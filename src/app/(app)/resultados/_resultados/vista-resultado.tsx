@@ -6,7 +6,8 @@ import { coincidencia, type EstadoResultado } from "@/domain/cierre";
 import { formatearHoraUy } from "@/domain/comun/horario";
 import { esquema } from "@/domain/esquemas";
 import type { ItemHistorial, JugadorResultado, PartidoResultado, ResultadoVista } from "./datos";
-import { CLASE_PUESTO, CLASE_SIGLA, Cancha, posicionPuesto } from "@/app/_cancha/cancha";
+import type { ClubId } from "@/domain/comun/tipos";
+import { CanchaDeLectura } from "@/app/_cancha/cancha-de-lectura";
 import estilos from "./resultados.module.css";
 
 export const MOTIVO_SIN_ONCE: Record<Exclude<EstadoResultado, "con_once">, string> = {
@@ -36,6 +37,8 @@ export function EncabezadoPartido({ club, partido }: { club: string; partido: Pa
 }
 
 export function VistaResultado(props: {
+  /** Club de las Camisetas. */
+  club: ClubId;
   partido: PartidoResultado;
   resultado: ResultadoVista | null;
   jugadores: Map<string, JugadorResultado>;
@@ -73,27 +76,34 @@ export function VistaResultado(props: {
         {formatearHoraUy(resultado.calculadoEn)}.
       </p>
       <p role="status">
-        {enComun === null
-          ? "No armaste una Alineación para este Partido."
-          : `Coincidiste en ${enComun} de 11 con el 11 Elegido.`}
+        {enComun === null ? (
+          "No armaste una Alineación para este Partido."
+        ) : (
+          <>
+            Coincidiste en <span className={estilos.numero}>{enComun}</span> de 11 con el 11 Elegido.
+          </>
+        )}
       </p>
-      <Cancha className={estilos.cancha} aria-label={`11 Elegido en ${definicion.nombre}`}>
-        {definicion.puestos.map((p) => {
-          const a = porPuesto.get(p.id);
-          const mio = !!(a?.jugadorId && misJugadores?.includes(a.jugadorId));
-          return (
-            <div
-              key={p.id}
-              className={`${CLASE_PUESTO} ${estilos.puesto}`}
-              data-mio={mio}
-              style={posicionPuesto(p)}
-            >
-              <span className={CLASE_SIGLA}>{p.sigla}</span>
-              <span>{nombre(a?.jugadorId ?? null)}</span>
-            </div>
-          );
-        })}
-      </Cancha>
+      <CanchaDeLectura
+        club={props.club}
+        esquema={definicion.id}
+        aria-label={`11 Elegido en ${definicion.nombre}`}
+        puestos={Object.fromEntries(
+          definicion.puestos.map((p) => {
+            const a = porPuesto.get(p.id);
+            const j = a?.jugadorId ? jugadores.get(a.jugadorId) : undefined;
+            const mio = !!(a?.jugadorId && misJugadores?.includes(a.jugadorId));
+            return [
+              p.id,
+              {
+                jugador: j ? { nombre: j.nombre, numero: j.numero } : null,
+                destacado: mio,
+                descripcion: `${p.etiqueta}: ${nombre(a?.jugadorId ?? null)}${mio ? " (en tu Alineación)" : ""}`,
+              },
+            ];
+          }),
+        )}
+      />
       <BotonCompartir
         urlImagen={`/api/imagen/once-elegido/${props.partido.id}`}
         enlace={`/compartir/once-elegido/${props.partido.id}`}
@@ -138,7 +148,9 @@ function OnceReal(props: {
   return (
     <section aria-label="11 Real">
       <h3>11 Real</h3>
-      <p role="status">La hinchada acertó {coincidencia(elegidos, props.onceReal)} de 11.</p>
+      <p role="status">
+        La hinchada acertó <span className={estilos.numero}>{coincidencia(elegidos, props.onceReal)}</span> de 11.
+      </p>
       <ul>
         {props.onceReal.map((id) => (
           <li key={id}>

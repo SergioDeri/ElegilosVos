@@ -14,7 +14,7 @@ import { esUuid } from "@/domain/comun/ids";
 import { NOMBRE_RIVAL_DESCONOCIDO } from "@/domain/comun/textos";
 import { esClubId, type ClubId } from "@/domain/comun/tipos";
 import { modeloDeImagen, type ModeloImagen } from "@/domain/compartir";
-import { esEsquemaId } from "@/domain/esquemas";
+import { esEsquemaId, type EsquemaId } from "@/domain/esquemas";
 import { fechaDeImagen } from "@/lib/compartir/fecha";
 import type { Database } from "@/lib/supabase/database.types";
 
@@ -52,7 +52,10 @@ export async function modeloMiAlineacion(cliente: Cliente, hinchaId: string, par
 }
 
 /** La imagen del 11 Elegido del Partido, o null si no existe o su Votación no tuvo 11 Elegido. */
-export async function modeloOnceElegido(clienteServicio: Cliente, partidoId: string): Promise<ModeloImagen | null> {
+/** El modelo de la imagen del 11 Elegido, con el Club y el Esquema para dibujarlo en la cancha pixel. */
+export type ModeloOnceElegido = ModeloImagen & { clubId: ClubId; esquemaId: EsquemaId };
+
+export async function modeloOnceElegido(clienteServicio: Cliente, partidoId: string): Promise<ModeloOnceElegido | null> {
   if (!esUuid(partidoId)) return null;
   const { data: fila, error } = await clienteServicio
     .from("resultado_votacion")
@@ -67,7 +70,7 @@ export async function modeloOnceElegido(clienteServicio: Cliente, partidoId: str
   const ids = once.flatMap((a) => (a.jugadorId ? [a.jugadorId] : []));
   const jugadores = await leerJugadores(clienteServicio, fila.partido.club_id, ids);
 
-  return modeloDeImagen({
+  const modelo = modeloDeImagen({
     tipo: "once_elegido",
     club: fila.partido.club_id,
     rival: fila.partido.rival?.nombre ?? NOMBRE_RIVAL_DESCONOCIDO,
@@ -76,6 +79,7 @@ export async function modeloOnceElegido(clienteServicio: Cliente, partidoId: str
     asignaciones: once,
     jugadores,
   });
+  return { ...modelo, clubId: fila.partido.club_id, esquemaId: fila.esquema };
 }
 
 /** Solo los Jugadores pedidos, del Club del Partido (incluye bajas: la imagen los nombra igual). */

@@ -1,14 +1,6 @@
-/* La cancha y la ubicación de los Puestos están en @/app/_cancha. */
-.cancha {
-  margin: 1rem auto;
-}
-
-.puesto {
-  border-radius: 0.3rem;
-  background: #fff;
-  color: #111;
-}
-
-.puesto[data-mio="true"] {
-  outline: 3px solid #ffd600;
+/* Los números de la Coincidencia, en la fuente pixel de títulos (8 px de arte). */
+.numero {
+  font-family: var(--fuente-titulos), monospace;
+  font-size: calc(8 * var(--u));
+  color: var(--enlace);
 }

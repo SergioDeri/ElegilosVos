@@ -39,7 +39,7 @@ export default async function PaginaResultados() {
       {partido ? (
         <section aria-label="Último Partido">
           <EncabezadoPartido club={club} partido={partido} />
-          <VistaResultado partido={partido} resultado={resultado} jugadores={jugadores} misJugadores={misJugadores} onceReal={onceReal} />
+          <VistaResultado club={hincha.clubFavorito} partido={partido} resultado={resultado} jugadores={jugadores} misJugadores={misJugadores} onceReal={onceReal} />
         </section>
       ) : (
         <p role="status">Todavía no cerró ninguna Votación de {club}.</p>

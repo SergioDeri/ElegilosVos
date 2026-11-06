@@ -10,7 +10,8 @@ import estilos from "./pixel.module.css";
 
 export interface JugadorDibujable {
   nombre: string;
-  numero: number;
+  /** null: sin número (Jugador desconocido). */
+  numero: number | null;
   posicionNatural: PosicionNatural;
 }
 
@@ -24,7 +25,7 @@ export function JugadorConCamiseta(props: {
   const { club, jugador, ancho, className } = props;
   return (
     <span className={className ? `${estilos.jugador} ${className}` : estilos.jugador}>
-      <Sprite matriz={camiseta(club, jugador.posicionNatural, { numero: jugador.numero })} />
+      <Sprite matriz={camiseta(club, jugador.posicionNatural, { numero: jugador.numero ?? undefined })} />
       <Sprite matriz={rotulo(jugador.nombre, ancho)} className={estilos.rotulo} />
     </span>
   );

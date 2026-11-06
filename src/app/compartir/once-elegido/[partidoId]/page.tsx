@@ -1,11 +1,13 @@
 // Página pública del 11 Elegido de un Partido (ticket 16): es el link que se
 // comparte en redes. Sin sesión. Su metadata Open Graph apunta a la imagen
-// generada en /api/imagen/once-elegido/<partidoId>.
+// generada en /api/imagen/once-elegido/<partidoId>. En la página, el 11 va en
+// la cancha pixel con las Camisetas y los acentos del Club (ticket 04).
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 import { BotonCompartir } from "@/app/_compartir/boton-compartir";
+import { CanchaDeLectura } from "@/app/_cancha/cancha-de-lectura";
 import { TAMANO_IMAGEN } from "@/lib/compartir/imagen";
 import { modeloOnceElegido } from "@/lib/compartir/datos";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
@@ -36,29 +38,36 @@ export default async function PaginaOnceElegidoPublico({ params }: PageProps<"/c
   if (!modelo) notFound();
 
   return (
-    <main>
-      <h1>{modelo.titulo}</h1>
-      <h2>{modelo.partido}</h2>
-      <p>
-        {modelo.fecha} · Esquema {modelo.esquema}
-      </p>
-      {/* eslint-disable-next-line @next/next/no-img-element -- imagen generada; UI mínima */}
-      <img src={urlImagen(partidoId)} alt={modelo.alt} width={540} height={675} />
-      <ul>
-        {modelo.puestos.map((p) => (
-          <li key={p.puesto}>
-            {p.sigla}: {p.nombre ? `${p.numero}. ${p.nombre}` : "Vacante"}
-          </li>
-        ))}
-      </ul>
-      <BotonCompartir
-        urlImagen={urlImagen(partidoId)}
-        enlace={`/compartir/once-elegido/${partidoId}`}
-        titulo={`${modelo.titulo}: ${modelo.partido}`}
-      />
-      <p>
-        <Link href="/">Armá tu 11 en Elegilos Vos</Link>
-      </p>
-    </main>
+    <div data-club={modelo.clubId}>
+      <main>
+        <h1>{modelo.titulo}</h1>
+        <h2>{modelo.partido}</h2>
+        <p>
+          {modelo.fecha} · Esquema {modelo.esquema}
+        </p>
+        <CanchaDeLectura
+          club={modelo.clubId}
+          esquema={modelo.esquemaId}
+          aria-label={`${modelo.titulo} en ${modelo.esquema}`}
+          puestos={Object.fromEntries(
+            modelo.puestos.map((p) => [
+              p.puesto,
+              {
+                jugador: p.nombre ? { nombre: p.nombre, numero: p.numero } : null,
+                descripcion: `${p.sigla}: ${p.nombre ? `${p.numero}. ${p.nombre}` : "Vacante"}`,
+              },
+            ]),
+          )}
+        />
+        <BotonCompartir
+          urlImagen={urlImagen(partidoId)}
+          enlace={`/compartir/once-elegido/${partidoId}`}
+          titulo={`${modelo.titulo}: ${modelo.partido}`}
+        />
+        <p>
+          <Link href="/">Armá tu 11 en Elegilos Vos</Link>
+        </p>
+      </main>
+    </div>
   );
 }

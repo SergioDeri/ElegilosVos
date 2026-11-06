@@ -38,7 +38,7 @@ export default async function PaginaResultadoDePartido({ params }: PageProps<"/r
       <h1>11 Elegido</h1>
       <EncabezadoPartido club={club} partido={partido} />
       {resultado || ahora.getTime() >= cierre.getTime() ? (
-        <VistaResultado partido={partido} resultado={resultado} jugadores={jugadores} misJugadores={misJugadores} onceReal={onceReal} />
+        <VistaResultado club={hincha.clubFavorito} partido={partido} resultado={resultado} jugadores={jugadores} misJugadores={misJugadores} onceReal={onceReal} />
       ) : (
         <p role="status">La Votación de este Partido cierra el {formatearHoraUy(cierre)}. El 11 Elegido sale al cierre.</p>
       )}

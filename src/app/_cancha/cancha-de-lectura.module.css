@@ -1,0 +1,49 @@
+/* Cancha de solo lectura dentro de una página con scroll: alto propio, en
+   píxeles de arte, que nunca pasa del alto visible. Vertical en pantallas
+   paradas y horizontal en las acostadas (la orientación la decide la
+   disposición según la forma del espacio). */
+.contenedor {
+  width: 100%;
+  height: min(
+    round(down, calc(100dvh - 8 * var(--u)), var(--u)),
+    calc(260 * var(--u))
+  );
+  margin: calc(3 * var(--u)) 0;
+}
+
+@media (orientation: landscape) {
+  .contenedor {
+    height: min(
+      round(down, calc(100dvh - 8 * var(--u)), var(--u)),
+      calc(160 * var(--u))
+    );
+  }
+}
+
+.puesto {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.puesto[data-destacado="true"] {
+  box-shadow: inset 0 0 0 var(--u) var(--enlace);
+}
+
+.puesto[data-atenuado="true"] {
+  opacity: 0.5;
+}
+
+/* Chapita con el porcentaje: fuente pixel, borde de 1 píxel de arte. */
+.detalle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 0 var(--u);
+  background: var(--color-negro);
+  color: var(--color-cal);
+  line-height: calc(8 * var(--u));
+  box-shadow: 0 0 0 var(--u) var(--color-contorno);
+  white-space: nowrap;
+  pointer-events: none;
+}

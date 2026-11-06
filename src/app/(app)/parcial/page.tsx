@@ -46,6 +46,7 @@ export default async function PaginaParcial() {
             resultado={parcial.resultado}
             jugadores={jugadores}
             textoVacio="Todavía no hay votos. ¡Armá tu Alineación y sé el primero!"
+            club={hincha.clubFavorito}
           />
         </>
       )}
