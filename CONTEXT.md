@@ -7,7 +7,7 @@ Los hinchas de Peñarol y Nacional arman la alineación titular de su club para 
 ### Clubes y partidos
 
 **Club**:
-Uno de los dos equipos de la app: Peñarol o Nacional.
+Uno de los dos equipos de la app: Peñarol o Nacional. Tiene escudo y dos Camisetas.
 _Avoid_: Equipo (ambiguo con el 11 votado)
 
 **Rival**:
@@ -22,6 +22,10 @@ Conjunto de Jugadores que pertenecen hoy a un Club. Un Jugador que se va del Clu
 
 **Jugador**:
 Integrante del Plantel de un Club. Tiene nombre, número y posición natural (ARQ/DEF/MED/DEL).
+
+**Camiseta**:
+Vestimenta fija de un Club con la que se muestra a sus Jugadores. Cada Club tiene dos: la de campo y la de arquero; la de arquero la lleva el Jugador cuya posición natural es ARQ. Los Rivales no tienen Camiseta.
+_Avoid_: Remera, equipación, kit
 
 **Disponibilidad**:
 Estado actual de un Jugador: Disponible, Lesionado, Suspendido o No disponible. Solo un Jugador Disponible puede elegirse y contar en la Votación.

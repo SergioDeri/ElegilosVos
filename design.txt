@@ -1,0 +1,57 @@
+Vamos a entrar en la siguiente fase. Quiero que el diseño de la app quede como pixel art. Quiero que toda la app tenga un estilo como el juego garra futbol que te dejo una explicacion de como era aca abajo:
+Quiero que el apartado visual del proyecto tenga un estilo pixel art. Esto es
+solo dirección artística: no hay que replicar ningún juego, solo la estética.
+
+## Resolución y píxeles
+- Resolución interna baja (por ejemplo [320x180]) escalada a la pantalla
+  por un factor entero (2x, 3x, 4x). Nunca escales con valores fraccionarios.
+- Sin suavizado: usar nearest-neighbor. En canvas, `imageSmoothingEnabled = false`;
+  en CSS, `image-rendering: pixelated`.
+- Todos los elementos se dibujan en la misma grilla de píxeles. Nada de mezclar
+  píxeles de distinto tamaño en una misma pantalla.
+- Posiciones y movimientos alineados a píxeles enteros para evitar temblores
+  en los bordes.
+
+## Sprites y animación
+- Tamaño base de personajes: [16x16 / 32x32] píxeles.
+- Spritesheets en PNG con fondo transparente, frames del mismo tamaño en grilla.
+- Animaciones cortas de 2 a 6 frames (idle, correr, acción), a pocos FPS
+  (6 a 12) para dar sensación retro.
+- Sin rotaciones ni escalados que rompan la grilla de píxeles.
+
+## Paleta de colores
+- Paleta limitada, de [16 a 32] colores, definida en un solo archivo y
+  reutilizada en todo el proyecto.
+- Poco gradiente: sombreado en 2 o 3 tonos por color (base, sombra, luz).
+- Contornos oscuros de 1 píxel en personajes y objetos importantes.
+- Referencia de ambiente: [colores vivos y saturados / tonos apagados / estilo
+  Game Boy / estilo 16 bits].
+
+## Escenarios y tiles
+- Fondos armados con tiles de [16x16] que se repiten, con variantes para evitar
+  que se note el patrón.
+- Parallax de 2 o 3 capas si hay scroll.
+- Sin texturas fotográficas ni degradados suaves de fondo.
+
+## Interfaz
+- Tipografía pixelada (bitmap font), tamaño entero y sin suavizado.
+- Botones y paneles con bordes de 1 o 2 píxeles y esquinas escalonadas.
+- Íconos de [8x8 / 16x16].
+
+## Efectos
+- Partículas hechas con píxeles cuadrados, no círculos suaves.
+- Sombras como elipses pixeladas de un solo tono.
+- Transiciones por bloques o fundido por pasos, no fundidos suaves.
+
+## Lo que NO quiero
+- Gráficos vectoriales suaves, sombras difusas (blur) ni bordes antialiased.
+- Mezclar estilos: todo el arte debe respetar la misma resolución y paleta.
+
+## Qué necesito de vos
+Antes de implementar, confirmá que entendiste el estilo y proponé la
+configuración técnica (escalado, renderizado sin suavizado, estructura de
+carpetas para sprites y paleta). No generes arte final todavía.
+
+
+
+ lo de arriba fue una explicacion corta. Lo que te pido que hagas es que ya precargues los clubes nacional y peñarol. La camiseta de peñarol es amarilla con bastones negros en el medio con numeros blancospara los jugadores la del golero es negra con numeros amarillos. La camiseta de nacional es blanca con los bordes del cuello y las mangas en azul y numeros rojos. La camiseta del golero es completamente azul con numeros blancos.
