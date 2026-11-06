@@ -1,0 +1,264 @@
+/* Base del estilo pixel art (spec .scratch/diseno-pixel-art, ADR 0004).
+   Los colores (--color-*), los acentos del tema (--acento, --acento-tinta,
+   --acento-sombra, --detalle, --enlace) y la grilla (--px, --u) los genera
+   @/domain/pixel en el layout raíz. Acá no se escriben colores sueltos.
+   Toda medida es un múltiplo entero de --u (1 píxel de arte). */
+
+/* -------------------------------------------------------------------------
+   Reset: nada suavizado, nada redondeado
+   ------------------------------------------------------------------------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  border-radius: 0;
+}
+
+html {
+  background: var(--color-fondo);
+  color: var(--color-cal);
+  font-family: var(--fuente-cuerpo), monospace;
+  /* Tiny5 es de 10 px: 1 píxel de la fuente = 1 píxel de arte. */
+  font-size: calc(10 * var(--u));
+  line-height: calc(12 * var(--u));
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: unset;
+  font-smooth: never;
+  text-rendering: optimizeSpeed;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+}
+
+img,
+svg,
+canvas {
+  image-rendering: pixelated;
+  shape-rendering: crispEdges;
+}
+
+/* -------------------------------------------------------------------------
+   Tipografía
+   ------------------------------------------------------------------------- */
+h1,
+h2,
+h3 {
+  /* Press Start 2P es de 8 px: un solo tamaño, en la misma grilla. */
+  font-family: var(--fuente-titulos), monospace;
+  font-size: calc(8 * var(--u));
+  line-height: calc(12 * var(--u));
+  font-weight: normal;
+  margin: calc(4 * var(--u)) 0;
+}
+
+h1 {
+  color: var(--color-cal);
+}
+
+h2,
+h3 {
+  color: var(--color-blancoSombra);
+}
+
+p {
+  margin: calc(3 * var(--u)) 0;
+}
+
+strong {
+  font-weight: normal;
+  color: var(--enlace);
+}
+
+a {
+  color: var(--enlace);
+  text-decoration: underline;
+  text-decoration-thickness: var(--u);
+  text-underline-offset: calc(2 * var(--u));
+}
+
+:focus-visible {
+  outline: var(--u) solid var(--enlace);
+  outline-offset: calc(2 * var(--u));
+}
+
+/* -------------------------------------------------------------------------
+   Bordes pixel con esquinas escalonadas: cuatro sombras sin desenfoque de
+   1 píxel de arte (las esquinas quedan vacías). --borde define el color.
+   ------------------------------------------------------------------------- */
+:root {
+  --borde: var(--color-contorno);
+  --marco:
+    0 calc(-1 * var(--u)) 0 0 var(--borde),
+    0 var(--u) 0 0 var(--borde),
+    calc(-1 * var(--u)) 0 0 0 var(--borde),
+    var(--u) 0 0 0 var(--borde);
+}
+
+/* -------------------------------------------------------------------------
+   Paneles: el contenido de cada pantalla
+   ------------------------------------------------------------------------- */
+main {
+  --borde: var(--color-grisOscuro);
+  /* Ancho y centrado redondeados a píxeles de arte enteros. */
+  --ancho-main: min(calc(200 * var(--u)), round(down, calc(100% - 4 * var(--u)), var(--u)));
+  display: block;
+  width: var(--ancho-main);
+  margin: calc(4 * var(--u)) 0;
+  margin-left: round(down, calc((100% - var(--ancho-main)) / 2), var(--u));
+  padding: calc(2 * var(--u)) calc(6 * var(--u)) calc(4 * var(--u));
+  background: var(--color-negroSombra);
+  box-shadow: var(--marco);
+}
+
+/* -------------------------------------------------------------------------
+   Botones: el acento del tema, con sombra inferior de 2 píxeles de arte
+   ------------------------------------------------------------------------- */
+button,
+.boton {
+  --borde: var(--color-contorno);
+  display: inline-block;
+  margin: var(--u) var(--u) calc(2 * var(--u));
+  padding: calc(2 * var(--u)) calc(5 * var(--u)) calc(3 * var(--u));
+  border: 0;
+  background: var(--acento);
+  color: var(--acento-tinta);
+  font: inherit;
+  line-height: calc(10 * var(--u));
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: inset 0 calc(-2 * var(--u)) 0 0 var(--acento-sombra), var(--marco);
+}
+
+button:hover,
+.boton:hover {
+  background: var(--acento-sombra);
+  box-shadow: inset 0 calc(-2 * var(--u)) 0 0 var(--color-contorno), var(--marco);
+}
+
+button:active,
+.boton:active {
+  transform: translateY(var(--u));
+  box-shadow: inset 0 calc(-1 * var(--u)) 0 0 var(--acento-sombra), var(--marco);
+}
+
+button:disabled {
+  cursor: default;
+  background: var(--color-grisOscuro);
+  color: var(--color-gris);
+  box-shadow: var(--marco);
+  transform: none;
+}
+
+/* -------------------------------------------------------------------------
+   Formularios
+   ------------------------------------------------------------------------- */
+form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: calc(3 * var(--u));
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--u);
+  align-self: stretch;
+  color: var(--color-blancoSombra);
+}
+
+input,
+select,
+textarea {
+  --borde: var(--color-grisOscuro);
+  margin: var(--u);
+  padding: calc(2 * var(--u)) calc(3 * var(--u));
+  border: 0;
+  background: var(--color-negro);
+  color: var(--color-cal);
+  font: inherit;
+  line-height: calc(10 * var(--u));
+  box-shadow: inset 0 var(--u) 0 0 var(--color-contorno), var(--marco);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  --borde: var(--enlace);
+  outline: none;
+}
+
+/* Casillas dibujadas en la grilla (sin el control nativo, que va suavizado). */
+input[type="checkbox"],
+input[type="radio"] {
+  appearance: none;
+  flex: none;
+  width: calc(6 * var(--u));
+  height: calc(6 * var(--u));
+  padding: 0;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+input[type="checkbox"]:checked,
+input[type="radio"]:checked {
+  background: var(--acento);
+  box-shadow: inset 0 0 0 var(--u) var(--color-negro), inset 0 calc(-2 * var(--u)) 0 var(--u) var(--acento-sombra), var(--marco);
+}
+
+/* -------------------------------------------------------------------------
+   Avisos
+   ------------------------------------------------------------------------- */
+[role="alert"],
+[role="status"] {
+  --borde: var(--color-contorno);
+  margin: calc(3 * var(--u)) var(--u);
+  padding: calc(2 * var(--u)) calc(4 * var(--u));
+  box-shadow: var(--marco);
+}
+
+[role="alert"] {
+  background: var(--color-rojoSombra);
+  color: var(--color-cal);
+}
+
+[role="status"] {
+  background: var(--color-negro);
+}
+
+[role="alertdialog"] {
+  --borde: var(--acento);
+  margin: calc(3 * var(--u)) var(--u);
+  padding: var(--u) calc(4 * var(--u)) calc(3 * var(--u));
+  background: var(--color-negro);
+  box-shadow: var(--marco);
+}
+
+/* -------------------------------------------------------------------------
+   Encabezado de la app: barra del acento del Club
+   ------------------------------------------------------------------------- */
+.barra-app {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(4 * var(--u));
+  padding: var(--u) calc(4 * var(--u));
+  background: var(--acento);
+  color: var(--acento-tinta);
+  /* Abajo, una línea del segundo color del Club (el rojo de Nacional, el negro de Peñarol). */
+  box-shadow:
+    inset 0 calc(-2 * var(--u)) 0 0 var(--acento-sombra),
+    0 var(--u) 0 0 var(--detalle);
+}
+
+.barra-app a {
+  color: inherit;
+}
+
+.barra-app button {
+  --acento: var(--color-negro);
+  --acento-tinta: var(--color-cal);
+  --acento-sombra: var(--color-contorno);
+}

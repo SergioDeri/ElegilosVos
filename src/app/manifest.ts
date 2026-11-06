@@ -2,6 +2,7 @@
 // notificaciones push solo funcionan con la web agregada a la pantalla de inicio.
 // Íconos placeholder: se rediseñan en la etapa de diseño.
 import type { MetadataRoute } from "next";
+import { PALETA, colorDeSistema } from "@/domain/pixel";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
@@ -12,8 +13,9 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: "/",
     scope: "/",
     display: "standalone",
-    background_color: "#ffffff",
-    theme_color: "#156534",
+    // Colores de la paleta: el tema neutro (el manifest es el mismo para todos).
+    background_color: PALETA.fondo,
+    theme_color: colorDeSistema("neutro"),
     icons: [
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
       { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
