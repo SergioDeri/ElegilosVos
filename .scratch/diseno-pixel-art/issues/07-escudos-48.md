@@ -27,3 +27,5 @@ Spec: `.scratch/diseno-pixel-art/spec.md`. ADR 0004 (pixel art en DOM con `--px`
 - **Sección Clubes**: `/admin/clubes` muestra el escudo de cada Club y un formulario para subirlo o reemplazarlo (`cambiarEscudoDelClub`). El enlace está en el inicio del backoffice.
 - **Pendiente:** la tarjeta del Partido del Hincha muestra el escudo del Rival pero no el del propio Club; sumarlo es parte de rediseñar la tarjeta (ticket 05). La clase `.escudo` de `alineacion.module.css` quedó sin uso; no se borró para no chocar con el ticket 05, que edita ese archivo.
 - **Verificado a ojo** (al hacer el ticket 06), en `/admin/clubes`: el hueco "falta escudo" en los dos Clubes; un PNG de 64x64 se rechaza con "El escudo tiene que medir exactamente 48x48 píxeles."; uno de 48x48 se guarda y se ve nítido, y al reemplazarlo queda un solo archivo en `clubes/penarol/`.
+
+**Revisión final (integración).** El inicio muestra los dos escudos en la tarjeta del Partido: el del Club Favorito (o el hueco "falta escudo") y el del Rival (`leerEscudoDelClub` en `@/lib/club/lecturas`). El README avisa que hay que vaciar el bucket `jugadores` antes de aplicar la migración del ticket 08 en producción.

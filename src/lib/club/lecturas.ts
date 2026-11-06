@@ -54,3 +54,10 @@ export async function leerPartidos(cliente: Cliente, club: ClubId): Promise<Part
     rival: p.rival ? { nombre: p.rival.nombre, escudoPath: p.rival.escudo_path } : null,
   }));
 }
+
+/** Ruta del escudo del Club en el bucket `escudos`, o null si el Admin todavía no lo subió. */
+export async function leerEscudoDelClub(cliente: Cliente, club: ClubId): Promise<string | null> {
+  const { data, error } = await cliente.from("club").select("escudo_path").eq("id", club).maybeSingle();
+  if (error) throw error;
+  return data?.escudo_path ?? null;
+}

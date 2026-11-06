@@ -9,7 +9,7 @@ Spec: `.scratch/diseno-pixel-art/spec.md`. ADR 0004 (pixel art en DOM con `--px`
 **Status:** ready-for-agent
 
 - [x] El Parcial se ve en la cancha pixel, con la misma disposición sin choques
-- [x] El 11 Elegido y el 11 Real se ven en la cancha pixel (el 11 Real no tiene Esquema: se muestra como hoy, con el estilo nuevo)
+- [ ] El 11 Elegido y el 11 Real se ven en la cancha pixel (el 11 Real no tiene Esquema: se muestra como hoy, con el estilo nuevo)
 - [x] Los porcentajes y la Coincidencia usan la fuente pixel y respetan la grilla
 - [x] La página pública del 11 Elegido tiene el estilo pixel y funciona sin sesión
 - [x] Revisado a ojo en celu vertical, celu acostado y desktop
@@ -33,3 +33,5 @@ Spec: `.scratch/diseno-pixel-art/spec.md`. ADR 0004 (pixel art en DOM con `--px`
 - Link público en 844x390. Sin sesión responde 200.
 
 **Pendiente.** No se probó el 11 Real con datos cargados.
+
+**Revisión final (integración).** Se destildó el criterio del 11 Real: el código está, pero no se revisó a ojo con un 11 Real cargado. La Camiseta de arquero en la cancha de lectura la decide el Puesto, no la posición natural, porque los resultados congelados no guardan la posición. Da lo mismo que la regla del spec mientras el dominio siga exigiendo que el Puesto de arquero lo ocupe un ARQ (`reglaDelArquero` en el editor y `respetaArquero` en el conteo).

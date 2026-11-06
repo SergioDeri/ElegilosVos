@@ -16,6 +16,13 @@
   align-items: center;
 }
 
+/* El escudo del Club y el del Rival, lado a lado. */
+.escudos {
+  display: flex;
+  flex-shrink: 0;
+  gap: calc(2 * var(--u));
+}
+
 .titulo {
   margin: 0;
   color: var(--color-cal);

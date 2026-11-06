@@ -9,7 +9,7 @@ import { requerirHincha } from "@/lib/auth/sesion";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { urlEscudo } from "@/lib/imagenes/subida";
 import { cargarAlineacion, cargarConOnceElegido } from "./_alineacion/datos";
-import { leerPartidos, leerPlantel } from "@/lib/club/lecturas";
+import { leerEscudoDelClub, leerPartidos, leerPlantel } from "@/lib/club/lecturas";
 import { CuentaRegresiva } from "./_alineacion/cuenta-regresiva";
 import { EditorAlineacion } from "./_alineacion/editor-alineacion";
 import { EnlaceParcial } from "./parcial/enlace-parcial";
@@ -30,9 +30,10 @@ export default async function Inicio() {
   const hincha = await requerirHincha();
   const club = NOMBRE_CLUB[hincha.clubFavorito];
   const supabase = await crearClienteServidor();
-  const [partidos, jugadores] = await Promise.all([
+  const [partidos, jugadores, escudoDelClub] = await Promise.all([
     leerPartidos(supabase, hincha.clubFavorito),
     leerPlantel(supabase, hincha.clubFavorito),
+    leerEscudoDelClub(supabase, hincha.clubFavorito),
   ]);
   const ahora = horaActual();
   // Solo los Partidos que no terminaron pueden ir a la pantalla.
@@ -64,7 +65,10 @@ export default async function Inicio() {
       <Link href="/resultados">Ver el 11 Elegido y el historial</Link>
       <section className={inicio.partido} aria-label="Próximo Partido">
         <div className={inicio.rival}>
-          <Escudo nombre={rival} url={urlEscudo(supabase, partido.rival?.escudoPath ?? null)} />
+          <div className={inicio.escudos}>
+            <Escudo nombre={club} url={urlEscudo(supabase, escudoDelClub)} />
+            <Escudo nombre={rival} url={urlEscudo(supabase, partido.rival?.escudoPath ?? null)} />
+          </div>
           <div>
             <h2 className={inicio.titulo}>
               {club} vs {rival}
