@@ -7,6 +7,11 @@ export type Decision = { tipo: "seguir" } | { tipo: "redirigir"; destino: string
 export const RUTA_LOGIN = "/login";
 export const RUTA_ELEGIR_CLUB = "/elegir-club";
 export const RUTA_INICIO = "/";
+/**
+ * Limpia una sesión huérfana (JWT con firma válida de un usuario que ya no
+ * existe, p. ej. borrado) y manda al login. Está bajo /auth, libre en el proxy.
+ */
+export const RUTA_SESION_HUERFANA = "/auth/sesion-huerfana";
 
 /** Solo para quien no inició sesión: con sesión mandan al inicio. */
 const RUTAS_DE_INVITADO = ["/login", "/registro", "/verificar"];

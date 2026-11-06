@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { decidirAcceso, rutaSegura } from "./rutas";
+import { RUTA_SESION_HUERFANA, decidirAcceso, rutaSegura } from "./rutas";
 
 describe("decidirAcceso", () => {
   it("sin sesión, una ruta de la app manda al login recordando a dónde iba", () => {
@@ -39,6 +39,16 @@ describe("decidirAcceso", () => {
 
   it("no confunde rutas que solo empiezan parecido", () => {
     expect(decidirAcceso("/loginx", false)).toEqual({ tipo: "redirigir", destino: "/login?next=%2Floginx" });
+  });
+});
+
+describe("sesión huérfana", () => {
+  // JWT válido de un usuario que ya no existe: si esta ruta redirigiera, el
+  // login (que manda al inicio con sesión) y el layout (que manda al login sin
+  // perfil) quedarían en un bucle.
+  it("la ruta que limpia la sesión se sigue con o sin sesión", () => {
+    expect(decidirAcceso(RUTA_SESION_HUERFANA, true)).toEqual({ tipo: "seguir" });
+    expect(decidirAcceso(RUTA_SESION_HUERFANA, false)).toEqual({ tipo: "seguir" });
   });
 });
 
