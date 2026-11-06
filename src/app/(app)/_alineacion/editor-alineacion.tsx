@@ -10,6 +10,7 @@
 // - Alternativa sin arrastre: tocar un Jugador o un Puesto ocupado para
 //   seleccionarlo y después tocar el destino (o "Quitar").
 import { useEffect, useId, useMemo, useState, type ReactNode } from "react";
+import type { PuestoEnCancha as CajaDePuesto } from "@/domain/cancha";
 import { useRouter } from "next/navigation";
 import {
   DndContext,
@@ -45,7 +46,8 @@ import { NOMBRE_DISPONIBILIDAD } from "@/domain/comun/textos";
 import { MENSAJE_DE_RECHAZO, POSICION } from "./textos";
 import { useGuardadoAutomatico, type EstadoGuardado } from "./use-guardado-automatico";
 import type { ClubId } from "@/domain/comun/tipos";
-import { CLASE_PUESTO, CLASE_SIGLA, Cancha, posicionPuesto } from "@/app/_cancha/cancha";
+import { BancoPixel, CanchaPixel } from "@/app/_cancha/cancha-pixel";
+import { PuestoLibre } from "@/app/_cancha/puesto-libre";
 import { JugadorConCamiseta } from "@/app/_pixel/jugador-con-camiseta";
 import { Icono } from "@/app/_pixel/icono";
 import estilos from "./alineacion.module.css";
@@ -89,7 +91,7 @@ export function EditorAlineacion({ partidoId, club, inicial, jugadores, editable
     return leida?.ok ? leida.estado : { esquema: "4-3-3", esquemaElegidoAMano: false, puestos: {} };
   });
   const [seleccion, setSeleccion] = useState<Origen | null>(null);
-  const [arrastrando, setArrastrando] = useState<Origen | null>(null);
+  const [arrastrando, setArrastrando] = useState<{ origen: Origen; ancho: number } | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
   const { estado: guardado, programar, reintentar } = useGuardadoAutomatico(partidoId);
   // Si el servidor dice que la Votación cerró, se recarga la pantalla (solo lectura).
@@ -162,7 +164,9 @@ export function EditorAlineacion({ partidoId, club, inicial, jugadores, editable
 
   function alEmpezar(e: DragStartEvent) {
     setSeleccion(null);
-    setArrastrando(leerOrigen(e.active.id));
+    const origen = leerOrigen(e.active.id);
+    const ancho = Number(e.active.data.current?.ancho ?? 24);
+    setArrastrando(origen ? { origen, ancho } : null);
   }
 
   function alTerminar(e: DragEndEvent) {
@@ -200,11 +204,12 @@ export function EditorAlineacion({ partidoId, club, inicial, jugadores, editable
       : seleccion
         ? porId.get(alineacion.puestos[seleccion.puesto]?.jugadorId ?? "")
         : undefined;
+  const origenArrastre = arrastrando?.origen;
   const enArrastre =
-    arrastrando?.tipo === "jugador"
-      ? porId.get(arrastrando.jugadorId)
-      : arrastrando
-        ? porId.get(alineacion.puestos[arrastrando.puesto]?.jugadorId ?? "")
+    origenArrastre?.tipo === "jugador"
+      ? porId.get(origenArrastre.jugadorId)
+      : origenArrastre
+        ? porId.get(alineacion.puestos[origenArrastre.puesto]?.jugadorId ?? "")
         : undefined;
 
   return (
@@ -223,7 +228,7 @@ export function EditorAlineacion({ partidoId, club, inicial, jugadores, editable
         },
       }}
     >
-      <section aria-label="Tu Alineación">
+      <section aria-label="Tu Alineación" className={estilos.editor}>
         <div className={estilos.barra}>
           <label>
             Esquema{" "}
@@ -243,90 +248,92 @@ export function EditorAlineacion({ partidoId, club, inicial, jugadores, editable
           {editable && <IndicadorGuardado estado={guardado} reintentar={reintentar} />}
         </div>
 
-        <p role="status" aria-live="polite" className={estilos.aviso}>
-          {aviso ??
-            (seleccionado && puedeEditar
-              ? `Elegiste a ${seleccionado.nombre}. Tocá un Puesto${seleccion?.tipo === "puesto" ? " o Quitar" : ""}.`
-              : "")}
-        </p>
-        {seleccion?.tipo === "puesto" && puedeEditar && (
-          <div className={estilos.acciones}>
-            <button type="button" onClick={() => aplicar(quitar(alineacion, seleccion.puesto))}>
-              Quitar a {seleccionado?.nombre}
-            </button>
-            <button type="button" onClick={() => setSeleccion(null)}>
-              Cancelar
-            </button>
-          </div>
-        )}
+        {/* Alto fijo: que aparezca un aviso o las acciones no mueve la cancha. */}
+        <div className={estilos.renglon}>
+          <p aria-live="polite" className={estilos.aviso}>
+            {aviso ??
+              (seleccionado && puedeEditar
+                ? `Elegiste a ${seleccionado.nombre}. Tocá un Puesto${seleccion?.tipo === "puesto" ? " o Quitar" : ""}.`
+                : "")}
+          </p>
+          {seleccion?.tipo === "puesto" && puedeEditar && (
+            <>
+              <button type="button" onClick={() => aplicar(quitar(alineacion, seleccion.puesto))}>
+                Quitar
+              </button>
+              <button type="button" onClick={() => setSeleccion(null)}>
+                Cancelar
+              </button>
+            </>
+          )}
+        </div>
 
-        <Cancha role="group" aria-label={`Cancha, Esquema ${alineacion.esquema}`}>
-          {esquema(alineacion.esquema).puestos.map((p) => {
-            const ocupado = alineacion.puestos[p.id];
+        <CanchaPixel
+          className={estilos.area}
+          esquema={alineacion.esquema}
+          // Con la Votación abierta siempre hay banco, aunque esté vacío: es
+          // donde se suelta un Jugador para sacarlo de la cancha.
+          suplentes={editable ? Math.max(1, libres.length) : 0}
+          role="group"
+          aria-label={`Cancha, Esquema ${alineacion.esquema}`}
+          puesto={(caja) => {
+            const ocupado = alineacion.puestos[caja.id];
             const jugador = ocupado ? porId.get(ocupado.jugadorId) : undefined;
             return (
               <PuestoEnCancha
-                key={p.id}
                 club={club}
-                puesto={p.id}
-                etiqueta={p.etiqueta}
-                sigla={p.sigla}
-                x={p.x}
-                y={p.y}
+                caja={caja}
                 jugador={jugador}
                 jugadorIdDesconocido={ocupado && !jugador ? ocupado.jugadorId : undefined}
                 editable={puedeEditar}
-                seleccionado={seleccion?.tipo === "puesto" && seleccion.puesto === p.id}
-                alTocar={() => tocarPuesto(p.id)}
+                seleccionado={seleccion?.tipo === "puesto" && seleccion.puesto === caja.id}
+                alTocar={() => tocarPuesto(caja.id)}
               />
             );
-          })}
-        </Cancha>
-
-        {editable && (
-          <Banco
-            editable={puedeEditar}
-            alTocar={() => seleccion?.tipo === "puesto" && soltar(seleccion, ID_BANCO)}
-            hayPuestoSeleccionado={seleccion?.tipo === "puesto"}
-          >
-            <h2>Plantel disponible ({libres.length})</h2>
-            {libres.length === 0 && <p>No quedan Jugadores Disponibles en el banco.</p>}
-            <ul className={estilos.suplentes}>
-              {libres.map((j) => (
-                <li key={j.id}>
-                  <JugadorDelBanco
-                    club={club}
-                    jugador={j}
-                    editable={puedeEditar}
-                    seleccionado={seleccion?.tipo === "jugador" && seleccion.jugadorId === j.id}
-                    alTocar={() => tocarJugador(j.id)}
-                  />
-                </li>
-              ))}
-            </ul>
-            {noDisponibles.length > 0 && (
-              <>
-                <h2>No disponibles</h2>
-                <ul className={estilos.lista}>
-                  {noDisponibles.map((j) => (
-                    <li key={j.id} className={estilos.noDisponible}>
-                      <span>
-                        {j.numero} · {j.nombre} · {POSICION[j.posicionNatural]}
-                      </span>
-                      <small>
-                        {NOMBRE_DISPONIBILIDAD[j.disponibilidad]}
-                        {j.motivo ? `: ${j.motivo}` : ""}
-                      </small>
-                    </li>
-                  ))}
-                </ul>
-              </>
-            )}
-          </Banco>
-        )}
+          }}
+          banco={(b, orientacion) => (
+            <Banco editable={puedeEditar} cantidad={libres.length}>
+              <BancoPixel banco={b} orientacion={orientacion}>
+                {libres.map((j) => (
+                  <li key={j.id}>
+                    <JugadorDelBanco
+                      club={club}
+                      jugador={j}
+                      ancho={b.anchoItem}
+                      editable={puedeEditar}
+                      seleccionado={seleccion?.tipo === "jugador" && seleccion.jugadorId === j.id}
+                      alTocar={() => tocarJugador(j.id)}
+                    />
+                  </li>
+                ))}
+              </BancoPixel>
+            </Banco>
+          )}
+        />
       </section>
+
+      {editable && noDisponibles.length > 0 && (
+        <section aria-label="No disponibles">
+          <h2>No disponibles</h2>
+          <ul className={estilos.lista}>
+            {noDisponibles.map((j) => (
+              <li key={j.id} className={estilos.noDisponible}>
+                <span>
+                  {j.numero} · {j.nombre} · {POSICION[j.posicionNatural]}
+                </span>
+                <small>
+                  {NOMBRE_DISPONIBILIDAD[j.disponibilidad]}
+                  {j.motivo ? `: ${j.motivo}` : ""}
+                </small>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       <DragOverlay>
-        {enArrastre ? <JugadorConCamiseta club={club} jugador={enArrastre} className={estilos.arrastrado} /> : null}
+        {enArrastre && arrastrando ? (
+          <JugadorConCamiseta club={club} jugador={enArrastre} ancho={arrastrando.ancho} className={estilos.arrastrado} />
+        ) : null}
       </DragOverlay>
     </DndContext>
   );
@@ -361,21 +368,18 @@ function IndicadorGuardado({ estado, reintentar }: { estado: EstadoGuardado; rei
 
 function PuestoEnCancha(props: {
   club: ClubId;
-  puesto: PuestoId;
-  etiqueta: string;
-  sigla: string;
-  x: number;
-  y: number;
+  caja: CajaDePuesto;
   jugador: JugadorDelClub | undefined;
   jugadorIdDesconocido: string | undefined;
   editable: boolean;
   seleccionado: boolean;
   alTocar: () => void;
 }) {
-  const { club, puesto, etiqueta, sigla, x, y, jugador, editable, seleccionado, alTocar } = props;
+  const { club, caja, jugador, editable, seleccionado, alTocar } = props;
+  const etiqueta = caja.etiqueta;
   const ocupado = !!jugador || !!props.jugadorIdDesconocido;
-  const soltable = useDroppable({ id: idPuesto(puesto), disabled: !editable });
-  const arrastrable = useDraggable({ id: idPuesto(puesto), disabled: !editable || !ocupado });
+  const soltable = useDroppable({ id: idPuesto(caja.id), disabled: !editable });
+  const arrastrable = useDraggable({ id: idPuesto(caja.id), disabled: !editable || !ocupado, data: { ancho: caja.ancho } });
   const noDisponible = jugador && (jugador.disponibilidad !== "disponible" || !jugador.enPlantel);
   const descripcion = jugador
     ? `${etiqueta}: ${jugador.numero} ${jugador.nombre}${noDisponible ? " (no disponible)" : ""}`
@@ -394,46 +398,48 @@ function PuestoEnCancha(props: {
       aria-pressed={seleccionado}
       aria-disabled={!editable}
       onClick={alTocar}
-      className={`${CLASE_PUESTO} ${estilos.puesto}`}
+      className={estilos.puesto}
       data-ocupado={ocupado}
       data-sobre={soltable.isOver}
       data-arrastrando={arrastrable.isDragging}
       data-seleccionado={seleccionado}
       data-no-disponible={!!noDisponible}
-      style={posicionPuesto({ x, y })}
     >
       {jugador ? (
         <>
-          <JugadorConCamiseta club={club} jugador={jugador} />
+          <JugadorConCamiseta club={club} jugador={jugador} ancho={caja.ancho} />
           {noDisponible && <span className={estilos.alerta}>!</span>}
         </>
       ) : (
-        <>
-          <span className={CLASE_SIGLA}>{sigla}</span>
-          {props.jugadorIdDesconocido && <span className={estilos.nombre}>?</span>}
-        </>
+        <PuestoLibre texto={props.jugadorIdDesconocido ? "?" : caja.sigla} ancho={caja.ancho} />
       )}
     </button>
   );
 }
 
-function Banco(props: { editable: boolean; hayPuestoSeleccionado: boolean; alTocar: () => void; children: ReactNode }) {
+function Banco(props: { editable: boolean; cantidad: number; children: ReactNode }) {
   const { setNodeRef, isOver } = useDroppable({ id: ID_BANCO, disabled: !props.editable });
   return (
-    <div ref={setNodeRef} className={estilos.banco} data-sobre={isOver}>
-      {props.hayPuestoSeleccionado && (
-        <button type="button" onClick={props.alTocar}>
-          Mandar al banco
-        </button>
-      )}
+    <div ref={setNodeRef} className={estilos.banco} data-sobre={isOver} aria-label={`Suplentes (${props.cantidad})`} role="group">
       {props.children}
     </div>
   );
 }
 
-function JugadorDelBanco(props: { club: ClubId; jugador: JugadorDelClub; editable: boolean; seleccionado: boolean; alTocar: () => void }) {
-  const { club, jugador, editable, seleccionado, alTocar } = props;
-  const { setNodeRef, listeners, attributes, isDragging } = useDraggable({ id: idJugador(jugador.id), disabled: !editable });
+function JugadorDelBanco(props: {
+  club: ClubId;
+  jugador: JugadorDelClub;
+  ancho: number;
+  editable: boolean;
+  seleccionado: boolean;
+  alTocar: () => void;
+}) {
+  const { club, jugador, ancho, editable, seleccionado, alTocar } = props;
+  const { setNodeRef, listeners, attributes, isDragging } = useDraggable({
+    id: idJugador(jugador.id),
+    disabled: !editable,
+    data: { ancho },
+  });
   return (
     <button
       type="button"
@@ -447,7 +453,7 @@ function JugadorDelBanco(props: { club: ClubId; jugador: JugadorDelClub; editabl
       data-seleccionado={seleccionado}
       data-arrastrando={isDragging}
     >
-      <JugadorConCamiseta club={club} jugador={jugador} />
+      <JugadorConCamiseta club={club} jugador={jugador} ancho={ancho} />
     </button>
   );
 }

@@ -1,8 +1,24 @@
 /* Pantalla de armado. Colores de la paleta (--color-*, acentos del tema) y
-   medidas en píxeles de arte (--u), como pide pixel.css; salvo el escudo del
-   Rival (.escudo), que pasa al estilo pixel en el ticket 07. La tarjeta del
-   Partido está en ../inicio.module.css; la cancha y la ubicación de los
-   Puestos, en @/app/_cancha. */
+   medidas en píxeles de arte (--u), como pide pixel.css. La tarjeta del
+   Partido está en ../inicio.module.css. La cancha, los Puestos y el banco los
+   ubica @/app/_cancha/cancha-pixel; acá va su aspecto. */
+
+/* El armado ocupa el alto visible: barra, renglón de avisos y la cancha con
+   el banco en todo lo que sobra, sin scroll. La pantalla usa todo el ancho. */
+main:has(.editor) {
+  --ancho-main: round(down, calc(100% - 4 * var(--u)), var(--u));
+}
+
+.editor {
+  display: flex;
+  flex-direction: column;
+  height: round(down, calc(100dvh - 4 * var(--u)), var(--u));
+}
+
+.area {
+  flex: 1;
+}
+
 .barra {
   display: flex;
   flex-wrap: wrap;
@@ -11,60 +27,76 @@
   justify-content: space-between;
 }
 
+.barra label {
+  flex-direction: row;
+  align-items: center;
+  align-self: auto;
+  gap: calc(2 * var(--u));
+}
+
+.guardado {
+  margin: 0;
+}
+
 .guardado[data-estado="error"],
 .guardado[data-estado="cerrada"],
 .guardado[data-estado="invalida"] {
   color: var(--color-rojoLuz);
 }
 
-.aviso {
-  min-height: calc(12 * var(--u));
+/* Alto fijo: el aviso y las acciones no empujan la cancha. */
+.renglon {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: calc(2 * var(--u));
+  height: calc(18 * var(--u));
+  overflow: hidden;
 }
 
-.acciones {
-  display: flex;
-  gap: calc(2 * var(--u));
-  margin-bottom: calc(2 * var(--u));
+.renglon button {
+  margin: 0;
+  padding: var(--u) calc(3 * var(--u)) calc(2 * var(--u));
+}
+
+.aviso {
+  flex: 1;
+  margin: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 /* Puestos y fichas del banco son botones, pero se ven como el Jugador: sin
-   el fondo, la sombra ni el hundido de los botones de pixel.css. */
+   el fondo, la sombra ni el hundido de los botones de pixel.css. Llenan la
+   caja que les dio la disposición. */
 .puesto,
 .puesto:hover,
 .puesto:active,
 .ficha,
 .ficha:hover,
 .ficha:active {
+  position: relative;
+  width: 100%;
+  height: 100%;
   margin: 0;
+  padding: 0;
   background: none;
   color: var(--color-cal);
   box-shadow: none;
-  touch-action: manipulation;
-}
-
-.ficha:active {
   transform: none;
-}
-
-/* Puesto vacío: un lugar libre marcado en la cancha. */
-.puesto {
-  min-height: calc(24 * var(--u));
-  justify-content: center;
-  cursor: pointer;
+  touch-action: manipulation;
+  cursor: grab;
 }
 
 .puesto[data-ocupado="false"] {
-  box-shadow: inset 0 0 0 var(--u) var(--color-cal);
-}
-
-.puesto[data-ocupado="true"] {
-  cursor: grab;
+  cursor: pointer;
 }
 
 .puesto[data-sobre="true"],
 .puesto[data-seleccionado="true"],
 .ficha[data-seleccionado="true"] {
-  box-shadow: 0 0 0 calc(2 * var(--u)) var(--enlace);
+  box-shadow: inset 0 0 0 var(--u) var(--enlace);
 }
 
 .puesto[data-arrastrando="true"],
@@ -87,32 +119,13 @@
   box-shadow: 0 0 0 var(--u) var(--color-contorno);
 }
 
-.nombre {
-  overflow-wrap: anywhere;
-}
-
 .banco {
-  margin-top: calc(4 * var(--u));
-  padding: calc(2 * var(--u));
+  width: 100%;
+  height: 100%;
 }
 
 .banco[data-sobre="true"] {
-  box-shadow: inset 0 0 0 calc(2 * var(--u)) var(--enlace);
-}
-
-/* Suplentes: fila alineada a la izquierda que salta de línea. */
-.suplentes {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: calc(2 * var(--u));
-}
-
-.ficha {
-  padding: var(--u);
-  cursor: grab;
+  box-shadow: inset 0 0 0 var(--u) var(--enlace);
 }
 
 .lista {
@@ -134,15 +147,3 @@
   cursor: grabbing;
 }
 
-.escudo {
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: #ddd;
-  color: #333;
-  font-weight: bold;
-  font-size: 0.8rem;
-}

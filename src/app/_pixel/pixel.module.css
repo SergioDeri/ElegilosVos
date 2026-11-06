@@ -4,8 +4,12 @@
   display: inline-flex;
   flex-direction: column;
   align-items: center;
-  /* El apellido se apoya en el ruedo de la Camiseta (última fila vacía). */
-  gap: 0;
+}
+
+/* El apellido se apoya en el ruedo: la última fila de la Camiseta es vacía
+   (Camiseta 24 + apellido 8 - 1 = ALTO_CAJA de @/domain/cancha). */
+.rotulo {
+  margin-top: calc(-1 * var(--u));
 }
 
 /* Escudo de 48 píxeles de arte, sin suavizado. */
