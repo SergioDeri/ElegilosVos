@@ -122,9 +122,11 @@ describe("imagen del 11 Elegido", () => {
       expect(texto).not.toContain(usuario(nombre).email);
     }
     expect(texto).not.toMatch(/hincha_id|alineaciones|votos|email/i);
-    // Solo los campos del modelo (lista blanca).
+    // Solo los campos del modelo (lista blanca). clubId y esquemaId (ticket 04
+    // de diseño pixel) son del Partido y del resultado, no de los Hinchas: la
+    // página pública los usa para las Camisetas y la cancha.
     expect(Object.keys(modelo!).sort()).toEqual(
-      ["alt", "club", "esquema", "fecha", "nombreArchivo", "partido", "puestos", "rival", "titulo"].sort(),
+      ["alt", "club", "clubId", "esquema", "esquemaId", "fecha", "nombreArchivo", "partido", "puestos", "rival", "titulo"].sort(),
     );
     for (const p of modelo!.puestos) {
       expect(Object.keys(p).sort()).toEqual(["nombre", "numero", "puesto", "sigla", "x", "yDesdeArriba"].sort());

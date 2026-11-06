@@ -12,7 +12,6 @@ import { leerPartidos, leerPlantel } from "@/lib/club/lecturas";
 import { CuentaRegresiva } from "./_alineacion/cuenta-regresiva";
 import { EditorAlineacion } from "./_alineacion/editor-alineacion";
 import { EnlaceParcial } from "./parcial/enlace-parcial";
-import estilos from "./_alineacion/alineacion.module.css";
 import inicio from "./inicio.module.css";
 import { Icono } from "@/app/_pixel/icono";
 import { asegurarHerencia } from "@/lib/herencia/asegurar";
