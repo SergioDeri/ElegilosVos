@@ -239,7 +239,6 @@ describe("Storage", () => {
     );
     expect(buckets).toEqual([
       { id: "escudos", public: true, file_size_limit: "2097152", allowed_mime_types: ["image/jpeg", "image/png", "image/webp"] },
-      { id: "jugadores", public: true, file_size_limit: "2097152", allowed_mime_types: ["image/jpeg", "image/png", "image/webp"] },
     ]);
   });
 
@@ -259,7 +258,7 @@ describe("Storage", () => {
 
   it("anon no lista los archivos de los buckets", async () => {
     const anon = clienteAnonimo();
-    for (const bucket of ["jugadores", "escudos"]) {
+    for (const bucket of ["escudos"]) {
       const { data } = await anon.storage.from(bucket).list();
       expect(data ?? []).toEqual([]);
     }

@@ -1,4 +1,4 @@
-// Subida de imágenes del backoffice (foto de Jugador, escudo de Rival). Se
+// Subida de imágenes del backoffice (escudos). Se
 // valida el contenido real con `validarFoto` (JPEG/PNG/WebP de hasta 2 MB) y
 // se sube con el cliente de la sesión del Admin (RLS del bucket).
 import "server-only";

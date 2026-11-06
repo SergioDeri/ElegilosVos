@@ -4,13 +4,12 @@
 // Server Actions (src/domain/planteles) y la autorización, Postgres.
 import { useActionState } from "react";
 import { CLUBES, DISPONIBILIDADES, POSICIONES_NATURALES, type ClubId, type Disponibilidad, type PosicionNatural } from "@/domain/comun/tipos";
-import { LARGO_MAXIMO_MOTIVO, LARGO_MAXIMO_NOMBRE, TIPOS_DE_FOTO } from "@/domain/planteles";
+import { LARGO_MAXIMO_MOTIVO, LARGO_MAXIMO_NOMBRE } from "@/domain/planteles";
 import { NOMBRE_CLUB, NOMBRE_DISPONIBILIDAD } from "@/domain/comun/textos";
 import { ETIQUETA_POSICION } from "../../_comun/etiquetas";
 import {
   cambiarClubDeHincha,
   cambiarDisponibilidad,
-  cambiarFoto,
   crearJugador,
   editarDatosJugador,
   type EstadoFormulario,
@@ -85,24 +84,12 @@ function CamposDisponibilidad({ estado, valores }: { estado: EstadoFormulario; v
   );
 }
 
-function CampoFoto({ estado }: { estado: EstadoFormulario }) {
-  return (
-    <p>
-      <label>
-        Foto (JPG, PNG o WebP, hasta 2 MB) <input name="foto" type="file" accept={TIPOS_DE_FOTO.join(",")} />
-      </label>
-      <ErrorDeCampo texto={estado.errores?.foto} />
-    </p>
-  );
-}
-
 export function FormularioAlta({ club }: { club: ClubId }) {
   const [estado, accion, enviando] = useActionState(crearJugador.bind(null, club), INICIAL);
   return (
     <form action={accion}>
       <CamposDatos estado={estado} />
       <CamposDisponibilidad estado={estado} />
-      <CampoFoto estado={estado} />
       <Mensaje estado={estado} />
       <button type="submit" disabled={enviando}>
         Dar de alta
@@ -132,19 +119,6 @@ export function FormularioDisponibilidad(props: { id: string; disponibilidad: Di
       <Mensaje estado={estado} />
       <button type="submit" disabled={enviando}>
         Guardar Disponibilidad
-      </button>
-    </form>
-  );
-}
-
-export function FormularioFoto({ id }: { id: string }) {
-  const [estado, accion, enviando] = useActionState(cambiarFoto.bind(null, id), INICIAL);
-  return (
-    <form action={accion}>
-      <CampoFoto estado={estado} />
-      <Mensaje estado={estado} />
-      <button type="submit" disabled={enviando}>
-        Subir foto
       </button>
     </form>
   );

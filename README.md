@@ -80,7 +80,7 @@ Migración `supabase/migrations/20261106120000_esquema_base.sql`:
 - `club` (`id` = `'penarol' | 'nacional'`, fijos, cargados en la migración). **Lectura pública** (anon y authenticated): son datos fijos no sensibles que hacen falta antes del login para elegir el Club Favorito. Nadie los escribe por la API.
 - `rival`: nombre único, `escudo_path`, `activo` (baja lógica). El Clásico usa al otro Club como Rival (hay filas "Peñarol" y "Nacional").
 - `partido`: `club_id`, `rival_id`, `inicio` (timestamptz, UTC), `estado` (`programado | cancelado`), `creado_en`. El estado de la Votación **no se guarda**: lo calcula el Calendario.
-- `jugador`: `club_id`, `nombre`, `numero` (1-99), `posicion_natural` (`ARQ | DEF | MED | DEL`), `foto_path`, `en_plantel` (baja lógica), `disponibilidad` (`disponible | lesionado | suspendido | no_disponible`), `motivo_disponibilidad`.
+- `jugador`: `club_id`, `nombre`, `numero` (1-99), `posicion_natural` (`ARQ | DEF | MED | DEL`), `en_plantel` (baja lógica), `disponibilidad` (`disponible | lesionado | suspendido | no_disponible`), `motivo_disponibilidad`.
 - `perfil` (Hincha): `id` = `auth.users.id` (cascade al borrar el usuario), `club_favorito_id` (nulo hasta elegirlo), `rol` (`hincha | admin`). Lo crea el trigger `al_crear_usuario_crear_perfil`.
 - Todas las tablas tienen `actualizado_en` mantenido por trigger (salvo `club`).
 - Función `public.es_admin()`: `true` solo si el usuario tiene rol `admin` **y** la sesión es AAL2 (2FA). Pensada para las políticas de escritura del backoffice. Todavía no la usa ninguna política.
@@ -230,7 +230,7 @@ Las Server Actions del backoffice (`src/app/admin/(panel)/acciones.ts`) no conf�
 - `evento_disponibilidad` (nueva): `jugador_id`, `club_id`, `disponibilidad_anterior`, `disponibilidad_nueva`, `motivo`, `momento`. La escribe solo el trigger `jugador_registrar_cambio_de_disponibilidad` cuando cambia la Disponibilidad (cambiar solo el motivo no genera evento). Sin acceso por la API para nadie: se lee con la service role (tickets 10 y 15).
 - `perfil`: política SELECT para el Admin. El Club Favorito de un Hincha se cambia con `cambiar_club_favorito(hincha uuid, club text)` (errores `42501` no es Admin con 2FA, `22023` club inválido, `P0002` no existe). `perfil` sigue sin UPDATE por la API para nadie, así que **el rol no se puede cambiar desde la app**.
 - `buscar_hinchas(texto)`: Hinchas cuyo email contiene el texto (máx. 50), con `id, email, club_favorito_id, rol, creado_en`. Solo Admin con 2FA (`42501` si no).
-- Storage: bucket público `jugadores` (fotos), máx. 2 MB, solo JPEG/PNG/WebP. Lectura por URL pública; subir, reemplazar y borrar solo el Admin. La app valida además el contenido real del archivo (`validarFoto` de `@/domain/planteles`). Rutas: `<club>/<jugador>/<uuid>.<ext>`.
+- Las fotos de Jugador (bucket `jugadores` y columna `foto_path`) se quitaron en el ticket 08 del diseño pixel art (migración `*_pixel08_quitar_fotos_jugador.sql`).
 
 **Dominio** (`@/domain/planteles`): `validarJugador`, `validarDatosJugador`, `validarDisponibilidad` (el motivo se descarta si queda Disponible), `validarFoto`, `TAMANO_MAXIMO_FOTO`, `TIPOS_DE_FOTO`.
 

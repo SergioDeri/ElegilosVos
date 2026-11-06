@@ -1,5 +1,6 @@
 // Reglas del Plantel para el backoffice (ticket 07): validación de los datos
-// de un Jugador y de su foto, y su nombre corto para la cancha. Lógica pura,
+// de un Jugador, de las imágenes que se suben (escudos) y su nombre corto
+// para la cancha. Lógica pura,
 // sin Next ni Supabase.
 import {
   DISPONIBILIDADES,
@@ -102,10 +103,10 @@ function aEntero(valor: unknown): number | null {
 }
 
 // -----------------------------------------------------------------------------
-// Foto del Jugador
+// Imágenes subidas (escudos de Rival)
 // -----------------------------------------------------------------------------
 
-/** 2 MB. Coincide con el límite del bucket `jugadores` en Storage. */
+/** 2 MB. Coincide con el límite del bucket `escudos` en Storage. */
 export const TAMANO_MAXIMO_FOTO = 2 * 1024 * 1024;
 
 export const TIPOS_DE_FOTO = ["image/jpeg", "image/png", "image/webp"] as const;
@@ -116,7 +117,7 @@ export type ResultadoFoto =
   | { ok: false; motivo: "vacia" | "tamano" | "formato" };
 
 /**
- * Valida una foto por su tamaño y su contenido real (los primeros bytes),
+ * Valida una imagen por su tamaño y su contenido real (los primeros bytes),
  * sin confiar en el tipo que declara el navegador. `cabecera`: al menos los
  * primeros 12 bytes del archivo.
  */

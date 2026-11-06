@@ -1,5 +1,5 @@
-// Tests de RLS del ticket 07: backoffice (Planteles, Disponibilidad, Club
-// Favorito de un Hincha y fotos en Storage). Las escrituras de Admin exigen
+// Tests de RLS del ticket 07: backoffice (Planteles, Disponibilidad y Club
+// Favorito de un Hincha). Las escrituras de Admin exigen
 // rol admin Y sesión AAL2 (`es_admin()`); un Hincha y un Admin sin 2FA no
 // pueden escribir nada.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -25,8 +25,6 @@ const sinPermisos: [string, () => Cliente][] = [
   ["un Hincha", () => clienteComo("hinchaPenarol")],
   ["un Admin sin 2FA (AAL1)", () => clienteComo("admin")],
 ];
-
-const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
 
 let jugadorId: string;
 
@@ -254,77 +252,5 @@ describe("perfil: Club Favorito de un Hincha", () => {
   });
 });
 
-describe("Storage: fotos de Jugadores (bucket `jugadores`)", () => {
-  const ruta = `pruebas/${crypto.randomUUID()}.png`;
-
-  beforeAll(async () => {
-    const { error } = await clienteServicio()
-      .storage.from("jugadores")
-      .upload(ruta, PNG, { contentType: "image/png" });
-    if (error) throw error;
-  });
-  afterAll(async () => {
-    await clienteServicio().storage.from("jugadores").remove([ruta]);
-  });
-
-  async function existe(path: string) {
-    const [carpeta, nombre] = path.split("/");
-    const { data } = await clienteServicio().storage.from("jugadores").list(carpeta, { search: nombre });
-    return (data ?? []).some((o) => o.name === nombre);
-  }
-
-  it("cualquiera lee las fotos por la URL pública", async () => {
-    const { data } = clienteAnonimo().storage.from("jugadores").getPublicUrl(ruta);
-    const respuesta = await fetch(data.publicUrl);
-    expect(respuesta.status).toBe(200);
-  });
-
-  it.each([["un anónimo", () => clienteAnonimo()] as [string, () => Cliente], ...sinPermisos])(
-    "%s no sube, no reemplaza ni borra fotos",
-    async (_, cliente) => {
-      const nueva = `pruebas/${crypto.randomUUID()}.png`;
-      const subida = await cliente().storage.from("jugadores").upload(nueva, PNG, { contentType: "image/png" });
-      expect(subida.error).not.toBeNull();
-      expect(await existe(nueva)).toBe(false);
-
-      const reemplazo = await cliente()
-        .storage.from("jugadores")
-        .upload(ruta, PNG, { contentType: "image/png", upsert: true });
-      expect(reemplazo.error).not.toBeNull();
-
-      await cliente().storage.from("jugadores").remove([ruta]);
-      expect(await existe(ruta)).toBe(true);
-    },
-  );
-
-  describe.skipIf(!conDosFactores)("el Admin con 2FA", () => {
-    const admin = () => adminAal2!.cliente;
-
-    it("sube, reemplaza y borra fotos", async () => {
-      const nueva = `pruebas/${crypto.randomUUID()}.png`;
-      const subida = await admin().storage.from("jugadores").upload(nueva, PNG, { contentType: "image/png" });
-      expect(subida.error).toBeNull();
-      const reemplazo = await admin()
-        .storage.from("jugadores")
-        .upload(nueva, PNG, { contentType: "image/png", upsert: true });
-      expect(reemplazo.error).toBeNull();
-      const borrado = await admin().storage.from("jugadores").remove([nueva]);
-      expect(borrado.error).toBeNull();
-      expect(await existe(nueva)).toBe(false);
-    });
-
-    it("el bucket rechaza otros tipos de archivo y archivos de más de 2 MB", async () => {
-      const texto = await admin()
-        .storage.from("jugadores")
-        .upload(`pruebas/${crypto.randomUUID()}.txt`, new TextEncoder().encode("hola"), { contentType: "text/plain" });
-      expect(texto.error).not.toBeNull();
-
-      const grande = new Uint8Array(2 * 1024 * 1024 + 1);
-      grande.set(PNG);
-      const pesada = await admin()
-        .storage.from("jugadores")
-        .upload(`pruebas/${crypto.randomUUID()}.png`, grande, { contentType: "image/png" });
-      expect(pesada.error).not.toBeNull();
-    });
-  });
-});
+// Las fotos de Jugadores se quitaron (diseño pixel art, ticket 08): ver
+// pixel-08-quitar-fotos.test.ts.
