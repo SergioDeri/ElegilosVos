@@ -8,7 +8,9 @@ import type { crearClienteServidor } from "@/lib/supabase/server";
 
 type Cliente = Awaited<ReturnType<typeof crearClienteServidor>>;
 
-export const BUCKET_ESCUDOS = "escudos";
+import { BUCKET_ESCUDOS } from "@/lib/imagenes/subida";
+
+export { BUCKET_ESCUDOS };
 
 export interface RivalVista extends RivalParaPartido {
   nombre: string;

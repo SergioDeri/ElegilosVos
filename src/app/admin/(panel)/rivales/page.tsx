@@ -5,6 +5,7 @@ import { crearClienteServidor } from "@/lib/supabase/server";
 import { NOMBRE_CLUB } from "@/domain/comun/textos";
 import { cargarRivales, urlEscudo, type RivalVista } from "../_partidos/datos";
 import { FormularioAltaRival } from "../_partidos/formularios";
+import { Escudo } from "@/app/_pixel/escudo";
 
 export default async function PaginaRivales() {
   await requerirAdmin();
@@ -28,8 +29,7 @@ export default async function PaginaRivales() {
           return (
             <tr key={r.id}>
               <td>
-                {/* eslint-disable-next-line @next/next/no-img-element -- UI mínima; la etapa de diseño decide */}
-                {url ? <img src={url} alt={`Escudo de ${r.nombre}`} width={32} height={32} /> : "—"}
+                <Escudo nombre={r.nombre} url={url} />
               </td>
               <td>
                 <Link href={`/admin/rivales/${r.id}`}>{r.nombre}</Link>

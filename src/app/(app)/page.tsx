@@ -18,6 +18,7 @@ import { AvisoNoDisponibles } from "./_herencia/aviso-no-disponibles";
 import Link from "next/link";
 import { BotonCompartir } from "@/app/_compartir/boton-compartir";
 import { NOMBRE_CLUB } from "@/domain/comun/textos";
+import { Escudo } from "@/app/_pixel/escudo";
 
 function horaActual(): Date {
   return new Date();
@@ -161,23 +162,4 @@ function MensajeVotacion(props: {
 /** URL pública del escudo del Rival (bucket `escudos`, ticket 08), o null. */
 function escudoDelRival(supabase: Awaited<ReturnType<typeof crearClienteServidor>>, path: string | null): string | null {
   return path ? supabase.storage.from("escudos").getPublicUrl(path).data.publicUrl : null;
-}
-
-/** Escudo del Rival: la imagen subida en el backoffice o, si no tiene, sus iniciales. */
-function Escudo({ nombre, url }: { nombre: string; url: string | null }) {
-  if (url) {
-    // eslint-disable-next-line @next/next/no-img-element -- UI mínima; la etapa de diseño decide
-    return <img className={estilos.escudo} src={url} alt={`Escudo de ${nombre}`} />;
-  }
-  const iniciales = nombre
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((p) => p[0]!.toUpperCase())
-    .join("");
-  return (
-    <span className={estilos.escudo} role="img" aria-label={`Escudo de ${nombre}`}>
-      {iniciales}
-    </span>
-  );
 }

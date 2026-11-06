@@ -1,6 +1,6 @@
 // Reglas del Plantel para el backoffice (ticket 07): validación de los datos
-// de un Jugador, de las imágenes que se suben (escudos) y su nombre corto
-// para la cancha. Lógica pura,
+// de un Jugador, de los escudos que se suben y su nombre corto para la
+// cancha. Lógica pura,
 // sin Next ni Supabase.
 import {
   DISPONIBILIDADES,
@@ -103,36 +103,44 @@ function aEntero(valor: unknown): number | null {
 }
 
 // -----------------------------------------------------------------------------
-// Imágenes subidas (escudos de Rival)
+// Escudos (de Club y de Rival): PNG pixel art de exactamente 48x48
 // -----------------------------------------------------------------------------
 
-/** 2 MB. Coincide con el límite del bucket `escudos` en Storage. */
-export const TAMANO_MAXIMO_FOTO = 2 * 1024 * 1024;
+export const LADO_ESCUDO = 48;
 
-export const TIPOS_DE_FOTO = ["image/jpeg", "image/png", "image/webp"] as const;
-export type TipoDeFoto = (typeof TIPOS_DE_FOTO)[number];
+/** 64 KB: sobra para un PNG de 48x48. Coincide con el límite del bucket `escudos`. */
+export const TAMANO_MAXIMO_ESCUDO = 64 * 1024;
 
-export type ResultadoFoto =
-  | { ok: true; tipo: TipoDeFoto; extension: "jpg" | "png" | "webp" }
-  | { ok: false; motivo: "vacia" | "tamano" | "formato" };
+/** Bytes del principio del archivo que hacen falta: firma (8) + largo y tipo del IHDR (8) + ancho y alto (8). */
+export const CABECERA_ESCUDO = 24;
+
+export type MotivoEscudoInvalido = "vacia" | "tamano" | "formato" | "dimensiones";
+
+export type ResultadoEscudo =
+  | { ok: true; tipo: "image/png"; extension: "png" }
+  | { ok: false; motivo: MotivoEscudoInvalido };
+
+const FIRMA_PNG = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+const IHDR = [0x49, 0x48, 0x44, 0x52];
 
 /**
- * Valida una imagen por su tamaño y su contenido real (los primeros bytes),
- * sin confiar en el tipo que declara el navegador. `cabecera`: al menos los
- * primeros 12 bytes del archivo.
+ * Valida un escudo por su tamaño y su contenido real, sin confiar en el tipo
+ * que declara el navegador: tiene que ser PNG (por la firma) y su cabecera
+ * (el chunk IHDR, que va primero) tiene que declarar 48x48. `cabecera`: al
+ * menos los primeros CABECERA_ESCUDO bytes del archivo.
  */
-export function validarFoto({ tamano, cabecera }: { tamano: number; cabecera: Uint8Array }): ResultadoFoto {
+export function validarEscudo({ tamano, cabecera }: { tamano: number; cabecera: Uint8Array }): ResultadoEscudo {
   if (tamano <= 0) return { ok: false, motivo: "vacia" };
-  if (tamano > TAMANO_MAXIMO_FOTO) return { ok: false, motivo: "tamano" };
+  if (tamano > TAMANO_MAXIMO_ESCUDO) return { ok: false, motivo: "tamano" };
 
   const empiezaCon = (bytes: number[], desde = 0) => bytes.every((b, i) => cabecera[desde + i] === b);
-
-  if (empiezaCon([0xff, 0xd8, 0xff])) return { ok: true, tipo: "image/jpeg", extension: "jpg" };
-  if (empiezaCon([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) return { ok: true, tipo: "image/png", extension: "png" };
-  if (empiezaCon([0x52, 0x49, 0x46, 0x46]) && empiezaCon([0x57, 0x45, 0x42, 0x50], 8)) {
-    return { ok: true, tipo: "image/webp", extension: "webp" };
+  if (cabecera.length < CABECERA_ESCUDO || !empiezaCon(FIRMA_PNG) || !empiezaCon(IHDR, 12)) {
+    return { ok: false, motivo: "formato" };
   }
-  return { ok: false, motivo: "formato" };
+
+  const datos = new DataView(cabecera.buffer, cabecera.byteOffset, cabecera.byteLength);
+  if (datos.getUint32(16) !== LADO_ESCUDO || datos.getUint32(20) !== LADO_ESCUDO) return { ok: false, motivo: "dimensiones" };
+  return { ok: true, tipo: "image/png", extension: "png" };
 }
 
 // -----------------------------------------------------------------------------

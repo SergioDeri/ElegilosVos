@@ -23,7 +23,7 @@ import {
   type ErroresRival,
 } from "@/domain/partidos";
 import { requerirAdminEnAccion } from "@/lib/auth/admin";
-import { archivoElegido, leerImagen, subirImagen, type ImagenLeida } from "@/lib/imagenes/subida";
+import { MENSAJE_ESCUDO, archivoElegido, leerEscudo, subirEscudo, type EscudoLeido } from "@/lib/imagenes/subida";
 import { BUCKET_ESCUDOS, cargarConOnceElegido, cargarPartidosDelClub, cargarRivales, type PartidoAdmin } from "./datos";
 import { TEXTO_RECHAZO, textosDeAvisos } from "./textos";
 
@@ -49,18 +49,11 @@ export type EstadoPartido = {
 // Rivales
 // -----------------------------------------------------------------------------
 
-const MENSAJE_ESCUDO = {
-  vacia: "El archivo está vacío.",
-  tamano: "El escudo no puede pesar más de 2 MB.",
-  formato: "El escudo tiene que ser JPG, PNG o WebP.",
-} as const;
-
 /** Sube el escudo y lo asigna al Rival; borra el anterior. */
-function guardarEscudo(supabase: Supabase, rival: { id: string; escudo_path: string | null }, escudo: ImagenLeida) {
-  return subirImagen(supabase, {
-    bucket: BUCKET_ESCUDOS,
+function guardarEscudo(supabase: Supabase, rival: { id: string; escudo_path: string | null }, escudo: EscudoLeido) {
+  return subirEscudo(supabase, {
     carpeta: rival.id,
-    imagen: escudo,
+    escudo,
     anterior: rival.escudo_path,
     asignar: async (ruta) => {
       const { data, error } = await supabase.from("rival").update({ escudo_path: ruta }).eq("id", rival.id).select("id");
@@ -82,7 +75,7 @@ export async function crearRival(_previo: EstadoRival, formData: FormData): Prom
   const supabase = await requerirAdminEnAccion();
   const validacion = validarRival({ nombre: formData.get("nombre"), clubId: formData.get("clubId") });
   const archivo = archivoElegido(formData, "escudo");
-  const escudo = archivo ? await leerImagen(archivo) : null;
+  const escudo = archivo ? await leerEscudo(archivo) : null;
   if (!validacion.ok || (escudo && !escudo.ok)) {
     return {
       errores: {
@@ -123,7 +116,7 @@ export async function cambiarEscudo(id: string, _previo: EstadoRival, formData: 
   const supabase = await requerirAdminEnAccion();
   const archivo = archivoElegido(formData, "escudo");
   if (!archivo) return { errores: { escudo: "Elegí un escudo." } };
-  const escudo = await leerImagen(archivo);
+  const escudo = await leerEscudo(archivo);
   if (!escudo.ok) return { errores: { escudo: MENSAJE_ESCUDO[escudo.motivo] } };
 
   const { data: rival } = await supabase.from("rival").select("id, escudo_path").eq("id", id).maybeSingle();

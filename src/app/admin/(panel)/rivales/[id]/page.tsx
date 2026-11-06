@@ -8,6 +8,7 @@ import { borrarRival, cambiarActivoRival, quitarEscudo } from "../../_partidos/a
 import { urlEscudo } from "../../_partidos/datos";
 import { FormularioEscudo, FormularioRival } from "../../_partidos/formularios";
 import { esUuid } from "@/domain/comun/ids";
+import { Escudo } from "@/app/_pixel/escudo";
 
 export default async function PaginaRival({ params, searchParams }: PageProps<"/admin/rivales/[id]">) {
   await requerirAdmin();
@@ -36,16 +37,11 @@ export default async function PaginaRival({ params, searchParams }: PageProps<"/
       <FormularioRival id={rival.id} nombre={rival.nombre} clubId={esClubId(rival.club_id) ? rival.club_id : null} />
 
       <h2>Escudo</h2>
-      {url ? (
-        <>
-          {/* eslint-disable-next-line @next/next/no-img-element -- UI mínima; la etapa de diseño decide */}
-          <img src={url} alt={`Escudo de ${rival.nombre}`} width={96} />
-          <form action={quitarEscudo.bind(null, rival.id)}>
-            <button type="submit">Quitar escudo</button>
-          </form>
-        </>
-      ) : (
-        <p>Sin escudo.</p>
+      <Escudo nombre={rival.nombre} url={url} />
+      {url && (
+        <form action={quitarEscudo.bind(null, rival.id)}>
+          <button type="submit">Quitar escudo</button>
+        </form>
       )}
       <FormularioEscudo id={rival.id} />
 

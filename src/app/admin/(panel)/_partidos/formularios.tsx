@@ -5,7 +5,7 @@
 import { useActionState } from "react";
 import { CLUBES, type ClubId } from "@/domain/comun/tipos";
 import { LARGO_MAXIMO_NOMBRE_RIVAL } from "@/domain/partidos";
-import { TIPOS_DE_FOTO } from "@/domain/planteles";
+import { CampoEscudo } from "../_componentes/campo-escudo";
 import { NOMBRE_CLUB } from "@/domain/comun/textos";
 import {
   borrarPartido,
@@ -58,23 +58,12 @@ function CamposRival({ estado, valores }: { estado: EstadoRival; valores?: { nom
   );
 }
 
-function CampoEscudo({ estado }: { estado: EstadoRival }) {
-  return (
-    <p>
-      <label>
-        Escudo (JPG, PNG o WebP, hasta 2 MB) <input name="escudo" type="file" accept={TIPOS_DE_FOTO.join(",")} />
-      </label>
-      <ErrorDeCampo texto={estado.errores?.escudo} />
-    </p>
-  );
-}
-
 export function FormularioAltaRival() {
   const [estado, accion, enviando] = useActionState(crearRival, {});
   return (
     <form action={accion}>
       <CamposRival estado={estado} />
-      <CampoEscudo estado={estado} />
+      <CampoEscudo error={estado.errores?.escudo} />
       <Mensaje estado={estado} />
       <button type="submit" disabled={enviando}>
         Dar de alta
@@ -100,7 +89,7 @@ export function FormularioEscudo({ id }: { id: string }) {
   const [estado, accion, enviando] = useActionState(cambiarEscudo.bind(null, id), {});
   return (
     <form action={accion}>
-      <CampoEscudo estado={estado} />
+      <CampoEscudo error={estado.errores?.escudo} />
       <Mensaje estado={estado} />
       <button type="submit" disabled={enviando}>
         Subir escudo

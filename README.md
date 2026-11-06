@@ -232,7 +232,7 @@ Las Server Actions del backoffice (`src/app/admin/(panel)/acciones.ts`) no conf�
 - `buscar_hinchas(texto)`: Hinchas cuyo email contiene el texto (máx. 50), con `id, email, club_favorito_id, rol, creado_en`. Solo Admin con 2FA (`42501` si no).
 - Las fotos de Jugador (bucket `jugadores` y columna `foto_path`) se quitaron en el ticket 08 del diseño pixel art (migración `*_pixel08_quitar_fotos_jugador.sql`).
 
-**Dominio** (`@/domain/planteles`): `validarJugador`, `validarDatosJugador`, `validarDisponibilidad` (el motivo se descarta si queda Disponible), `validarFoto`, `TAMANO_MAXIMO_FOTO`, `TIPOS_DE_FOTO`.
+**Dominio** (`@/domain/planteles`): `validarJugador`, `validarDatosJugador`, `validarDisponibilidad` (el motivo se descarta si queda Disponible), `validarEscudo` (PNG de exactamente 48x48 por firma y cabecera IHDR, hasta 64 KB; motivos `vacia`, `tamano`, `formato`, `dimensiones`), `LADO_ESCUDO`, `TAMANO_MAXIMO_ESCUDO`, `CABECERA_ESCUDO`.
 
 **2FA en Supabase local**: `supabase/config.toml` tiene `[auth.mfa.totp] enroll_enabled = true` y `verify_enabled = true` (`# Ticket 07`). Como toda la config de Auth, se lee al arrancar: después de traer este cambio, `npx supabase stop && npx supabase start`. En producción: *Authentication → Multi-Factor → TOTP* habilitado en el dashboard.
 
@@ -317,7 +317,7 @@ Aunque el cron se atrase, el Hincha que entra a la app recibe su Alineación her
 
 **Avisos con confirmación**: alta, postergación, cancelación, reactivación y borrado calculan el Calendario antes y después (`analizarCambio`) y, si una Votación abierta cambia, una Votación nunca abriría (abre >= cierra) o una cerrada se reabriría, muestran los avisos y piden "Entiendo, guardar igual" antes de guardar.
 
-**Reglas** (`@/domain/partidos`): `validarRival`, `validarPartido` (inicio en hora de Montevideo con `desdeHoraUy`, guardado en UTC; Rival activo y que no sea el propio Club), `rivalesParaPartido`, `validarInicio`, `validarAccion` (reprogramar / cancelar / reactivar / borrar), `analizarCambio`, `ventanaVacia`. El escudo se valida con `validarFoto` de `@/domain/planteles`.
+**Reglas** (`@/domain/partidos`): `validarRival`, `validarPartido` (inicio en hora de Montevideo con `desdeHoraUy`, guardado en UTC; Rival activo y que no sea el propio Club), `rivalesParaPartido`, `validarInicio`, `validarAccion` (reprogramar / cancelar / reactivar / borrar), `analizarCambio`, `ventanaVacia`. El escudo se valida con `validarEscudo` de `@/domain/planteles`.
 
 - **Cancelar** pone `estado = 'cancelado'`: la Votación queda anulada y las Alineaciones se conservan.
 - **Reactivar** (des-cancelar) se permite solo con un inicio cuya Votación todavía no cerró: sirve para corregir una cancelación por error o reprogramar un Partido suspendido sin perder las Alineaciones, y nunca deja una Votación "cerrada" que no pasó por el cierre (sin 11 Elegido).
@@ -331,7 +331,7 @@ Aunque el cron se atrase, el Hincha que entra a la app recibe su Alineación her
 - `partido`: el Admin lee todos, da de alta, edita y borra. Columnas escribibles por la API: insert `(club_id, rival_id, inicio, estado)`, update `(rival_id, inicio, estado)`: el Club y `creado_en` (apertura de la Votación) no se cambian.
 - Trigger `partido_validar` (pedidos de la API): Rival activo al cargarlo o cambiarlo y distinto del propio Club (`23514`). Trigger `partido_impedir_borrado_con_alineaciones` (`EV080`): la FK de `alineacion` es en cascada. La service role no pasa por estas validaciones.
 - `partido_tiene_alineaciones(partido)`: solo Admin con 2FA (`42501`).
-- Storage: bucket público `escudos` (2 MB, JPEG/PNG/WebP, sin SVG); escritura solo el Admin. Rutas `<rival>/<uuid>.<ext>`. La pantalla del Hincha muestra el escudo del Rival (o sus iniciales si no tiene).
+- Storage: bucket público `escudos`; escritura solo el Admin. Desde el ticket 07 del diseño pixel art (migración `*_pixel07_escudos_48.sql`) acepta solo PNG de hasta 64 KB y la app exige 48x48. Rutas `<rival>/<uuid>.png` y `clubes/<club>/<uuid>.png`. El escudo de cada Club (`club.escudo_path`) lo sube el Admin en `/admin/clubes` (`grant update (escudo_path)` + política `"club: el Admin cambia el escudo"`). Donde falta un escudo se ve el hueco "falta escudo".
 
 ## Cierre de Votación y 11 Elegido (ticket 12)
 
@@ -424,7 +424,7 @@ npx web-push generate-vapid-keys
 | Secretos en el árbol y en el historial | Sin hallazgos (solo claves **falsas** de suscripción push en tests, permitidas en `.gitleaks.toml`). | `gitleaks git . --config .gitleaks.toml` (o con Docker: `docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:latest git /repo --config /repo/.gitleaks.toml`). |
 | RLS en todas las tablas de `public`, políticas, grants a `anon`/`authenticated`, funciones SECURITY DEFINER | Todas con RLS; toda función con `search_path` vacío; `anon` no ejecuta **ninguna** función; las SECURITY DEFINER que puede llamar un usuario con sesión son 8, revisadas (chequean `auth.uid()` o `es_admin()`). | `tests/rls/17-seguridad.test.ts` consulta el catálogo (con `pg`, URL de `supabase status` o `SUPABASE_TEST_DB_URL`) y falla ante una tabla sin RLS, una vista sin `security_invoker`, una función sin `search_path`, una función ejecutable por `anon` o cualquier privilegio fuera de la lista esperada. **Si agregás una tabla, una función o un permiso a propósito, actualizá esa lista**: así alguien lo revisa. |
 | Mínimo privilegio | Migración `20261106201700_17_seguridad.sql`: sin TRUNCATE/TRIGGER/REFERENCES/MAINTAIN para la API, sin escritura sobre `club`, sin EXECUTE de PUBLIC/`anon`, y los mismos cambios en los privilegios por defecto. | Mismo test. |
-| Storage (`jugadores`, `escudos`) | Públicos solo para leer por URL; 2 MB; JPEG/PNG/WebP; listar, subir, reemplazar y borrar solo el Admin con 2FA. | Mismo test + tests 07 y 08. |
+| Storage (`escudos`) | Público solo para leer por URL; PNG de hasta 64 KB; listar, subir, reemplazar y borrar solo el Admin con 2FA. (El bucket `jugadores` se borró en el ticket 08 del diseño pixel art.) | Mismo test + tests 08, pixel-07 y pixel-08. |
 | Service role y VAPID privada | Solo en módulos `server-only` (`src/lib/supabase/admin.ts`, `src/lib/notificaciones/web-push.ts`). | `npm run build` y `grep -r "<valor de la clave>" .next/static` → nada (verificado con las claves locales). |
 | Server Actions y Route Handlers | Toda acción verifica la sesión en el servidor (`requerirHincha`/`requerirSesion`/`obtenerHincha`) o `requerirAdminEnAccion()` (pregunta `es_admin()` a Postgres); los crons usan `cronAutorizado`; las imágenes validan el uuid. | Revisión manual (ver el reporte del ticket). |
 | Redirecciones (`next`) | `rutaSegura` rechaza además espacios, caracteres de control y `\` (el parser de URL borraba el tab de `/\t/malo.com` y quedaba `//malo.com`). | `src/lib/auth/rutas.test.ts`. |
@@ -494,7 +494,7 @@ Refactor sin cambios de comportamiento. Antes de escribir algo de esto, usá lo 
 - **Nombre corto del Jugador**: `nombreCorto(nombre, largoMaximo?)` de `@/domain/planteles` (la cancha del armado y la imagen para compartir).
 - **Cancha**: `@/app/_cancha/cancha` (`Cancha`, `posicionPuesto`, `CLASE_PUESTO`, `CLASE_SIGLA`) dibuja el campo y ubica los Puestos; cada vista pone el contenido y el aspecto de sus Puestos.
 - **Lecturas de la base**: `leerPlantel` / `leerPartidos` (`@/lib/club/lecturas`, reciben el cliente), `COLUMNAS_ALINEACION` (`@/domain/armado`) para leer una Alineación, y `leerPorId` (`@/lib/supabase/paginar`) para paginar por `id` (keyset).
-- **Imágenes del backoffice**: `archivoElegido`, `leerImagen`, `subirImagen` (`@/lib/imagenes/subida`, server-only).
+- **Escudos del backoffice**: `archivoElegido`, `leerEscudo`, `subirEscudo`, `MENSAJE_ESCUDO` (`@/lib/imagenes/subida`, server-only). En pantalla, `Escudo` de `@/app/_pixel/escudo` (o el hueco `faltaEscudo` de `@/domain/escudos`).
 - **Compartir**: la fecha en hora de Montevideo la arma `fechaDeImagen` (`@/lib/compartir/fecha`); el dominio la recibe ya formateada.
 - **Tests de RLS**: `tests/rls/datos.ts` (`creadorDePartidos`, `partidoAbierto`, `jugadoresDisponibles`, `once433`, `puestos433`, `guardarConServicio`).
 

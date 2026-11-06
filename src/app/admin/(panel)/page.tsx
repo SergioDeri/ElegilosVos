@@ -18,6 +18,9 @@ export default function InicioBackoffice() {
           <Link href="/admin/partidos/nacional">Partidos de Nacional</Link>
         </li>
         <li>
+          <Link href="/admin/clubes">Clubes: escudos</Link>
+        </li>
+        <li>
           <Link href="/admin/rivales">Rivales</Link>
         </li>
         <li>

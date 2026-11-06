@@ -117,6 +117,8 @@ describe("tablas y vistas de public", () => {
         privilegio: "UPDATE",
         columnas: "esquema,esquema_elegido_a_mano,esquema_modificado_en,partido_id,puestos",
       },
+      // El Admin cambia el escudo del Club (diseño pixel art, ticket 07).
+      { rol: "authenticated", tabla: "club", privilegio: "UPDATE", columnas: "escudo_path" },
       { rol: "authenticated", tabla: "once_real", privilegio: "UPDATE", columnas: "jugadores" },
       { rol: "authenticated", tabla: "partido", privilegio: "INSERT", columnas: "club_id,estado,inicio,rival_id" },
       { rol: "authenticated", tabla: "partido", privilegio: "UPDATE", columnas: "estado,inicio,rival_id" },
@@ -238,7 +240,8 @@ describe("Storage", () => {
       "select id, public, file_size_limit::text, allowed_mime_types from storage.buckets order by id",
     );
     expect(buckets).toEqual([
-      { id: "escudos", public: true, file_size_limit: "2097152", allowed_mime_types: ["image/jpeg", "image/png", "image/webp"] },
+      // Escudos: solo PNG de hasta 64 KB (diseño pixel art, ticket 07).
+      { id: "escudos", public: true, file_size_limit: "65536", allowed_mime_types: ["image/png"] },
     ]);
   });
 

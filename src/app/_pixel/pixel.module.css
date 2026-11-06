@@ -7,3 +7,10 @@
   /* El apellido se apoya en el ruedo de la Camiseta (última fila vacía). */
   gap: 0;
 }
+
+/* Escudo de 48 píxeles de arte, sin suavizado. */
+.escudo {
+  display: inline-block;
+  flex: none;
+  image-rendering: pixelated;
+}

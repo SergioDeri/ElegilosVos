@@ -1,7 +1,7 @@
 // Reglas de Rivales y Partidos para el backoffice (ticket 08). Lógica pura.
 //
-// El escudo de un Rival se valida con `validarFoto` de @/domain/planteles
-// (mismas reglas: JPEG/PNG/WebP de hasta 2 MB, por contenido real).
+// El escudo de un Rival se valida con `validarEscudo` de @/domain/planteles
+// (PNG pixel art de exactamente 48x48, por contenido real).
 import { aHoraUyLocal, desdeHoraUy } from "@/domain/comun/horario";
 import { CLUBES, type ClubId, type EstadoPartido } from "@/domain/comun/tipos";
 import { calcularVotaciones, cierreDeVotacion, type PartidoCalendario, type Votacion } from "@/domain/calendario";

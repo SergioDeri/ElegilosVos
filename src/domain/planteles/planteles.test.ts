@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   nombreCorto,
-  TAMANO_MAXIMO_FOTO,
+  CABECERA_ESCUDO,
+  LADO_ESCUDO,
+  TAMANO_MAXIMO_ESCUDO,
   validarDatosJugador,
   validarDisponibilidad,
-  validarFoto,
+  validarEscudo,
   validarJugador,
 } from "./index";
 
@@ -98,29 +100,56 @@ describe("validarDatosJugador y validarDisponibilidad por separado", () => {
   });
 });
 
-const JPEG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0x10]);
-const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0]);
-const WEBP = new Uint8Array([0x52, 0x49, 0x46, 0x46, 1, 2, 3, 4, 0x57, 0x45, 0x42, 0x50, 0]);
-const GIF = new Uint8Array([0x47, 0x49, 0x46, 0x38, 0x39, 0x61]);
+/** Cabecera de un PNG: firma + chunk IHDR que declara ancho x alto. */
+function png(ancho: number, alto: number, tipoChunk = "IHDR"): Uint8Array {
+  const b = new Uint8Array(33);
+  b.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  const v = new DataView(b.buffer);
+  v.setUint32(8, 13);
+  b.set([...tipoChunk].map((c) => c.charCodeAt(0)), 12);
+  v.setUint32(16, ancho);
+  v.setUint32(20, alto);
+  return b;
+}
+const JPEG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0x10, ...Array(30).fill(0)]);
+const WEBP = new Uint8Array([0x52, 0x49, 0x46, 0x46, 1, 2, 3, 4, 0x57, 0x45, 0x42, 0x50, ...Array(30).fill(0)]);
+const GIF = new Uint8Array([0x47, 0x49, 0x46, 0x38, 0x39, 0x61, ...Array(30).fill(0)]);
 
-describe("validarFoto", () => {
-  it.each([
-    [JPEG, "image/jpeg", "jpg"],
-    [PNG, "image/png", "png"],
-    [WEBP, "image/webp", "webp"],
-  ] as const)("reconoce el contenido real (%#)", (cabecera, tipo, extension) => {
-    expect(validarFoto({ tamano: 1000, cabecera })).toEqual({ ok: true, tipo, extension });
+describe("validarEscudo", () => {
+  it("acepta un PNG de exactamente 48x48", () => {
+    expect(LADO_ESCUDO).toBe(48);
+    expect(validarEscudo({ tamano: 1000, cabecera: png(48, 48) })).toEqual({ ok: true, tipo: "image/png", extension: "png" });
   });
 
-  it("rechaza otros formatos aunque digan ser imagen", () => {
-    expect(validarFoto({ tamano: 1000, cabecera: GIF })).toEqual({ ok: false, motivo: "formato" });
-    expect(validarFoto({ tamano: 1000, cabecera: new Uint8Array([1, 2]) })).toEqual({ ok: false, motivo: "formato" });
+  it("alcanza con leer CABECERA_ESCUDO bytes", () => {
+    expect(CABECERA_ESCUDO).toBe(24);
+    expect(validarEscudo({ tamano: 1000, cabecera: png(48, 48).subarray(0, CABECERA_ESCUDO) }).ok).toBe(true);
+  });
+
+  it.each([
+    [47, 48],
+    [48, 49],
+    [96, 96],
+    [24, 24],
+    [0, 0],
+  ])("rechaza un PNG de %ix%i por dimensiones", (ancho, alto) => {
+    expect(validarEscudo({ tamano: 1000, cabecera: png(ancho, alto) })).toEqual({ ok: false, motivo: "dimensiones" });
+  });
+
+  it("rechaza JPEG, WebP, GIF y basura por formato, aunque digan ser imagen", () => {
+    for (const cabecera of [JPEG, WEBP, GIF, new Uint8Array([1, 2])])
+      expect(validarEscudo({ tamano: 1000, cabecera })).toEqual({ ok: false, motivo: "formato" });
+  });
+
+  it("rechaza un PNG cortado o sin IHDR al principio por formato", () => {
+    expect(validarEscudo({ tamano: 1000, cabecera: png(48, 48).subarray(0, 20) })).toEqual({ ok: false, motivo: "formato" });
+    expect(validarEscudo({ tamano: 1000, cabecera: png(48, 48, "IDAT") })).toEqual({ ok: false, motivo: "formato" });
   });
 
   it("rechaza archivos vacíos o más grandes que el máximo", () => {
-    expect(validarFoto({ tamano: 0, cabecera: JPEG })).toEqual({ ok: false, motivo: "vacia" });
-    expect(validarFoto({ tamano: TAMANO_MAXIMO_FOTO + 1, cabecera: JPEG })).toEqual({ ok: false, motivo: "tamano" });
-    expect(validarFoto({ tamano: TAMANO_MAXIMO_FOTO, cabecera: JPEG }).ok).toBe(true);
+    expect(validarEscudo({ tamano: 0, cabecera: png(48, 48) })).toEqual({ ok: false, motivo: "vacia" });
+    expect(validarEscudo({ tamano: TAMANO_MAXIMO_ESCUDO + 1, cabecera: png(48, 48) })).toEqual({ ok: false, motivo: "tamano" });
+    expect(validarEscudo({ tamano: TAMANO_MAXIMO_ESCUDO, cabecera: png(48, 48) }).ok).toBe(true);
   });
 });
 
