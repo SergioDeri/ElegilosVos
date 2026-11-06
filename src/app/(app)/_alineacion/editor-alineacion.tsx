@@ -9,7 +9,7 @@
 //   Puesto al banco (quitar).
 // - Alternativa sin arrastre: tocar un Jugador o un Puesto ocupado para
 //   seleccionarlo y después tocar el destino (o "Quitar").
-import { useEffect, useId, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useId, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import type { PuestoEnCancha as CajaDePuesto } from "@/domain/cancha";
 import { useRouter } from "next/navigation";
 import {
@@ -40,7 +40,7 @@ import {
   type AlineacionJson,
   type ResultadoOperacion,
 } from "@/domain/editor";
-import { esEsquemaId, esquema, esquemas, type PuestoId } from "@/domain/esquemas";
+import { PUESTO_IDS, esEsquemaId, esquema, esquemas, type PuestoId } from "@/domain/esquemas";
 import type { JugadorDelClub } from "@/lib/club/lecturas";
 import { NOMBRE_DISPONIBILIDAD } from "@/domain/comun/textos";
 import { MENSAJE_DE_RECHAZO, POSICION } from "./textos";
@@ -51,6 +51,7 @@ import { PuestoLibre } from "@/app/_cancha/puesto-libre";
 import { JugadorConCamiseta } from "@/app/_pixel/jugador-con-camiseta";
 import { Icono } from "@/app/_pixel/icono";
 import estilos from "./alineacion.module.css";
+import efectos from "@/app/_pixel/efectos.module.css";
 
 type Origen = { tipo: "jugador"; jugadorId: string } | { tipo: "puesto"; puesto: PuestoId };
 
@@ -93,6 +94,8 @@ export function EditorAlineacion({ partidoId, club, inicial, jugadores, editable
   const [seleccion, setSeleccion] = useState<Origen | null>(null);
   const [arrastrando, setArrastrando] = useState<{ origen: Origen; ancho: number } | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
+  // Último Puesto donde se soltó una Camiseta: salta y suelta partículas.
+  const [salto, setSalto] = useState<{ puesto: PuestoId; vez: number } | null>(null);
   const { estado: guardado, programar, reintentar } = useGuardadoAutomatico(partidoId);
   // Si el servidor dice que la Votación cerró, se recarga la pantalla (solo lectura).
   useEffect(() => {
@@ -125,11 +128,12 @@ export function EditorAlineacion({ partidoId, club, inicial, jugadores, editable
       else setSeleccion(null);
       return;
     }
-    aplicar(
+    const resultado =
       origen.tipo === "jugador"
         ? colocar(alineacion, origen.jugadorId, destino, jugadores, ahora)
-        : mover(alineacion, origen.puesto, destino, jugadores, ahora),
-    );
+        : mover(alineacion, origen.puesto, destino, jugadores, ahora);
+    aplicar(resultado);
+    if (resultado.ok && resultado.estado !== alineacion) setSalto((s) => ({ puesto: destino, vez: (s?.vez ?? 0) + 1 }));
   }
 
   function tocarPuesto(puesto: PuestoId) {
@@ -287,6 +291,7 @@ export function EditorAlineacion({ partidoId, club, inicial, jugadores, editable
                 jugadorIdDesconocido={ocupado && !jugador ? ocupado.jugadorId : undefined}
                 editable={puedeEditar}
                 seleccionado={seleccion?.tipo === "puesto" && seleccion.puesto === caja.id}
+                salto={salto?.puesto === caja.id ? salto.vez : undefined}
                 alTocar={() => tocarPuesto(caja.id)}
               />
             );
@@ -373,9 +378,11 @@ function PuestoEnCancha(props: {
   jugadorIdDesconocido: string | undefined;
   editable: boolean;
   seleccionado: boolean;
+  /** Cuántas veces se soltó una Camiseta acá (cambia: salta de nuevo). */
+  salto: number | undefined;
   alTocar: () => void;
 }) {
-  const { club, caja, jugador, editable, seleccionado, alTocar } = props;
+  const { club, caja, jugador, editable, seleccionado, salto, alTocar } = props;
   const etiqueta = caja.etiqueta;
   const ocupado = !!jugador || !!props.jugadorIdDesconocido;
   const soltable = useDroppable({ id: idPuesto(caja.id), disabled: !editable });
@@ -407,7 +414,14 @@ function PuestoEnCancha(props: {
     >
       {jugador ? (
         <>
-          <JugadorConCamiseta club={club} jugador={jugador} ancho={caja.ancho} />
+          {salto === undefined ? (
+            <JugadorConCamiseta club={club} jugador={jugador} ancho={caja.ancho} balanceo={faseDeBalanceo(caja.id)} />
+          ) : (
+            <span key={salto} className={efectos.salto}>
+              <JugadorConCamiseta club={club} jugador={jugador} ancho={caja.ancho} balanceo={faseDeBalanceo(caja.id)} />
+              <Particulas />
+            </span>
+          )}
           {noDisponible && <span className={estilos.alerta}>!</span>}
         </>
       ) : (
@@ -455,5 +469,32 @@ function JugadorDelBanco(props: {
     >
       <JugadorConCamiseta club={club} jugador={jugador} ancho={ancho} />
     </button>
+  );
+}
+
+/** Media cancha se balancea desfasada de la otra. */
+function faseDeBalanceo(puesto: PuestoId): 0 | 1 {
+  return PUESTO_IDS.indexOf(puesto) % 2 === 0 ? 0 : 1;
+}
+
+/** Destinos de las partículas, en píxeles de arte (múltiplos de 4: 4 pasos enteros). */
+const PARTICULAS = [
+  [-8, -8],
+  [0, -12],
+  [8, -8],
+  [-12, 0],
+  [12, 0],
+  [-8, 4],
+  [8, 4],
+  [0, 8],
+] as const;
+
+function Particulas() {
+  return (
+    <span className={efectos.particulas} aria-hidden>
+      {PARTICULAS.map(([dx, dy], i) => (
+        <span key={i} className={efectos.particula} style={{ "--dx": dx, "--dy": dy } as CSSProperties} />
+      ))}
+    </span>
   );
 }

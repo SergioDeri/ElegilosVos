@@ -9,6 +9,7 @@ import type { ItemHistorial, JugadorResultado, PartidoResultado, ResultadoVista 
 import type { ClubId } from "@/domain/comun/tipos";
 import { CanchaDeLectura } from "@/app/_cancha/cancha-de-lectura";
 import estilos from "./resultados.module.css";
+import { Papelitos } from "@/app/_pixel/papelitos";
 
 export const MOTIVO_SIN_ONCE: Record<Exclude<EstadoResultado, "con_once">, string> = {
   sin_alineaciones: "Nadie tenía una Alineación que cuente al cierre de la Votación, así que no hubo 11 Elegido.",
@@ -70,6 +71,7 @@ export function VistaResultado(props: {
 
   return (
     <>
+      <Papelitos />
       <p>
         Esquema: <strong>{definicion.nombre}</strong>. Lo eligieron {resultado.alineacionesQueCuentan}{" "}
         {resultado.alineacionesQueCuentan === 1 ? "Alineación" : "Alineaciones"}. Calculado el{" "}

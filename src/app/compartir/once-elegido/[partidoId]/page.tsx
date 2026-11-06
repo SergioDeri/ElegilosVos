@@ -8,6 +8,8 @@ import { notFound } from "next/navigation";
 import { cache } from "react";
 import { BotonCompartir } from "@/app/_compartir/boton-compartir";
 import { CanchaDeLectura } from "@/app/_cancha/cancha-de-lectura";
+import { Papelitos } from "@/app/_pixel/papelitos";
+import efectos from "@/app/_pixel/efectos.module.css";
 import { TAMANO_IMAGEN } from "@/lib/compartir/imagen";
 import { modeloOnceElegido } from "@/lib/compartir/datos";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
@@ -38,7 +40,8 @@ export default async function PaginaOnceElegidoPublico({ params }: PageProps<"/c
   if (!modelo) notFound();
 
   return (
-    <div data-club={modelo.clubId}>
+    <div data-club={modelo.clubId} className={efectos.transicion}>
+      <Papelitos />
       <main>
         <h1>{modelo.titulo}</h1>
         <h2>{modelo.partido}</h2>

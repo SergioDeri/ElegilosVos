@@ -1,0 +1,162 @@
+/* Efectos por pasos (ticket 09): todo con steps() o fotogramas, nunca
+   interpolado, y todo apagado con "reducir movimiento" (las animaciones solo
+   existen dentro de prefers-reduced-motion: no-preference; afuera, cada cosa
+   se ve en su lugar final). Los desplazamientos son múltiplos de --u. */
+
+/* ---------------------------------------------------------------------------
+   Transición entre pantallas: barrido por bloques de izquierda a derecha
+   --------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: no-preference) {
+  .transicion {
+    /* Sin relleno al final: después del barrido no queda clip-path (que
+       recortaría el arrastre y los papelitos, que son fixed). */
+    animation: barrido 240ms steps(6, jump-start) backwards;
+  }
+}
+
+@keyframes barrido {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Balanceo en la cancha: 2 fotogramas a 4 FPS, la mitad desfasada
+   --------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: no-preference) {
+  .balanceo {
+    animation: balanceo 500ms step-end infinite;
+  }
+
+  .balanceoDesfasado {
+    animation: balanceo 500ms step-end -250ms infinite;
+  }
+}
+
+@keyframes balanceo {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(calc(-1 * var(--u)));
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Salto al soltar una Camiseta en un Puesto, con partículas cuadradas
+   --------------------------------------------------------------------------- */
+.salto {
+  position: relative;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .salto > :first-child {
+    animation: salto 400ms step-end both;
+  }
+}
+
+@keyframes salto {
+  0% {
+    transform: translateY(calc(-2 * var(--u)));
+  }
+  20% {
+    transform: translateY(calc(-4 * var(--u)));
+  }
+  40% {
+    transform: translateY(calc(-3 * var(--u)));
+  }
+  60% {
+    transform: translateY(calc(-1 * var(--u)));
+  }
+  80%,
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.particulas {
+  display: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .particulas {
+    display: block;
+    position: absolute;
+    left: 50%;
+    top: calc(12 * var(--u));
+    pointer-events: none;
+  }
+
+  .particula {
+    position: absolute;
+    width: calc(2 * var(--u));
+    height: calc(2 * var(--u));
+    background: var(--color-cal);
+    /* --dx y --dy: destino en píxeles de arte, múltiplos de 4 (4 pasos enteros). */
+    animation: particula 400ms steps(4, jump-end) both;
+  }
+
+  .particula:nth-child(even) {
+    background: var(--acento);
+  }
+}
+
+@keyframes particula {
+  from {
+    transform: translate(0, 0);
+    visibility: visible;
+  }
+  to {
+    transform: translate(calc(var(--dx) * var(--u)), calc(var(--dy) * var(--u)));
+    visibility: hidden;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Papelitos al ver el 11 Elegido o la Coincidencia
+   --------------------------------------------------------------------------- */
+.papelitos {
+  display: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .papelitos {
+    display: block;
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .papelito {
+    position: absolute;
+    top: calc(-4 * var(--u));
+    width: calc(2 * var(--u));
+    height: calc(2 * var(--u));
+    background: var(--color-cal);
+    /* 16 pasos de un largo entero de píxeles de arte, hasta pasar el borde de abajo. */
+    --paso: round(up, calc(100dvh / 16), var(--u));
+    animation: papelito 1800ms steps(16, jump-end) both;
+  }
+
+  .papelito:nth-child(3n) {
+    background: var(--acento);
+  }
+
+  .papelito:nth-child(3n + 1) {
+    background: var(--detalle);
+  }
+}
+
+@keyframes papelito {
+  from {
+    transform: translate(0, 0);
+  }
+  to {
+    transform: translate(calc(var(--dx) * var(--u)), calc(16 * var(--paso) + 4 * var(--u)));
+  }
+}
