@@ -492,7 +492,7 @@ Refactor sin cambios de comportamiento. Antes de escribir algo de esto, usá lo 
 
 - **`@/domain/comun`**: `esUuid` (`ids.ts`), `esClubId` y `clubIdDeLaBase` (`tipos.ts`; el segundo lanza si una columna FK a `club` trae otra cosa), `NOMBRE_CLUB`, `NOMBRE_DISPONIBILIDAD` y `NOMBRE_RIVAL_DESCONOCIDO` (`textos.ts`). `@/domain/cierre`: `esEstadoResultado` / `estadoResultadoDeLaBase`. No castees strings de la base (`as ClubId`, `as EstadoResultado`).
 - **Nombre corto del Jugador**: `nombreCorto(nombre, largoMaximo?)` de `@/domain/planteles` (la cancha del armado y la imagen para compartir).
-- **Cancha**: `@/app/_cancha/cancha` (`Cancha`, `posicionPuesto`, `CLASE_PUESTO`, `CLASE_SIGLA`) dibuja el campo y ubica los Puestos; cada vista pone el contenido y el aspecto de sus Puestos.
+- **Cancha**: la disposición (orientación, tamaño, dibujo, Puestos y banco sin choques) la calcula `disponer()` de `@/domain/cancha`; `CanchaPixel` (`@/app/_cancha/cancha-pixel`) la mide y la dibuja, y `CanchaDeLectura` es la versión de solo lectura (Parcial, 11 Elegido, link compartido). Cada vista pone el contenido de sus Puestos.
 - **Lecturas de la base**: `leerPlantel` / `leerPartidos` (`@/lib/club/lecturas`, reciben el cliente), `COLUMNAS_ALINEACION` (`@/domain/armado`) para leer una Alineación, y `leerPorId` (`@/lib/supabase/paginar`) para paginar por `id` (keyset).
 - **Escudos del backoffice**: `archivoElegido`, `leerEscudo`, `subirEscudo`, `MENSAJE_ESCUDO` (`@/lib/imagenes/subida`, server-only). En pantalla, `Escudo` de `@/app/_pixel/escudo` (o el hueco `faltaEscudo` de `@/domain/escudos`).
 - **Compartir**: la fecha en hora de Montevideo la arma `fechaDeImagen` (`@/lib/compartir/fecha`); el dominio la recibe ya formateada.
