@@ -1,13 +1,12 @@
-/* Estilos mínimos y funcionales de la pantalla de armado (el diseño es una etapa aparte). */
-.editor {
-  max-width: 32rem;
-  margin: 0 auto;
-}
-
+/* Pantalla de armado. Colores de la paleta (--color-*, acentos del tema) y
+   medidas en píxeles de arte (--u), como pide pixel.css; salvo la tarjeta del
+   Partido (.partido, .rival, .escudo), que pasa al estilo pixel con los
+   escudos (ticket 07). La cancha y la ubicación de los Puestos están en
+   @/app/_cancha. */
 .barra {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: calc(4 * var(--u));
   align-items: center;
   justify-content: space-between;
 }
@@ -15,49 +14,77 @@
 .guardado[data-estado="error"],
 .guardado[data-estado="cerrada"],
 .guardado[data-estado="invalida"] {
-  color: #b00020;
+  color: var(--color-rojoLuz);
 }
 
 .aviso {
-  min-height: 1.5em;
+  min-height: calc(12 * var(--u));
 }
 
 .acciones {
   display: flex;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  gap: calc(2 * var(--u));
+  margin-bottom: calc(2 * var(--u));
 }
 
-/* La cancha y la ubicación de los Puestos están en @/app/_cancha; acá, lo
-   propio del armado (Puestos vacíos, arrastre y selección). */
-.puesto {
-  min-height: 3rem;
-  justify-content: center;
-  border: 2px dashed #fff;
-  border-radius: 0.5rem;
-  background: rgb(255 255 255 / 0.15);
-  color: #fff;
+/* Puestos y fichas del banco son botones, pero se ven como el Jugador: sin
+   el fondo, la sombra ni el hundido de los botones de pixel.css. */
+.puesto,
+.puesto:hover,
+.puesto:active,
+.ficha,
+.ficha:hover,
+.ficha:active {
+  margin: 0;
+  background: none;
+  color: var(--color-cal);
+  box-shadow: none;
   touch-action: manipulation;
+}
+
+.ficha:active {
+  transform: none;
+}
+
+/* Puesto vacío: un lugar libre marcado en la cancha. */
+.puesto {
+  min-height: calc(24 * var(--u));
+  justify-content: center;
   cursor: pointer;
 }
 
+.puesto[data-ocupado="false"] {
+  box-shadow: inset 0 0 0 var(--u) var(--color-cal);
+}
+
 .puesto[data-ocupado="true"] {
-  border-style: solid;
-  background: #fff;
-  color: #111;
+  cursor: grab;
 }
 
 .puesto[data-sobre="true"],
-.puesto[data-seleccionado="true"] {
-  outline: 3px solid #ffd600;
+.puesto[data-seleccionado="true"],
+.ficha[data-seleccionado="true"] {
+  box-shadow: 0 0 0 calc(2 * var(--u)) var(--enlace);
 }
 
-.puesto[data-arrastrando="true"] {
+.puesto[data-arrastrando="true"],
+.ficha[data-arrastrando="true"] {
   opacity: 0.4;
 }
 
+/* Jugador heredado que ya no está Disponible: fondo rojo y un "!". */
 .puesto[data-no-disponible="true"] {
-  background: #ffe0b2;
+  background: var(--color-rojoSombra);
+}
+
+.alerta {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 0 var(--u);
+  background: var(--color-rojo);
+  color: var(--color-blancoLuz);
+  box-shadow: 0 0 0 var(--u) var(--color-contorno);
 }
 
 .nombre {
@@ -65,50 +92,46 @@
 }
 
 .banco {
-  margin-top: 1rem;
-  padding: 0.5rem;
-  border: 2px dashed transparent;
+  margin-top: calc(4 * var(--u));
+  padding: calc(2 * var(--u));
 }
 
 .banco[data-sobre="true"] {
-  border-color: #ffd600;
+  box-shadow: inset 0 0 0 calc(2 * var(--u)) var(--enlace);
+}
+
+/* Suplentes: fila alineada a la izquierda que salta de línea. */
+.suplentes {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(2 * var(--u));
+}
+
+.ficha {
+  padding: var(--u);
+  cursor: grab;
 }
 
 .lista {
   list-style: none;
   padding: 0;
   display: grid;
-  gap: 0.25rem;
-}
-
-.ficha {
-  width: 100%;
-  text-align: left;
-  padding: 0.5rem;
-  min-height: 2.75rem;
-  touch-action: manipulation;
-  cursor: grab;
-  background: #fff;
-  color: #111;
-  border: 1px solid #999;
-  border-radius: 0.25rem;
-}
-
-.ficha[data-seleccionado="true"] {
-  outline: 3px solid #ffd600;
-}
-
-.ficha[data-arrastrando="true"] {
-  opacity: 0.4;
+  gap: var(--u);
 }
 
 .noDisponible {
   display: flex;
   flex-direction: column;
-  padding: 0.5rem;
-  color: #666;
-  border: 1px solid #ddd;
-  border-radius: 0.25rem;
+  padding: calc(2 * var(--u));
+  color: var(--color-gris);
+  box-shadow: inset 0 0 0 var(--u) var(--color-grisOscuro);
+}
+
+.arrastrado {
+  cursor: grabbing;
 }
 
 .partido {
@@ -133,16 +156,4 @@
   color: #333;
   font-weight: bold;
   font-size: 0.8rem;
-}
-
-.fichaArrastrada {
-  display: inline-block;
-  padding: 0.4rem 0.6rem;
-  background: #fff;
-  color: #111;
-  border: 2px solid #ffd600;
-  border-radius: 0.5rem;
-  box-shadow: 0 2px 6px rgb(0 0 0 / 0.3);
-  white-space: nowrap;
-  cursor: grabbing;
 }

@@ -19,10 +19,24 @@ Spec: `.scratch/diseno-pixel-art/spec.md`. ADR 0004 (pixel art en DOM con `--px`
 
 **Status:** ready-for-agent
 
-- [ ] El dominio devuelve la matriz 24x24 de la Camiseta según Club y posición natural, con número estampado opcional; las 4 Camisetas son fijas en el código, no en la base
-- [ ] Tests: cada matriz mide 24x24, usa solo colores de la paleta y es simétrica salvo el sombreado y los bastones; la de arquero corresponde a ARQ; el número queda dentro del torso, rodeado de contorno; snapshot de las 4 Camisetas
-- [ ] En el armado, los Puestos ocupados y los suplentes muestran Camiseta, número y apellido (con el `nombreCorto` que ya existe)
-- [ ] La Camiseta no lleva escudo
-- [ ] Arrastrar y soltar Jugadores funciona como antes, y lo que se arrastra se ve con el mismo sprite
-- [ ] Los Jugadores no disponibles heredados se siguen distinguiendo como hoy
-- [ ] `npm run typecheck && npm run lint && npm test` pasan
+- [x] El dominio devuelve la matriz 24x24 de la Camiseta según Club y posición natural, con número estampado opcional; las 4 Camisetas son fijas en el código, no en la base
+- [x] Tests: cada matriz mide 24x24, usa solo colores de la paleta y es simétrica salvo el sombreado y los bastones; la de arquero corresponde a ARQ; el número queda dentro del torso, rodeado de contorno; snapshot de las 4 Camisetas
+- [x] En el armado, los Puestos ocupados y los suplentes muestran Camiseta, número y apellido (con el `nombreCorto` que ya existe)
+- [x] La Camiseta no lleva escudo
+- [x] Arrastrar y soltar Jugadores funciona como antes, y lo que se arrastra se ve con el mismo sprite
+- [x] Los Jugadores no disponibles heredados se siguen distinguiendo como hoy
+- [x] `npm run typecheck && npm run lint && npm test` pasan
+
+## Comments
+
+**Implementación.**
+
+- Dominio: `camiseta(club, posicionNatural, { numero })` en `@/domain/pixel` devuelve la matriz 24x24; el número se estampa con `textoBitmap` (los mismos dígitos 3x5 y el mismo contorno). Tests en `camisetas.test.ts`, con snapshot de las 4 Camisetas.
+- App: `Sprite` (`src/app/_pixel/sprite.tsx`) dibuja cualquier matriz como SVG medido en `--u`, y `JugadorConCamiseta` muestra la Camiseta con el apellido (`nombreCorto`) en texto bitmap. Se usa en los Puestos ocupados, en los suplentes y en el `DragOverlay`.
+- Los Puestos ocupados ya no muestran la sigla, que queda solo en los vacíos (y en el `aria-label`). Los suplentes se muestran en una fila que salta de línea; la posición y el nombre completo quedan solo en el `aria-label`.
+- Los no disponibles heredados se siguen distinguiendo, ahora con fondo `rojoSombra` y un "!" en vez del naranja con "(!)".
+- El CSS del armado pasó a la paleta y a `--u`, salvo la tarjeta del Partido (`.partido`, `.rival`, `.escudo`), que queda para el ticket 07.
+
+**Verificado a ojo** con un Hincha de cada Club: Camisetas de campo y de arquero, arrastre con teclado (el overlay es el mismo sprite) y Jugador lesionado heredado.
+
+**Queda para el 03:** en la cancha actual, la Camiseta del arquero (y = 0.05) se sale un poco por abajo y recorta el apellido, y los apellidos largos pueden pisarse en las líneas de 5. Los dos casos los resuelve la disposición nueva.

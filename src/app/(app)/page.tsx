@@ -88,6 +88,7 @@ export default async function Inicio() {
           // Al cambiar de Partido o de estado (por ejemplo, al cerrar), el editor arranca de nuevo.
           key={`${partido.id}:${votacion.estado}`}
           partidoId={partido.id}
+          club={hincha.clubFavorito}
           inicial={alineacion ? aJson(alineacion) : null}
           jugadores={jugadores}
           editable={votacion.estado === "abierta"}

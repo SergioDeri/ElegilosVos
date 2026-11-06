@@ -44,8 +44,9 @@ import type { JugadorDelClub } from "@/lib/club/lecturas";
 import { NOMBRE_DISPONIBILIDAD } from "@/domain/comun/textos";
 import { MENSAJE_DE_RECHAZO, POSICION } from "./textos";
 import { useGuardadoAutomatico, type EstadoGuardado } from "./use-guardado-automatico";
-import { nombreCorto } from "@/domain/planteles";
+import type { ClubId } from "@/domain/comun/tipos";
 import { CLASE_PUESTO, CLASE_SIGLA, Cancha, posicionPuesto } from "@/app/_cancha/cancha";
+import { JugadorConCamiseta } from "@/app/_pixel/jugador-con-camiseta";
 import estilos from "./alineacion.module.css";
 
 type Origen = { tipo: "jugador"; jugadorId: string } | { tipo: "puesto"; puesto: PuestoId };
@@ -72,13 +73,15 @@ function leerOrigen(id: string | number): Origen | null {
 
 export interface PropsEditor {
   partidoId: string;
+  /** Club Favorito del Hincha: el de las Camisetas. */
+  club: ClubId;
   inicial: AlineacionJson | null;
   jugadores: JugadorDelClub[];
   /** false: solo lectura (sin Votación abierta). */
   editable: boolean;
 }
 
-export function EditorAlineacion({ partidoId, inicial, jugadores, editable }: PropsEditor) {
+export function EditorAlineacion({ partidoId, club, inicial, jugadores, editable }: PropsEditor) {
   const router = useRouter();
   const [alineacion, setAlineacion] = useState<Alineacion>(() => {
     const leida = inicial ? desdeJson(inicial) : null;
@@ -219,7 +222,7 @@ export function EditorAlineacion({ partidoId, inicial, jugadores, editable }: Pr
         },
       }}
     >
-      <section aria-label="Tu Alineación" className={estilos.editor}>
+      <section aria-label="Tu Alineación">
         <div className={estilos.barra}>
           <label>
             Esquema{" "}
@@ -263,6 +266,7 @@ export function EditorAlineacion({ partidoId, inicial, jugadores, editable }: Pr
             return (
               <PuestoEnCancha
                 key={p.id}
+                club={club}
                 puesto={p.id}
                 etiqueta={p.etiqueta}
                 sigla={p.sigla}
@@ -286,10 +290,11 @@ export function EditorAlineacion({ partidoId, inicial, jugadores, editable }: Pr
           >
             <h2>Plantel disponible ({libres.length})</h2>
             {libres.length === 0 && <p>No quedan Jugadores Disponibles en el banco.</p>}
-            <ul className={estilos.lista}>
+            <ul className={estilos.suplentes}>
               {libres.map((j) => (
                 <li key={j.id}>
                   <JugadorDelBanco
+                    club={club}
                     jugador={j}
                     editable={puedeEditar}
                     seleccionado={seleccion?.tipo === "jugador" && seleccion.jugadorId === j.id}
@@ -319,7 +324,9 @@ export function EditorAlineacion({ partidoId, inicial, jugadores, editable }: Pr
           </Banco>
         )}
       </section>
-      <DragOverlay>{enArrastre ? <div className={estilos.fichaArrastrada}>{enArrastre.numero} · {enArrastre.nombre}</div> : null}</DragOverlay>
+      <DragOverlay>
+        {enArrastre ? <JugadorConCamiseta club={club} jugador={enArrastre} className={estilos.arrastrado} /> : null}
+      </DragOverlay>
     </DndContext>
   );
 }
@@ -351,6 +358,7 @@ function IndicadorGuardado({ estado, reintentar }: { estado: EstadoGuardado; rei
 }
 
 function PuestoEnCancha(props: {
+  club: ClubId;
   puesto: PuestoId;
   etiqueta: string;
   sigla: string;
@@ -362,7 +370,7 @@ function PuestoEnCancha(props: {
   seleccionado: boolean;
   alTocar: () => void;
 }) {
-  const { puesto, etiqueta, sigla, x, y, jugador, editable, seleccionado, alTocar } = props;
+  const { club, puesto, etiqueta, sigla, x, y, jugador, editable, seleccionado, alTocar } = props;
   const ocupado = !!jugador || !!props.jugadorIdDesconocido;
   const soltable = useDroppable({ id: idPuesto(puesto), disabled: !editable });
   const arrastrable = useDraggable({ id: idPuesto(puesto), disabled: !editable || !ocupado });
@@ -392,15 +400,17 @@ function PuestoEnCancha(props: {
       data-no-disponible={!!noDisponible}
       style={posicionPuesto({ x, y })}
     >
-      <span className={CLASE_SIGLA}>{sigla}</span>
       {jugador ? (
-        <span className={estilos.nombre}>
-          {jugador.numero} {nombreCorto(jugador.nombre)}
-          {noDisponible ? " (!)" : ""}
-        </span>
-      ) : props.jugadorIdDesconocido ? (
-        <span className={estilos.nombre}>?</span>
-      ) : null}
+        <>
+          <JugadorConCamiseta club={club} jugador={jugador} />
+          {noDisponible && <span className={estilos.alerta}>!</span>}
+        </>
+      ) : (
+        <>
+          <span className={CLASE_SIGLA}>{sigla}</span>
+          {props.jugadorIdDesconocido && <span className={estilos.nombre}>?</span>}
+        </>
+      )}
     </button>
   );
 }
@@ -419,8 +429,8 @@ function Banco(props: { editable: boolean; hayPuestoSeleccionado: boolean; alToc
   );
 }
 
-function JugadorDelBanco(props: { jugador: JugadorDelClub; editable: boolean; seleccionado: boolean; alTocar: () => void }) {
-  const { jugador, editable, seleccionado, alTocar } = props;
+function JugadorDelBanco(props: { club: ClubId; jugador: JugadorDelClub; editable: boolean; seleccionado: boolean; alTocar: () => void }) {
+  const { club, jugador, editable, seleccionado, alTocar } = props;
   const { setNodeRef, listeners, attributes, isDragging } = useDraggable({ id: idJugador(jugador.id), disabled: !editable });
   return (
     <button
@@ -435,7 +445,7 @@ function JugadorDelBanco(props: { jugador: JugadorDelClub; editable: boolean; se
       data-seleccionado={seleccionado}
       data-arrastrando={isDragging}
     >
-      <strong>{jugador.numero}</strong> {jugador.nombre} <small>{POSICION[jugador.posicionNatural]}</small>
+      <JugadorConCamiseta club={club} jugador={jugador} />
     </button>
   );
 }

@@ -1,0 +1,9 @@
+/* Piezas de arte pixel compartidas. Medidas en píxeles de arte (--u). */
+
+.jugador {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  /* El apellido se apoya en el ruedo de la Camiseta (última fila vacía). */
+  gap: 0;
+}

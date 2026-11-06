@@ -32,6 +32,12 @@
   overflow-wrap: anywhere;
 }
 
+/* Si el Puesto es un botón, el hundido de pixel.css (button:active) no le
+   cambia la ubicación. */
+.puesto:active {
+  transform: translate(-50%, 50%);
+}
+
 .sigla {
   font-weight: bold;
 }

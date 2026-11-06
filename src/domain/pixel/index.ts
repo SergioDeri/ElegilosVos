@@ -1,8 +1,8 @@
 // Arte pixel (spec .scratch/diseno-pixel-art, ADR 0004). Lógica pura: la
-// paleta única, los temas por Club, la unidad --px y el texto bitmap. Los
-// sprites son matrices de colores de la paleta; quien los dibuja (React, CSS)
-// vive en la app.
-import { CLUBES, type ClubId } from "@/domain/comun/tipos";
+// paleta única, los temas por Club, la unidad --px, el texto bitmap y las
+// Camisetas. Los sprites son matrices de colores de la paleta; quien los
+// dibuja (React, CSS) vive en la app.
+import { CLUBES, type ClubId, type PosicionNatural } from "@/domain/comun/tipos";
 
 // -----------------------------------------------------------------------------
 // Paleta: única fuente de colores del arte (16 bits, vivos)
@@ -236,5 +236,123 @@ export function textoBitmap(texto: string, color: ColorPaleta, opciones: { conto
     for (const [x, y] of encendidos)
       for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) m[y + dy][x + dx] = PALETA.contorno;
   for (const [x, y] of encendidos) m[y][x] = PALETA[color];
+  return m;
+}
+
+// -----------------------------------------------------------------------------
+// Camisetas: 24x24, fijas por Club (sin escudo); la de arquero va con ARQ
+// -----------------------------------------------------------------------------
+
+export const LADO_CAMISETA = 24;
+
+type Tela = "amarillo" | "negro" | "blanco" | "azul" | "rojo";
+type Tono = "Luz" | "" | "Sombra";
+
+function tono(tela: Tela, t: Tono): string {
+  return PALETA[`${tela}${t}`];
+}
+
+interface DisenoCamiseta {
+  /** Tela del cuerpo en la columna x (para los bastones). */
+  cuerpo: (x: number) => Tela;
+  manga: Tela;
+  puno: Tela;
+  cuello: Tela;
+  numero: Tela;
+}
+
+const CAMISETAS: Record<ClubId, { campo: DisenoCamiseta; arquero: DisenoCamiseta }> = {
+  penarol: {
+    // Bastones de 3 columnas en todo el frente, desde amarillo en la columna 6.
+    campo: {
+      cuerpo: (x) => (Math.floor((x - 6) / 3) % 2 === 0 ? "amarillo" : "negro"),
+      manga: "amarillo",
+      puno: "negro",
+      cuello: "negro",
+      numero: "blanco",
+    },
+    arquero: { cuerpo: () => "negro", manga: "negro", puno: "negro", cuello: "negro", numero: "amarillo" },
+  },
+  nacional: {
+    campo: { cuerpo: () => "blanco", manga: "blanco", puno: "azul", cuello: "azul", numero: "rojo" },
+    arquero: { cuerpo: () => "azul", manga: "azul", puno: "azul", cuello: "azul", numero: "blanco" },
+  },
+};
+
+// Mitad izquierda (12 columnas) de la Camiseta; la derecha es su espejo.
+// o contorno · m manga · k puño · b cuerpo · c cuello
+const MITAD_CAMISETA = [
+  "............",
+  "............",
+  "....oooooo..",
+  "...ommmbbccc",
+  "..ommmmbbbcc",
+  ".ommmmmbbbbc",
+  "ommmmmbbbbbb",
+  "okmmmmbbbbbb",
+  "okkmmobbbbbb",
+  ".okkmobbbbbb",
+  "..oooobbbbbb",
+  ...Array<string>(11).fill(".....obbbbbb"),
+  ".....ooooooo",
+  "............",
+];
+const PLANTILLA_CAMISETA = MITAD_CAMISETA.map((f) => f + [...f].reverse().join(""));
+// Sombreado: luz arriba a la izquierda, sombra a la derecha y en el ruedo.
+/** Última fila de tela: va en sombra. */
+const FILA_RUEDO = 21;
+/** Desde esta columna, el cuerpo va en sombra. */
+const COLUMNA_SOMBRA_CUERPO = 15;
+/** Desde esta columna, mangas y puños van en sombra. */
+const COLUMNA_SOMBRA_MANGA = 18;
+/** Hasta esta columna, la manga izquierda va en luz. */
+const COLUMNA_LUZ_MANGA = 3;
+/** Hasta esta columna y esta fila, el cuerpo va en luz. */
+const COLUMNA_LUZ_CUERPO = 8;
+const FILA_LUZ_CUERPO = 10;
+/** Fila de arriba de los dígitos del número. */
+const FILA_NUMERO = 9;
+
+/**
+ * Matriz 24x24 de la Camiseta del Club: la de arquero si la posición natural
+ * es ARQ. Con `numero`, lo estampa en el pecho (dígitos 3x5 centrados en las
+ * filas 9 a 13) con contorno de 1 px. Luz arriba a la izquierda; sombra a la
+ * derecha y en la última fila.
+ */
+export function camiseta(club: ClubId, posicion: PosicionNatural, opciones: { numero?: number } = {}): Matriz {
+  const diseno = CAMISETAS[club][posicion === "ARQ" ? "arquero" : "campo"];
+  const m: Matriz = PLANTILLA_CAMISETA.map((fila, y) =>
+    [...fila].map((ch, x) => {
+      const mangaEnSombra = x >= COLUMNA_SOMBRA_MANGA;
+      switch (ch) {
+        case "o":
+          return PALETA.contorno;
+        case "m":
+          return tono(diseno.manga, mangaEnSombra ? "Sombra" : x <= COLUMNA_LUZ_MANGA ? "Luz" : "");
+        case "k":
+          return tono(diseno.puno, mangaEnSombra ? "Sombra" : "");
+        case "c":
+          return tono(diseno.cuello, "");
+        case "b":
+          if (y === FILA_RUEDO || x >= COLUMNA_SOMBRA_CUERPO) return tono(diseno.cuerpo(x), "Sombra");
+          return tono(diseno.cuerpo(x), x <= COLUMNA_LUZ_CUERPO && y <= FILA_LUZ_CUERPO ? "Luz" : "");
+        default:
+          return null;
+      }
+    }),
+  );
+
+  if (opciones.numero !== undefined) {
+    const texto = String(opciones.numero);
+    const numero = textoBitmap(texto, `${diseno.numero}Luz`, { contorno: true });
+    // textoBitmap: contorno (1) + fila de diacríticos (1) arriba de los dígitos.
+    const y0 = FILA_NUMERO - 2;
+    const x0 = LADO_CAMISETA / 2 - Math.ceil(anchoTexto(texto) / 2) - 1;
+    numero.forEach((fila, dy) =>
+      fila.forEach((c, dx) => {
+        if (c !== null) m[y0 + dy][x0 + dx] = c;
+      }),
+    );
+  }
   return m;
 }
