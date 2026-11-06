@@ -3,7 +3,8 @@ import Link from "next/link";
 import { requerirAdmin } from "@/lib/auth/admin";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { NOMBRE_CLUB } from "@/domain/comun/textos";
-import { cargarRivales, urlEscudo, type RivalVista } from "../_partidos/datos";
+import { cargarRivales, type RivalVista } from "../_partidos/datos";
+import { urlEscudo } from "@/lib/imagenes/subida";
 import { FormularioAltaRival } from "../_partidos/formularios";
 import { Escudo } from "@/app/_pixel/escudo";
 

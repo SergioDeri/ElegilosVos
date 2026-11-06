@@ -5,7 +5,7 @@ import { requerirAdmin } from "@/lib/auth/admin";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { esClubId } from "@/domain/comun/tipos";
 import { borrarRival, cambiarActivoRival, quitarEscudo } from "../../_partidos/acciones";
-import { urlEscudo } from "../../_partidos/datos";
+import { urlEscudo } from "@/lib/imagenes/subida";
 import { FormularioEscudo, FormularioRival } from "../../_partidos/formularios";
 import { esUuid } from "@/domain/comun/ids";
 import { Escudo } from "@/app/_pixel/escudo";

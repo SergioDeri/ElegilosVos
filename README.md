@@ -97,7 +97,7 @@ Varios agentes trabajan a la vez en worktrees separados (rama `wip/<NN>-<slug>` 
 4. **`src/domain/comun/`** es compartido: si un enum de la base cambia, actualizá `tipos.ts` en la misma rama. Evitá agregar ahí cosas de un solo módulo.
 5. **Horas**: UTC en la base y en el dominio (`Date`/ISO con `Z`); America/Montevideo solo en el borde de la UI, con `src/domain/comun/horario.ts` (`formatearHoraUy`, `desdeHoraUy`, `aHoraUyLocal`). Única excepción: `validarInicio` de `@/domain/partidos`, que parsea el `datetime-local` del formulario de Partido dentro de `validarPartido` y lo devuelve en UTC.
 6. **Datos de ejemplo**: no edites `seed.sql`; agregá `supabase/seeds/<NN>-<slug>.sql`.
-7. **Tests de RLS**: un archivo por ticket, `tests/rls/<NN>-<slug>.test.ts`, usando `tests/rls/helpers.ts` (clientes y usuarios) y `tests/rls/datos.ts` (datos de prueba).
+7. **Tests de RLS**: un archivo por ticket, `tests/rls/<NN>-<slug>.test.ts` (los tickets de otro feature que repiten número llevan su prefijo, por ejemplo `pixel-07-escudos.test.ts`), usando `tests/rls/helpers.ts` (clientes y usuarios) y `tests/rls/datos.ts` (datos de prueba).
 8. **`database.types.ts`** es generado: si al mergear hay conflicto, no lo resuelvas a mano; aplicá las migraciones (`npm run db:reset`) y corré `npm run db:types`.
 9. **`package.json` / `package-lock.json`**: si chocan al mergear, quedate con la unión de dependencias y regenerá el lock con `npm install`.
 10. **Secretos**: nunca en el repo. La service role key y la VAPID privada solo en código de servidor (`import "server-only"`). Las variables con `NEXT_PUBLIC_` llegan al navegador: nunca le pongas ese prefijo a un secreto.

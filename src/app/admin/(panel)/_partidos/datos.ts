@@ -8,10 +8,6 @@ import type { crearClienteServidor } from "@/lib/supabase/server";
 
 type Cliente = Awaited<ReturnType<typeof crearClienteServidor>>;
 
-import { BUCKET_ESCUDOS } from "@/lib/imagenes/subida";
-
-export { BUCKET_ESCUDOS };
-
 export interface RivalVista extends RivalParaPartido {
   nombre: string;
   escudoPath: string | null;
@@ -51,10 +47,6 @@ export async function cargarPartidosDelClub(supabase: Cliente, club: ClubId): Pr
     estado: p.estado,
     creadoEn: new Date(p.creado_en),
   }));
-}
-
-export function urlEscudo(supabase: Cliente, path: string | null): string | null {
-  return path ? supabase.storage.from(BUCKET_ESCUDOS).getPublicUrl(path).data.publicUrl : null;
 }
 
 /**

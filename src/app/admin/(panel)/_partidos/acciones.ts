@@ -24,7 +24,8 @@ import {
 } from "@/domain/partidos";
 import { requerirAdminEnAccion } from "@/lib/auth/admin";
 import { MENSAJE_ESCUDO, archivoElegido, leerEscudo, subirEscudo, type EscudoLeido } from "@/lib/imagenes/subida";
-import { BUCKET_ESCUDOS, cargarConOnceElegido, cargarPartidosDelClub, cargarRivales, type PartidoAdmin } from "./datos";
+import { BUCKET_ESCUDOS } from "@/lib/imagenes/subida";
+import { cargarConOnceElegido, cargarPartidosDelClub, cargarRivales, type PartidoAdmin } from "./datos";
 import { TEXTO_RECHAZO, textosDeAvisos } from "./textos";
 
 type Supabase = Awaited<ReturnType<typeof requerirAdminEnAccion>>;

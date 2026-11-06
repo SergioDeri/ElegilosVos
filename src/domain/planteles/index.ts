@@ -1,7 +1,6 @@
 // Reglas del Plantel para el backoffice (ticket 07): validación de los datos
-// de un Jugador, de los escudos que se suben y su nombre corto para la
-// cancha. Lógica pura,
-// sin Next ni Supabase.
+// de un Jugador y su nombre corto para la cancha, y validación de los escudos
+// que se suben. Lógica pura, sin Next ni Supabase.
 import {
   DISPONIBILIDADES,
   POSICIONES_NATURALES,

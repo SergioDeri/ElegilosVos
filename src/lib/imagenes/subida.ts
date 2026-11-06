@@ -9,6 +9,11 @@ import type { Database } from "@/lib/supabase/database.types";
 
 export const BUCKET_ESCUDOS = "escudos";
 
+/** URL pública de un escudo (de Club o de Rival) del bucket, o null si no hay. */
+export function urlEscudo(supabase: SupabaseClient<Database>, path: string | null): string | null {
+  return path ? supabase.storage.from(BUCKET_ESCUDOS).getPublicUrl(path).data.publicUrl : null;
+}
+
 /** Mensaje para el Admin por cada motivo de rechazo. */
 export const MENSAJE_ESCUDO: Record<MotivoEscudoInvalido, string> = {
   vacia: "El archivo está vacío.",

@@ -85,7 +85,7 @@
   .particulas {
     display: block;
     position: absolute;
-    left: 50%;
+    left: round(down, 50%, var(--u));
     top: calc(12 * var(--u));
     pointer-events: none;
   }

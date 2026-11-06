@@ -51,10 +51,10 @@ export async function modeloMiAlineacion(cliente: Cliente, hinchaId: string, par
   });
 }
 
-/** La imagen del 11 Elegido del Partido, o null si no existe o su Votación no tuvo 11 Elegido. */
 /** El modelo de la imagen del 11 Elegido, con el Club y el Esquema para dibujarlo en la cancha pixel. */
 export type ModeloOnceElegido = ModeloImagen & { clubId: ClubId; esquemaId: EsquemaId };
 
+/** La imagen del 11 Elegido del Partido, o null si no existe o su Votación no tuvo 11 Elegido. */
 export async function modeloOnceElegido(clienteServicio: Cliente, partidoId: string): Promise<ModeloOnceElegido | null> {
   if (!esUuid(partidoId)) return null;
   const { data: fila, error } = await clienteServicio

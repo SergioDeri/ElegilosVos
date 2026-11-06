@@ -7,6 +7,7 @@ import { formatearHoraUy } from "@/domain/comun/horario";
 import { aJson } from "@/domain/editor";
 import { requerirHincha } from "@/lib/auth/sesion";
 import { crearClienteServidor } from "@/lib/supabase/server";
+import { urlEscudo } from "@/lib/imagenes/subida";
 import { cargarAlineacion, cargarConOnceElegido } from "./_alineacion/datos";
 import { leerPartidos, leerPlantel } from "@/lib/club/lecturas";
 import { CuentaRegresiva } from "./_alineacion/cuenta-regresiva";
@@ -63,7 +64,7 @@ export default async function Inicio() {
       <Link href="/resultados">Ver el 11 Elegido y el historial</Link>
       <section className={inicio.partido} aria-label="Próximo Partido">
         <div className={inicio.rival}>
-          <Escudo nombre={rival} url={escudoDelRival(supabase, partido.rival?.escudoPath ?? null)} />
+          <Escudo nombre={rival} url={urlEscudo(supabase, partido.rival?.escudoPath ?? null)} />
           <div>
             <h2 className={inicio.titulo}>
               {club} vs {rival}
@@ -162,7 +163,3 @@ function MensajeVotacion(props: {
   }
 }
 
-/** URL pública del escudo del Rival (bucket `escudos`, ticket 08), o null. */
-function escudoDelRival(supabase: Awaited<ReturnType<typeof crearClienteServidor>>, path: string | null): string | null {
-  return path ? supabase.storage.from("escudos").getPublicUrl(path).data.publicUrl : null;
-}

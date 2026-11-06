@@ -7,7 +7,7 @@ import { crearClienteServidor } from "@/lib/supabase/server";
 import { CLUBES } from "@/domain/comun/tipos";
 import { NOMBRE_CLUB } from "@/domain/comun/textos";
 import { Escudo } from "@/app/_pixel/escudo";
-import { urlEscudo } from "../_partidos/datos";
+import { urlEscudo } from "@/lib/imagenes/subida";
 import { FormularioEscudoDelClub } from "./formulario";
 
 export default async function PaginaClubes() {
