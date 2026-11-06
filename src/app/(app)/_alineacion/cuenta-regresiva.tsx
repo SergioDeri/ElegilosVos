@@ -5,6 +5,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { textoCuentaRegresiva } from "@/domain/armado";
+import estilos from "./cuenta-regresiva.module.css";
 
 export function CuentaRegresiva({ hasta }: { hasta: string }) {
   const router = useRouter();
@@ -29,5 +30,5 @@ export function CuentaRegresiva({ hasta }: { hasta: string }) {
     };
   }, [objetivo, router]);
 
-  return <span>{restante === null ? "…" : textoCuentaRegresiva(restante)}</span>;
+  return <span className={estilos.cuenta}>{restante === null ? "…" : textoCuentaRegresiva(restante)}</span>;
 }

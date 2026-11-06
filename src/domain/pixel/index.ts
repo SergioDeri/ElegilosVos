@@ -1,6 +1,6 @@
 // Arte pixel (spec .scratch/diseno-pixel-art, ADR 0004). Lógica pura: la
-// paleta única, los temas por Club, la unidad --px, el texto bitmap y las
-// Camisetas. Los sprites son matrices de colores de la paleta; quien los
+// paleta única, los temas por Club, la unidad --px, el texto bitmap, las
+// Camisetas y los íconos. Los sprites son matrices de colores de la paleta; quien los
 // dibuja (React, CSS) vive en la app.
 import { CLUBES, type ClubId, type PosicionNatural } from "@/domain/comun/tipos";
 
@@ -355,4 +355,65 @@ export function camiseta(club: ClubId, posicion: PosicionNatural, opciones: { nu
     );
   }
   return m;
+}
+
+// -----------------------------------------------------------------------------
+// Íconos: 8x8, de un solo color de la paleta, fondo transparente
+// -----------------------------------------------------------------------------
+
+export const LADO_ICONO = 8;
+
+const DIBUJOS_ICONOS = {
+  // Tilde: la Alineación quedó guardada.
+  guardado: [
+    "........",
+    ".......#",
+    "......##",
+    "#....##.",
+    "##..##..",
+    ".####...",
+    "..##....",
+    "........",
+  ],
+  // Candado: cierre de la Votación.
+  cierre: [
+    "..####..",
+    ".#....#.",
+    ".#....#.",
+    "########",
+    "###..###",
+    "###..###",
+    "########",
+    "........",
+  ],
+  // Flecha que sale de una caja: compartir.
+  compartir: [
+    "...##...",
+    "..####..",
+    ".#.##.#.",
+    "...##...",
+    "#..##..#",
+    "#......#",
+    "########",
+    "........",
+  ],
+  // Tres barras: menú.
+  menu: [
+    "########",
+    "........",
+    "........",
+    "########",
+    "........",
+    "........",
+    "########",
+    "........",
+  ],
+} satisfies Record<string, string[]>;
+
+export type NombreIcono = keyof typeof DIBUJOS_ICONOS;
+export const ICONOS = Object.keys(DIBUJOS_ICONOS) as NombreIcono[];
+
+/** El ícono como matriz 8x8 pintada de `color`. */
+export function icono(nombre: NombreIcono, color: ColorPaleta): Matriz {
+  return DIBUJOS_ICONOS[nombre].map((fila) => [...fila].map((c) => (c === "#" ? PALETA[color] : null)));
 }

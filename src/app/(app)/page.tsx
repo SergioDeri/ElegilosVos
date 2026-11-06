@@ -13,6 +13,8 @@ import { CuentaRegresiva } from "./_alineacion/cuenta-regresiva";
 import { EditorAlineacion } from "./_alineacion/editor-alineacion";
 import { EnlaceParcial } from "./parcial/enlace-parcial";
 import estilos from "./_alineacion/alineacion.module.css";
+import inicio from "./inicio.module.css";
+import { Icono } from "@/app/_pixel/icono";
 import { asegurarHerencia } from "@/lib/herencia/asegurar";
 import { AvisoNoDisponibles } from "./_herencia/aviso-no-disponibles";
 import Link from "next/link";
@@ -60,14 +62,14 @@ export default async function Inicio() {
     <main>
       <h1>Elegilos Vos</h1>
       <Link href="/resultados">Ver el 11 Elegido y el historial</Link>
-      <section className={estilos.partido} aria-label="Próximo Partido">
-        <div className={estilos.rival}>
+      <section className={inicio.partido} aria-label="Próximo Partido">
+        <div className={inicio.rival}>
           <Escudo nombre={rival} url={escudoDelRival(supabase, partido.rival?.escudoPath ?? null)} />
           <div>
-            <h2>
+            <h2 className={inicio.titulo}>
               {club} vs {rival}
             </h2>
-            <p>
+            <p className={inicio.fecha}>
               <time dateTime={partido.inicio.toISOString()}>{formatearHoraUy(partido.inicio)}</time> (hora de Uruguay)
             </p>
           </div>
@@ -132,7 +134,8 @@ function MensajeVotacion(props: {
   switch (props.estado) {
     case "abierta":
       return (
-        <p>
+        <p className={inicio.votacion}>
+          <Icono nombre="cierre" />
           La Votación cierra en <CuentaRegresiva hasta={props.cierra.toISOString()} /> ({formatearHoraUy(props.cierra)}).
           Tu Alineación se guarda sola: la que tengas al cierre es tu voto.
         </p>
@@ -148,6 +151,7 @@ function MensajeVotacion(props: {
     case "cerrada":
       return (
         <p role="status">
+          <Icono nombre="cierre" />
           La Votación de este Partido cerró el {formatearHoraUy(props.cierra)}. Tu Alineación ya no se puede cambiar. La
           del próximo Partido abre cuando termine este ({formatearHoraUy(props.finDelPartido)}).
         </p>

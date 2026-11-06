@@ -1,0 +1,25 @@
+/* Mi cuenta. Colores de la paleta y medidas en píxeles de arte (--u). */
+
+/* Cada sección separada por una línea de 1 píxel de arte. */
+.seccion + .seccion {
+  margin-top: calc(4 * var(--u));
+  padding-top: calc(2 * var(--u));
+  box-shadow: 0 calc(-1 * var(--u)) 0 0 var(--color-grisOscuro);
+}
+
+/* Datos: rótulo y valor en dos columnas. */
+.datos {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--u) calc(4 * var(--u));
+  margin: calc(3 * var(--u)) 0;
+}
+
+.datos dt {
+  color: var(--color-blancoSombra);
+}
+
+.datos dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}

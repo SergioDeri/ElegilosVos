@@ -1,0 +1,11 @@
+/* Ícono 8x8 en línea con el texto de cuerpo (Tiny5 a 10 × --u, línea de 12):
+   apoyado 1 píxel de arte por debajo de la línea base, como las mayúsculas. */
+.icono {
+  vertical-align: calc(-1 * var(--u));
+  margin-right: calc(2 * var(--u));
+}
+
+/* Del color del texto que lo rodea. */
+.icono rect {
+  fill: currentColor;
+}

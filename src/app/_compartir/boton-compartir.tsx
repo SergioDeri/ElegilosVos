@@ -3,6 +3,7 @@
 // comparte con la Web Share API (con archivo) si el navegador puede; si no, la
 // descarga y, si hay un link público, lo copia al portapapeles.
 import { useState } from "react";
+import { Icono } from "@/app/_pixel/icono";
 
 const NOMBRE_POR_DEFECTO = "elegilos-vos.png";
 
@@ -82,7 +83,14 @@ export function BotonCompartir(props: {
   return (
     <p>
       <button type="button" onClick={compartir} disabled={ocupado}>
-        {ocupado ? "Generando imagen..." : "Compartir"}
+        {ocupado ? (
+          "Generando imagen..."
+        ) : (
+          <>
+            <Icono nombre="compartir" />
+            Compartir
+          </>
+        )}
       </button>
       {mensaje && <span role="status"> {mensaje}</span>}
     </p>

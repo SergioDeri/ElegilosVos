@@ -11,6 +11,7 @@ import Link from "next/link";
 import { colorDeSistema, temaDe } from "@/domain/pixel";
 import { obtenerHincha, requerirHincha } from "@/lib/auth/sesion";
 import { BotonCerrarSesion } from "@/app/_sesion/boton-cerrar-sesion";
+import { Icono } from "@/app/_pixel/icono";
 
 export async function generateViewport(): Promise<Viewport> {
   const hincha = await obtenerHincha();
@@ -22,7 +23,10 @@ export default async function LayoutApp({ children }: LayoutProps<"/">) {
   return (
     <div data-club={temaDe(hincha.clubFavorito)}>
       <header className="barra-app">
-        <Link href="/cuenta">Mi cuenta</Link>
+        <Link href="/cuenta">
+          <Icono nombre="menu" />
+          Mi cuenta
+        </Link>
         <BotonCerrarSesion />
       </header>
       {children}

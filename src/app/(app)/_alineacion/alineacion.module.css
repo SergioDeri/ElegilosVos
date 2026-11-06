@@ -1,8 +1,8 @@
 /* Pantalla de armado. Colores de la paleta (--color-*, acentos del tema) y
-   medidas en píxeles de arte (--u), como pide pixel.css; salvo la tarjeta del
-   Partido (.partido, .rival, .escudo), que pasa al estilo pixel con los
-   escudos (ticket 07). La cancha y la ubicación de los Puestos están en
-   @/app/_cancha. */
+   medidas en píxeles de arte (--u), como pide pixel.css; salvo el escudo del
+   Rival (.escudo), que pasa al estilo pixel en el ticket 07. La tarjeta del
+   Partido está en ../inicio.module.css; la cancha y la ubicación de los
+   Puestos, en @/app/_cancha. */
 .barra {
   display: flex;
   flex-wrap: wrap;
@@ -132,17 +132,6 @@
 
 .arrastrado {
   cursor: grabbing;
-}
-
-.partido {
-  max-width: 32rem;
-  margin: 0 auto 1rem;
-}
-
-.rival {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
 }
 
 .escudo {

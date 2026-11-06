@@ -1,0 +1,31 @@
+/* Inicio del Hincha: tarjeta del próximo Partido. Colores de la paleta y
+   medidas en píxeles de arte (--u), como pide pixel.css. */
+
+/* Panel con borde del acento del Club y esquinas escalonadas (--marco). */
+.partido {
+  --borde: var(--acento);
+  margin: calc(4 * var(--u)) var(--u);
+  padding: calc(3 * var(--u)) calc(4 * var(--u));
+  background: var(--color-negro);
+  box-shadow: var(--marco);
+}
+
+.rival {
+  display: flex;
+  gap: calc(4 * var(--u));
+  align-items: center;
+}
+
+.titulo {
+  margin: 0;
+  color: var(--color-cal);
+}
+
+.fecha {
+  margin: var(--u) 0 0;
+  color: var(--color-blancoSombra);
+}
+
+.votacion {
+  margin-bottom: 0;
+}

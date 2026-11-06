@@ -47,6 +47,7 @@ import { useGuardadoAutomatico, type EstadoGuardado } from "./use-guardado-autom
 import type { ClubId } from "@/domain/comun/tipos";
 import { CLASE_PUESTO, CLASE_SIGLA, Cancha, posicionPuesto } from "@/app/_cancha/cancha";
 import { JugadorConCamiseta } from "@/app/_pixel/jugador-con-camiseta";
+import { Icono } from "@/app/_pixel/icono";
 import estilos from "./alineacion.module.css";
 
 type Origen = { tipo: "jugador"; jugadorId: string } | { tipo: "puesto"; puesto: PuestoId };
@@ -342,6 +343,7 @@ function IndicadorGuardado({ estado, reintentar }: { estado: EstadoGuardado; rei
   };
   return (
     <span role="status" aria-live="polite" className={estilos.guardado} data-estado={estado.tipo}>
+      {estado.tipo === "guardado" && <Icono nombre="guardado" />}
       {texto[estado.tipo]}{" "}
       {estado.tipo === "error" && (
         <button type="button" onClick={reintentar}>

@@ -7,6 +7,7 @@ import { RUTA_INICIO } from "@/lib/auth/rutas";
 import { SeccionNotificaciones } from "./_notificaciones/seccion-notificaciones";
 import { FormularioBorrarCuenta } from "./formulario-borrar-cuenta";
 import { NOMBRE_CLUB } from "@/domain/comun/textos";
+import estilos from "./cuenta.module.css";
 
 export default async function PaginaCuenta() {
   const hincha = await requerirHincha();
@@ -18,9 +19,9 @@ export default async function PaginaCuenta() {
       </p>
       <h1>Mi cuenta</h1>
 
-      <section aria-labelledby="seccion-datos">
+      <section aria-labelledby="seccion-datos" className={estilos.seccion}>
         <h2 id="seccion-datos">Tus datos</h2>
-        <dl>
+        <dl className={estilos.datos}>
           <dt>Email</dt>
           <dd>{hincha.email ?? "Sin email"}</dd>
           <dt>Club Favorito</dt>
@@ -29,9 +30,9 @@ export default async function PaginaCuenta() {
         <p>Tu Club Favorito no se puede cambiar desde la app.</p>
       </section>
 
-      <SeccionNotificaciones />
+      <SeccionNotificaciones className={estilos.seccion} />
 
-      <section aria-labelledby="seccion-borrar">
+      <section aria-labelledby="seccion-borrar" className={estilos.seccion}>
         <h2 id="seccion-borrar">Borrar cuenta</h2>
         {hincha.rol === "admin" ? (
           <p role="status">
