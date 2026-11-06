@@ -1,0 +1,196 @@
+/* Backoffice liviano (diseño pixel art, ticket 06). La base es la de
+   pixel.css: paleta, fuentes bitmap, paneles y botones con bordes pixelados.
+   Acá solo se lo hace denso para cargar datos rápido: más ancho, menos aire y
+   tablas compactas. Sin sprites ni efectos (salvo el hueco "falta escudo" del
+   ticket 07). Colores de la paleta y medidas en píxeles de arte (--u). */
+
+.backoffice {
+  --borde: var(--color-grisOscuro);
+}
+
+/* -------------------------------------------------------------------------
+   Encabezado: email y navegación en una línea que salta si no entra
+   ------------------------------------------------------------------------- */
+.encabezado {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.encabezado strong {
+  color: inherit;
+}
+
+.encabezado nav {
+  flex: 1;
+}
+
+.encabezado > :last-child {
+  margin-left: auto;
+}
+
+/* -------------------------------------------------------------------------
+   Panel: todo el ancho disponible (en pasos de --u) y menos aire
+   ------------------------------------------------------------------------- */
+.backoffice main {
+  --ancho-main: min(calc(480 * var(--u)), round(down, calc(100% - 4 * var(--u)), var(--u)));
+  padding: calc(2 * var(--u)) calc(4 * var(--u)) calc(4 * var(--u));
+}
+
+.backoffice h2,
+.backoffice h3 {
+  margin: calc(6 * var(--u)) 0 calc(2 * var(--u));
+}
+
+.backoffice p {
+  margin: calc(2 * var(--u)) 0;
+}
+
+/* -------------------------------------------------------------------------
+   Formularios densos: cada campo en su renglón, con poco aire
+   ------------------------------------------------------------------------- */
+.backoffice form {
+  gap: var(--u);
+}
+
+.backoffice form p {
+  margin: 0;
+}
+
+.backoffice input,
+.backoffice select,
+.backoffice textarea {
+  padding: var(--u) calc(2 * var(--u));
+}
+
+/* El botón nativo del campo de archivo, como los demás botones. */
+.backoffice input[type="file"]::file-selector-button {
+  margin: 0 calc(3 * var(--u)) 0 0;
+  padding: 0 calc(3 * var(--u)) var(--u);
+  border: 0;
+  background: var(--acento);
+  color: var(--acento-tinta);
+  font: inherit;
+  box-shadow: inset 0 calc(-2 * var(--u)) 0 0 var(--acento-sombra);
+  cursor: pointer;
+}
+
+.backoffice button {
+  margin: var(--u) var(--u) calc(2 * var(--u)) 0;
+  padding: var(--u) calc(4 * var(--u)) calc(2 * var(--u));
+}
+
+/* Formularios de una sola acción (baja, borrar...): en línea. */
+.backoffice form:has(> button:only-child) {
+  display: inline-flex;
+}
+
+.backoffice fieldset {
+  margin: calc(2 * var(--u)) 0;
+  padding: calc(2 * var(--u)) calc(4 * var(--u));
+  border: var(--u) solid var(--color-grisOscuro);
+}
+
+.backoffice legend {
+  padding: 0 var(--u);
+  color: var(--color-blancoSombra);
+}
+
+/* -------------------------------------------------------------------------
+   Listas
+   ------------------------------------------------------------------------- */
+.backoffice ul {
+  margin: calc(2 * var(--u)) 0;
+  padding-left: calc(6 * var(--u));
+}
+
+.backoffice li {
+  margin: var(--u) 0;
+}
+
+.backoffice li::marker {
+  content: "· ";
+  color: var(--color-gris);
+}
+
+.backoffice fieldset ul {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(calc(80 * var(--u)), 1fr));
+  gap: 0 calc(4 * var(--u));
+}
+
+.backoffice fieldset li::marker {
+  content: none;
+}
+
+.backoffice fieldset label {
+  flex-direction: row;
+  align-items: center;
+  color: var(--color-cal);
+}
+
+/* -------------------------------------------------------------------------
+   Tablas compactas, con líneas de 1 píxel de arte
+   ------------------------------------------------------------------------- */
+.backoffice table {
+  width: 100%;
+  margin: calc(2 * var(--u)) 0;
+  border-collapse: collapse;
+}
+
+.backoffice th,
+.backoffice td {
+  padding: var(--u) calc(2 * var(--u));
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: var(--u) solid var(--color-grisOscuro);
+}
+
+.backoffice th {
+  background: var(--color-negro);
+  color: var(--color-blancoSombra);
+  font-weight: normal;
+}
+
+.backoffice tbody tr:hover {
+  background: var(--color-negro);
+}
+
+.backoffice td form,
+.backoffice td button {
+  margin: 0;
+}
+
+/* -------------------------------------------------------------------------
+   Desplegables (Parcial de cada Votación) y código (clave de 2FA)
+   ------------------------------------------------------------------------- */
+.backoffice details {
+  margin: calc(2 * var(--u)) 0;
+}
+
+.backoffice summary {
+  list-style: none;
+  cursor: pointer;
+  color: var(--enlace);
+}
+
+.backoffice summary::-webkit-details-marker {
+  display: none;
+}
+
+.backoffice summary::before {
+  content: "+ ";
+}
+
+.backoffice details[open] > summary::before {
+  content: "- ";
+}
+
+.backoffice code {
+  padding: 0 var(--u);
+  background: var(--color-negro);
+  color: var(--color-cal);
+  font-family: inherit;
+  overflow-wrap: anywhere;
+}

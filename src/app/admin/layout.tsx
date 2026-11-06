@@ -1,17 +1,22 @@
 // Backoffice. Solo cuentas con rol Admin (si no, 404); sin sesión, al login.
 // El panel (admin/(panel)) exige además 2FA en la sesión (AAL2). Este layout
 // NO protege las Server Actions: cada una llama a requerirAdminEnAccion().
+//
+// Estilo (diseño pixel art, ticket 06): la paleta, las fuentes y los bordes
+// pixel de la app, con el tema neutro y tablas y formularios densos
+// (backoffice.module.css). Sin sprites ni efectos.
 import Link from "next/link";
 import { requerirCuentaAdmin } from "@/lib/auth/admin";
 import { BotonCerrarSesion } from "@/app/_sesion/boton-cerrar-sesion";
+import estilos from "./backoffice.module.css";
 
 export const metadata = { title: "Backoffice · Elegilos Vos", robots: { index: false } };
 
 export default async function LayoutAdmin({ children }: LayoutProps<"/admin">) {
   const { hincha, conDosFactores } = await requerirCuentaAdmin();
   return (
-    <>
-      <header>
+    <div className={estilos.backoffice}>
+      <header className={`barra-app ${estilos.encabezado}`}>
         <strong>Backoffice</strong> · {hincha.email}
         {conDosFactores && (
           <nav>
@@ -23,6 +28,6 @@ export default async function LayoutAdmin({ children }: LayoutProps<"/admin">) {
         <BotonCerrarSesion />
       </header>
       {children}
-    </>
+    </div>
   );
 }
