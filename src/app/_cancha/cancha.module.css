@@ -1,0 +1,37 @@
+/* Cancha compartida (armado, Parcial y resultados): el campo y la ubicación de
+   cada Puesto. El aspecto de cada Puesto (fondo, borde, estados) y su
+   contenido los define cada vista.
+   Estilos mínimos y funcionales (el diseño es una etapa aparte). */
+
+/* Con :where() (especificidad 0): una vista puede cambiar, por ejemplo, el margen. */
+:where(.cancha) {
+  position: relative;
+  width: 100%;
+  max-width: 26rem;
+  margin: 0 auto;
+  aspect-ratio: 68 / 100;
+  background: #2e7d32;
+  border: 2px solid #fff;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+/* Centrado en (x, y) del Puesto; `bottom` y `left` los pone posicionPuesto().
+   Solo ubicación y tamaño: las vistas no pisan estas propiedades. */
+.puesto {
+  position: absolute;
+  transform: translate(-50%, 50%);
+  width: 4.5rem;
+  padding: 0.2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 0.7rem;
+  line-height: 1.1;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.sigla {
+  font-weight: bold;
+}

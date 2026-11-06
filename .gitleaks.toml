@@ -1,0 +1,20 @@
+# Configuración de gitleaks (ticket 17). Usa las reglas por defecto y solo
+# permite las claves FALSAS de suscripción push de los tests (formato real de
+# Web Push, sin valor: no corresponden a ningún navegador ni cuenta).
+#
+#   docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:latest dir /repo --config /repo/.gitleaks.toml
+#   gitleaks git . --config .gitleaks.toml     # historial completo
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Claves de suscripción push de ejemplo en los tests"
+regexes = [
+  '''dGqD8bRY8VSDmHmb6-boAQ''',
+  '''BLlKA3Z0rjh4r1zf9dh0XU7iSiNfRr0KqQSlDWMNASyEcHKazYILP-fa3_o6lOzTbscjdNWJmoyUcBdAlvhGZH8''',
+]
+paths = [
+  '''(^|/)node_modules/''',
+  '''(^|/)\.next/''',
+]

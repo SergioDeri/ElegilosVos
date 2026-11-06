@@ -1,0 +1,28 @@
+# Secretos: nunca commitear
+.env
+.env.*
+!.env.example
+supabase/.temp/
+supabase/.branches/
+
+# Dependencias y builds
+node_modules/
+.next/
+out/
+build/
+dist/
+.vercel/
+
+# Sistema / editores
+.DS_Store
+*.log
+
+# Next / TypeScript (generados)
+next-env.d.ts
+*.tsbuildinfo
+
+# Tests
+coverage/
+
+# Worktrees de agentes
+.claude/worktrees/

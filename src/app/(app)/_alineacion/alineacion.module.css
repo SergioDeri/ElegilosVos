@@ -1,0 +1,148 @@
+/* Estilos mínimos y funcionales de la pantalla de armado (el diseño es una etapa aparte). */
+.editor {
+  max-width: 32rem;
+  margin: 0 auto;
+}
+
+.barra {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.guardado[data-estado="error"],
+.guardado[data-estado="cerrada"],
+.guardado[data-estado="invalida"] {
+  color: #b00020;
+}
+
+.aviso {
+  min-height: 1.5em;
+}
+
+.acciones {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* La cancha y la ubicación de los Puestos están en @/app/_cancha; acá, lo
+   propio del armado (Puestos vacíos, arrastre y selección). */
+.puesto {
+  min-height: 3rem;
+  justify-content: center;
+  border: 2px dashed #fff;
+  border-radius: 0.5rem;
+  background: rgb(255 255 255 / 0.15);
+  color: #fff;
+  touch-action: manipulation;
+  cursor: pointer;
+}
+
+.puesto[data-ocupado="true"] {
+  border-style: solid;
+  background: #fff;
+  color: #111;
+}
+
+.puesto[data-sobre="true"],
+.puesto[data-seleccionado="true"] {
+  outline: 3px solid #ffd600;
+}
+
+.puesto[data-arrastrando="true"] {
+  opacity: 0.4;
+}
+
+.puesto[data-no-disponible="true"] {
+  background: #ffe0b2;
+}
+
+.nombre {
+  overflow-wrap: anywhere;
+}
+
+.banco {
+  margin-top: 1rem;
+  padding: 0.5rem;
+  border: 2px dashed transparent;
+}
+
+.banco[data-sobre="true"] {
+  border-color: #ffd600;
+}
+
+.lista {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.ficha {
+  width: 100%;
+  text-align: left;
+  padding: 0.5rem;
+  min-height: 2.75rem;
+  touch-action: manipulation;
+  cursor: grab;
+  background: #fff;
+  color: #111;
+  border: 1px solid #999;
+  border-radius: 0.25rem;
+}
+
+.ficha[data-seleccionado="true"] {
+  outline: 3px solid #ffd600;
+}
+
+.ficha[data-arrastrando="true"] {
+  opacity: 0.4;
+}
+
+.noDisponible {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem;
+  color: #666;
+  border: 1px solid #ddd;
+  border-radius: 0.25rem;
+}
+
+.partido {
+  max-width: 32rem;
+  margin: 0 auto 1rem;
+}
+
+.rival {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.escudo {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #ddd;
+  color: #333;
+  font-weight: bold;
+  font-size: 0.8rem;
+}
+
+.fichaArrastrada {
+  display: inline-block;
+  padding: 0.4rem 0.6rem;
+  background: #fff;
+  color: #111;
+  border: 2px solid #ffd600;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.3);
+  white-space: nowrap;
+  cursor: grabbing;
+}

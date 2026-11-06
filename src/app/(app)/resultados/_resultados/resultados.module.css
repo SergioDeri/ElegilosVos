@@ -1,0 +1,14 @@
+/* La cancha y la ubicación de los Puestos están en @/app/_cancha. */
+.cancha {
+  margin: 1rem auto;
+}
+
+.puesto {
+  border-radius: 0.3rem;
+  background: #fff;
+  color: #111;
+}
+
+.puesto[data-mio="true"] {
+  outline: 3px solid #ffd600;
+}

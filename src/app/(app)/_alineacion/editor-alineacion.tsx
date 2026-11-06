@@ -1,0 +1,441 @@
+"use client";
+
+// Cancha + banco. La UI solo despacha operaciones del Editor de Alineación
+// (@/domain/editor); cada cambio aceptado se guarda solo (con debounce).
+//
+// Interacción:
+// - Arrastrar (mouse, toque prolongado o teclado) un Jugador del banco a un
+//   Puesto (colocar/reemplazar), un Puesto a otro (mover/intercambiar) o un
+//   Puesto al banco (quitar).
+// - Alternativa sin arrastre: tocar un Jugador o un Puesto ocupado para
+//   seleccionarlo y después tocar el destino (o "Quitar").
+import { useEffect, useId, useMemo, useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
+import {
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
+  useDraggable,
+  useDroppable,
+  useSensor,
+  useSensors,
+  pointerWithin,
+  rectIntersection,
+  type Announcements,
+  type CollisionDetection,
+  type DragEndEvent,
+  type DragStartEvent,
+} from "@dnd-kit/core";
+import {
+  banco,
+  cambiarEsquema,
+  colocar,
+  desdeJson,
+  mover,
+  quitar,
+  type Alineacion,
+  type AlineacionJson,
+  type ResultadoOperacion,
+} from "@/domain/editor";
+import { esEsquemaId, esquema, esquemas, type PuestoId } from "@/domain/esquemas";
+import type { JugadorDelClub } from "@/lib/club/lecturas";
+import { NOMBRE_DISPONIBILIDAD } from "@/domain/comun/textos";
+import { MENSAJE_DE_RECHAZO, POSICION } from "./textos";
+import { useGuardadoAutomatico, type EstadoGuardado } from "./use-guardado-automatico";
+import { nombreCorto } from "@/domain/planteles";
+import { CLASE_PUESTO, CLASE_SIGLA, Cancha, posicionPuesto } from "@/app/_cancha/cancha";
+import estilos from "./alineacion.module.css";
+
+type Origen = { tipo: "jugador"; jugadorId: string } | { tipo: "puesto"; puesto: PuestoId };
+
+const ID_BANCO = "banco";
+const idPuesto = (p: PuestoId) => `puesto:${p}`;
+const idJugador = (j: string) => `jugador:${j}`;
+
+/**
+ * Con mouse o toque manda el puntero (el banco es ancho y taparía Puestos
+ * vecinos); con teclado no hay puntero y se usa la intersección.
+ */
+const deteccion: CollisionDetection = (args) => {
+  const bajoElPuntero = pointerWithin(args);
+  return bajoElPuntero.length > 0 ? bajoElPuntero : rectIntersection(args);
+};
+
+function leerOrigen(id: string | number): Origen | null {
+  const [tipo, valor] = String(id).split(":");
+  if (tipo === "jugador" && valor) return { tipo: "jugador", jugadorId: valor };
+  if (tipo === "puesto" && valor) return { tipo: "puesto", puesto: valor as PuestoId };
+  return null;
+}
+
+export interface PropsEditor {
+  partidoId: string;
+  inicial: AlineacionJson | null;
+  jugadores: JugadorDelClub[];
+  /** false: solo lectura (sin Votación abierta). */
+  editable: boolean;
+}
+
+export function EditorAlineacion({ partidoId, inicial, jugadores, editable }: PropsEditor) {
+  const router = useRouter();
+  const [alineacion, setAlineacion] = useState<Alineacion>(() => {
+    const leida = inicial ? desdeJson(inicial) : null;
+    return leida?.ok ? leida.estado : { esquema: "4-3-3", esquemaElegidoAMano: false, puestos: {} };
+  });
+  const [seleccion, setSeleccion] = useState<Origen | null>(null);
+  const [arrastrando, setArrastrando] = useState<Origen | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
+  const { estado: guardado, programar, reintentar } = useGuardadoAutomatico(partidoId);
+  // Si el servidor dice que la Votación cerró, se recarga la pantalla (solo lectura).
+  useEffect(() => {
+    if (guardado.tipo === "cerrada") router.refresh();
+  }, [guardado.tipo, router]);
+  const puedeEditar = editable && guardado.tipo !== "cerrada" && guardado.tipo !== "invalida";
+
+  const porId = useMemo(() => new Map(jugadores.map((j) => [j.id, j])), [jugadores]);
+  const libres = banco(alineacion, jugadores);
+  const noDisponibles = jugadores.filter((j) => j.enPlantel && j.disponibilidad !== "disponible");
+
+  function aplicar(resultado: ResultadoOperacion) {
+    setSeleccion(null);
+    if (!resultado.ok) {
+      setAviso(MENSAJE_DE_RECHAZO[resultado.motivo]);
+      return;
+    }
+    setAviso(null);
+    if (resultado.estado === alineacion) return;
+    setAlineacion(resultado.estado);
+    programar(resultado.estado);
+  }
+
+  /** Suelta `origen` sobre un Puesto o sobre el banco. */
+  function soltar(origen: Origen, destino: PuestoId | typeof ID_BANCO) {
+    if (!puedeEditar) return;
+    const ahora = new Date();
+    if (destino === ID_BANCO) {
+      if (origen.tipo === "puesto") aplicar(quitar(alineacion, origen.puesto));
+      else setSeleccion(null);
+      return;
+    }
+    aplicar(
+      origen.tipo === "jugador"
+        ? colocar(alineacion, origen.jugadorId, destino, jugadores, ahora)
+        : mover(alineacion, origen.puesto, destino, jugadores, ahora),
+    );
+  }
+
+  function tocarPuesto(puesto: PuestoId) {
+    if (!puedeEditar) return;
+    if (seleccion && !(seleccion.tipo === "puesto" && seleccion.puesto === puesto)) {
+      soltar(seleccion, puesto);
+      return;
+    }
+    if (seleccion) {
+      setSeleccion(null);
+      return;
+    }
+    if (alineacion.puestos[puesto]) setSeleccion({ tipo: "puesto", puesto });
+  }
+
+  function tocarJugador(jugadorId: string) {
+    if (!puedeEditar) return;
+    setAviso(null);
+    setSeleccion((s) => (s?.tipo === "jugador" && s.jugadorId === jugadorId ? null : { tipo: "jugador", jugadorId }));
+  }
+
+  function elegirEsquema(valor: string) {
+    if (!puedeEditar || !esEsquemaId(valor)) return;
+    aplicar(cambiarEsquema(alineacion, valor, new Date()));
+  }
+
+  const sensores = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
+    useSensor(KeyboardSensor),
+  );
+
+  function alEmpezar(e: DragStartEvent) {
+    setSeleccion(null);
+    setArrastrando(leerOrigen(e.active.id));
+  }
+
+  function alTerminar(e: DragEndEvent) {
+    setArrastrando(null);
+    const origen = leerOrigen(e.active.id);
+    if (!origen || !e.over) return;
+    const destino = String(e.over.id);
+    if (destino === ID_BANCO) soltar(origen, ID_BANCO);
+    else if (destino.startsWith("puesto:")) soltar(origen, destino.slice("puesto:".length) as PuestoId);
+  }
+
+  const nombreDe = (id: string | number) => {
+    const o = leerOrigen(id);
+    if (!o) return "";
+    if (o.tipo === "jugador") return porId.get(o.jugadorId)?.nombre ?? "";
+    const j = alineacion.puestos[o.puesto];
+    return j ? (porId.get(j.jugadorId)?.nombre ?? "") : "";
+  };
+  const destinoDe = (id: string | number | undefined) => {
+    if (id === undefined) return "fuera de la cancha";
+    if (id === ID_BANCO) return "el banco";
+    const p = esquema(alineacion.esquema).puestos.find((x) => idPuesto(x.id) === id);
+    return p ? `el Puesto ${p.etiqueta}` : "";
+  };
+  const anuncios: Announcements = {
+    onDragStart: ({ active }) => `Agarraste a ${nombreDe(active.id)}.`,
+    onDragOver: ({ active, over }) => `${nombreDe(active.id)} está sobre ${destinoDe(over?.id)}.`,
+    onDragEnd: ({ active, over }) => `Soltaste a ${nombreDe(active.id)} en ${destinoDe(over?.id)}.`,
+    onDragCancel: ({ active }) => `Cancelaste. ${nombreDe(active.id)} vuelve a su lugar.`,
+  };
+
+  const seleccionado =
+    seleccion?.tipo === "jugador"
+      ? porId.get(seleccion.jugadorId)
+      : seleccion
+        ? porId.get(alineacion.puestos[seleccion.puesto]?.jugadorId ?? "")
+        : undefined;
+  const enArrastre =
+    arrastrando?.tipo === "jugador"
+      ? porId.get(arrastrando.jugadorId)
+      : arrastrando
+        ? porId.get(alineacion.puestos[arrastrando.puesto]?.jugadorId ?? "")
+        : undefined;
+
+  return (
+    <DndContext
+      id={useId()}
+      sensors={sensores}
+      collisionDetection={deteccion}
+      onDragStart={alEmpezar}
+      onDragEnd={alTerminar}
+      onDragCancel={() => setArrastrando(null)}
+      accessibility={{
+        announcements: anuncios,
+        screenReaderInstructions: {
+          draggable:
+            "Para mover un Jugador con el teclado, apretá espacio o enter, movelo con las flechas y apretá espacio o enter para soltarlo. Escape cancela.",
+        },
+      }}
+    >
+      <section aria-label="Tu Alineación" className={estilos.editor}>
+        <div className={estilos.barra}>
+          <label>
+            Esquema{" "}
+            <select
+              value={alineacion.esquemaElegidoAMano ? alineacion.esquema : ""}
+              onChange={(e) => elegirEsquema(e.target.value)}
+              disabled={!puedeEditar}
+            >
+              {!alineacion.esquemaElegidoAMano && <option value="">Elegí un Esquema ({alineacion.esquema})</option>}
+              {esquemas().map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.nombre}
+                </option>
+              ))}
+            </select>
+          </label>
+          {editable && <IndicadorGuardado estado={guardado} reintentar={reintentar} />}
+        </div>
+
+        <p role="status" aria-live="polite" className={estilos.aviso}>
+          {aviso ??
+            (seleccionado && puedeEditar
+              ? `Elegiste a ${seleccionado.nombre}. Tocá un Puesto${seleccion?.tipo === "puesto" ? " o Quitar" : ""}.`
+              : "")}
+        </p>
+        {seleccion?.tipo === "puesto" && puedeEditar && (
+          <div className={estilos.acciones}>
+            <button type="button" onClick={() => aplicar(quitar(alineacion, seleccion.puesto))}>
+              Quitar a {seleccionado?.nombre}
+            </button>
+            <button type="button" onClick={() => setSeleccion(null)}>
+              Cancelar
+            </button>
+          </div>
+        )}
+
+        <Cancha role="group" aria-label={`Cancha, Esquema ${alineacion.esquema}`}>
+          {esquema(alineacion.esquema).puestos.map((p) => {
+            const ocupado = alineacion.puestos[p.id];
+            const jugador = ocupado ? porId.get(ocupado.jugadorId) : undefined;
+            return (
+              <PuestoEnCancha
+                key={p.id}
+                puesto={p.id}
+                etiqueta={p.etiqueta}
+                sigla={p.sigla}
+                x={p.x}
+                y={p.y}
+                jugador={jugador}
+                jugadorIdDesconocido={ocupado && !jugador ? ocupado.jugadorId : undefined}
+                editable={puedeEditar}
+                seleccionado={seleccion?.tipo === "puesto" && seleccion.puesto === p.id}
+                alTocar={() => tocarPuesto(p.id)}
+              />
+            );
+          })}
+        </Cancha>
+
+        {editable && (
+          <Banco
+            editable={puedeEditar}
+            alTocar={() => seleccion?.tipo === "puesto" && soltar(seleccion, ID_BANCO)}
+            hayPuestoSeleccionado={seleccion?.tipo === "puesto"}
+          >
+            <h2>Plantel disponible ({libres.length})</h2>
+            {libres.length === 0 && <p>No quedan Jugadores Disponibles en el banco.</p>}
+            <ul className={estilos.lista}>
+              {libres.map((j) => (
+                <li key={j.id}>
+                  <JugadorDelBanco
+                    jugador={j}
+                    editable={puedeEditar}
+                    seleccionado={seleccion?.tipo === "jugador" && seleccion.jugadorId === j.id}
+                    alTocar={() => tocarJugador(j.id)}
+                  />
+                </li>
+              ))}
+            </ul>
+            {noDisponibles.length > 0 && (
+              <>
+                <h2>No disponibles</h2>
+                <ul className={estilos.lista}>
+                  {noDisponibles.map((j) => (
+                    <li key={j.id} className={estilos.noDisponible}>
+                      <span>
+                        {j.numero} · {j.nombre} · {POSICION[j.posicionNatural]}
+                      </span>
+                      <small>
+                        {NOMBRE_DISPONIBILIDAD[j.disponibilidad]}
+                        {j.motivo ? `: ${j.motivo}` : ""}
+                      </small>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </Banco>
+        )}
+      </section>
+      <DragOverlay>{enArrastre ? <div className={estilos.fichaArrastrada}>{enArrastre.numero} · {enArrastre.nombre}</div> : null}</DragOverlay>
+    </DndContext>
+  );
+}
+
+function IndicadorGuardado({ estado, reintentar }: { estado: EstadoGuardado; reintentar: () => void }) {
+  const texto: Record<EstadoGuardado["tipo"], string> = {
+    guardado: "Guardado",
+    pendiente: "Cambios sin guardar…",
+    guardando: "Guardando…",
+    error: "No se pudo guardar. Reintentando…",
+    cerrada: "La Votación cerró: este cambio no se guardó.",
+    invalida: "Algo cambió en el Plantel y este cambio no se guardó. Recargá la página.",
+  };
+  return (
+    <span role="status" aria-live="polite" className={estilos.guardado} data-estado={estado.tipo}>
+      {texto[estado.tipo]}{" "}
+      {estado.tipo === "error" && (
+        <button type="button" onClick={reintentar}>
+          Reintentar ahora
+        </button>
+      )}
+      {estado.tipo === "invalida" && (
+        <button type="button" onClick={() => window.location.reload()}>
+          Recargar
+        </button>
+      )}
+    </span>
+  );
+}
+
+function PuestoEnCancha(props: {
+  puesto: PuestoId;
+  etiqueta: string;
+  sigla: string;
+  x: number;
+  y: number;
+  jugador: JugadorDelClub | undefined;
+  jugadorIdDesconocido: string | undefined;
+  editable: boolean;
+  seleccionado: boolean;
+  alTocar: () => void;
+}) {
+  const { puesto, etiqueta, sigla, x, y, jugador, editable, seleccionado, alTocar } = props;
+  const ocupado = !!jugador || !!props.jugadorIdDesconocido;
+  const soltable = useDroppable({ id: idPuesto(puesto), disabled: !editable });
+  const arrastrable = useDraggable({ id: idPuesto(puesto), disabled: !editable || !ocupado });
+  const noDisponible = jugador && (jugador.disponibilidad !== "disponible" || !jugador.enPlantel);
+  const descripcion = jugador
+    ? `${etiqueta}: ${jugador.numero} ${jugador.nombre}${noDisponible ? " (no disponible)" : ""}`
+    : `${etiqueta}: vacío`;
+
+  return (
+    <button
+      type="button"
+      ref={(nodo) => {
+        soltable.setNodeRef(nodo);
+        arrastrable.setNodeRef(nodo);
+      }}
+      {...(editable && ocupado ? arrastrable.listeners : {})}
+      {...arrastrable.attributes}
+      aria-label={descripcion}
+      aria-pressed={seleccionado}
+      aria-disabled={!editable}
+      onClick={alTocar}
+      className={`${CLASE_PUESTO} ${estilos.puesto}`}
+      data-ocupado={ocupado}
+      data-sobre={soltable.isOver}
+      data-arrastrando={arrastrable.isDragging}
+      data-seleccionado={seleccionado}
+      data-no-disponible={!!noDisponible}
+      style={posicionPuesto({ x, y })}
+    >
+      <span className={CLASE_SIGLA}>{sigla}</span>
+      {jugador ? (
+        <span className={estilos.nombre}>
+          {jugador.numero} {nombreCorto(jugador.nombre)}
+          {noDisponible ? " (!)" : ""}
+        </span>
+      ) : props.jugadorIdDesconocido ? (
+        <span className={estilos.nombre}>?</span>
+      ) : null}
+    </button>
+  );
+}
+
+function Banco(props: { editable: boolean; hayPuestoSeleccionado: boolean; alTocar: () => void; children: ReactNode }) {
+  const { setNodeRef, isOver } = useDroppable({ id: ID_BANCO, disabled: !props.editable });
+  return (
+    <div ref={setNodeRef} className={estilos.banco} data-sobre={isOver}>
+      {props.hayPuestoSeleccionado && (
+        <button type="button" onClick={props.alTocar}>
+          Mandar al banco
+        </button>
+      )}
+      {props.children}
+    </div>
+  );
+}
+
+function JugadorDelBanco(props: { jugador: JugadorDelClub; editable: boolean; seleccionado: boolean; alTocar: () => void }) {
+  const { jugador, editable, seleccionado, alTocar } = props;
+  const { setNodeRef, listeners, attributes, isDragging } = useDraggable({ id: idJugador(jugador.id), disabled: !editable });
+  return (
+    <button
+      type="button"
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      aria-pressed={seleccionado}
+      aria-label={`${jugador.numero} ${jugador.nombre}, ${POSICION[jugador.posicionNatural]}`}
+      onClick={alTocar}
+      className={estilos.ficha}
+      data-seleccionado={seleccionado}
+      data-arrastrando={isDragging}
+    >
+      <strong>{jugador.numero}</strong> {jugador.nombre} <small>{POSICION[jugador.posicionNatural]}</small>
+    </button>
+  );
+}
