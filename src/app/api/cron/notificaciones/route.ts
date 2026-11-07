@@ -1,6 +1,6 @@
 // Cron de notificaciones push (ticket 15). Lo llama Vercel Cron (GET con
 // `Authorization: Bearer ${CRON_SECRET}`) o pg_cron + pg_net desde Supabase
-// (ver README). Sin el secreto correcto: 401. Sin claves VAPID configuradas no
+// (ver docs/DESARROLLO.md). Sin el secreto correcto: 401. Sin claves VAPID configuradas no
 // envía nada (lo registra en el log) y responde 200 con `salteado: true`.
 import { NextResponse } from "next/server";
 import { cronAutorizado } from "@/lib/cron/autorizar";

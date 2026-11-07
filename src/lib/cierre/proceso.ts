@@ -12,7 +12,7 @@
 // Necesita un cliente con la service role (`crearClienteAdmin()`); no lo crea
 // acá para poder probarlo con un `ahora` explícito.
 //
-// Límites (documentados en el README):
+// Límites (documentados en docs/DESARROLLO.md):
 //   * Las Alineaciones son las guardadas cuando corre el proceso. Después del
 //     cierre ningún Hincha puede escribirlas, pero si alguien borra su cuenta
 //     entre el cierre y el proceso, su Alineación ya no cuenta.

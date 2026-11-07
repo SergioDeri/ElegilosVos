@@ -4,7 +4,7 @@
 // Supabase Auth (`getUser()`); nunca uno que venga del cliente. Borrar el
 // usuario de Auth borra en cascada su perfil y, desde el perfil, todas sus
 // Alineaciones (y cualquier tabla futura que referencie al Hincha con
-// `on delete cascade`: ver la sección del ticket 13 en el README).
+// `on delete cascade`: ver la sección del ticket 13 en docs/DESARROLLO.md).
 //
 // No importa `server-only` para poder probarlo desde tests/rls, pero el
 // cliente `admin` que recibe es el de la service role (`crearClienteAdmin()`):

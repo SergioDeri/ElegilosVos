@@ -5,7 +5,7 @@
  * hace el servidor con ese modelo. No lleva datos de Hinchas.
  *
  * Sin horas de Montevideo: la fecha llega ya formateada desde el borde
- * (`@/lib/compartir/fecha`), como pide la regla de horas del README.
+ * (`@/lib/compartir/fecha`), como pide la regla de horas de docs/DESARROLLO.md.
  */
 import { NOMBRE_CLUB } from "@/domain/comun/textos";
 import type { ClubId } from "@/domain/comun/tipos";

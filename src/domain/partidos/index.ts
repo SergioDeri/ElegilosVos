@@ -228,7 +228,7 @@ function rechazo(motivo: MotivoRechazo): ResultadoAccion {
  * Fecha y hora de Montevideo de un `<input type="datetime-local">` como
  * instante UTC, o null si no es una fecha y hora válida.
  *
- * Excepción a la regla de horas (README, convención 5): es la única hora de
+ * Excepción a la regla de horas (docs/DESARROLLO.md, convención 5): es la única hora de
  * Montevideo que entra al dominio. Se queda acá porque `validarPartido` valida
  * el formulario completo del Partido (Club, Rival e inicio, con sus errores por
  * campo) y el inicio sale de ella ya en UTC; sacarla al borde partiría esa

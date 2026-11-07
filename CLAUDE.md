@@ -20,6 +20,6 @@ Single-context: `CONTEXT.md` + `docs/adr/` en la raíz. See `docs/agents/domain.
 
 ## Código
 
-- Antes de tocar código, leé el `README.md`: estructura, comandos y **convenciones para el trabajo en paralelo** (migraciones nuevas con timestamp, lógica pura en `src/domain/`, RLS deny-by-default, horas en UTC).
+- Antes de tocar código, leé la guía de desarrollo `docs/DESARROLLO.md` (el `README.md` es la presentación pública, en inglés): estructura, comandos y **convenciones para el trabajo en paralelo** (migraciones nuevas con timestamp, lógica pura en `src/domain/`, RLS deny-by-default, horas en UTC).
 - Next.js 16: ver `AGENTS.md` (las APIs pueden diferir de lo que conocés; la doc está en `node_modules/next/dist/docs/`).
 - Antes de terminar: `npm run typecheck && npm run lint && npm test && npm run test:rls`.

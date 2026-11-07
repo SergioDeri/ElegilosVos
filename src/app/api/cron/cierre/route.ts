@@ -1,6 +1,6 @@
 // Cron del cierre de Votaciones (ticket 12). Lo llama Vercel Cron (GET con
 // `Authorization: Bearer ${CRON_SECRET}`) o pg_cron + pg_net desde Supabase
-// (ver README). Sin el secreto correcto: 401.
+// (ver docs/DESARROLLO.md). Sin el secreto correcto: 401.
 import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 import { cronAutorizado } from "@/lib/cron/autorizar";

@@ -358,7 +358,7 @@ skip_nonce_check = false
 # If enabled, it will allow the user to successfully authenticate when the provider does not return an email address.
 email_optional = false
 
-# Ticket 04: login con Google. Credenciales por variables de entorno (ver README,
+# Ticket 04: login con Google. Credenciales por variables de entorno (ver docs/DESARROLLO.md,
 # "Login con Google"). Callback de Auth: http://127.0.0.1:54321/auth/v1/callback
 [auth.external.google]
 enabled = true

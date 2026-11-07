@@ -53,7 +53,7 @@ async function enTransaccion(fn: () => Promise<void>) {
 }
 
 async function guardarSecretos(appUrl: string, secreto: string) {
-  // Si ya existen en la base local (alguien siguió el README), se pisan dentro de la transacción.
+  // Si ya existen en la base local (alguien siguió docs/DESARROLLO.md), se pisan dentro de la transacción.
   await db.query("delete from vault.secrets where name in ('app_url', 'cron_secret')");
   await db.query("select vault.create_secret($1, 'app_url'), vault.create_secret($2, 'cron_secret')", [appUrl, secreto]);
 }
@@ -142,7 +142,7 @@ describe("programar_crons", () => {
     expect((await hincha.rpc("programar_crons")).error).not.toBeNull();
     expect((await hincha.rpc("desprogramar_crons")).error).not.toBeNull();
     // La service role puede (sin secretos en la base local de tests no agenda nada,
-    // o re-agenda lo mismo si alguien siguió el README).
+    // o re-agenda lo mismo si alguien siguió docs/DESARROLLO.md).
     const { error } = await clienteServicio().rpc("programar_crons");
     expect(error).toBeNull();
   });
