@@ -18,7 +18,7 @@ html {
   background: var(--color-fondo);
   color: var(--color-cal);
   font-family: var(--fuente-cuerpo), monospace;
-  /* Tiny5 es de 10 px: 1 píxel de la fuente = 1 píxel de arte. */
+  /* Jersey 10 es de 10 px: 1 píxel de la fuente = 1 píxel de arte. */
   font-size: calc(10 * var(--u));
   line-height: calc(12 * var(--u));
   -webkit-font-smoothing: none;

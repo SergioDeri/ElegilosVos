@@ -99,7 +99,7 @@ The art is rendered with plain HTML, CSS and SVG rather than a canvas, so forms,
 | Scheduled jobs | `pg_cron` + `pg_net` in the database: closing votes, carrying lineups over, sending notifications |
 | Drag and drop | [dnd-kit](https://dndkit.com/) |
 | Push | Web Push (VAPID) |
-| Fonts | Press Start 2P and Tiny5 (both OFL), self-hosted |
+| Fonts | Press Start 2P and Jersey 10 (both OFL), self-hosted |
 | Tests | [Vitest](https://vitest.dev/): unit tests for the domain logic, plus access-policy tests against a local Supabase |
 | Hosting | Vercel + Supabase |
 

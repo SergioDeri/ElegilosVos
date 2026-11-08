@@ -5,14 +5,15 @@ import { RegistrarServiceWorker } from "./_pwa/registrar-service-worker";
 import "./pixel.css";
 
 // Fuentes bitmap (OFL-1.1), servidas por la app. Se usan solo en múltiplos
-// enteros de su tamaño nativo: Press Start 2P de 8 px, Tiny5 de 10 px.
+// enteros de su tamaño nativo: Press Start 2P de 8 px, Jersey 10 de 10 px
+// (reemplazó a Tiny5, que en el celu se leía poco).
 const fuenteTitulos = localFont({
   src: "../../node_modules/@fontsource/press-start-2p/files/press-start-2p-latin-400-normal.woff2",
   variable: "--fuente-titulos",
   display: "swap",
 });
 const fuenteCuerpo = localFont({
-  src: "../../node_modules/@fontsource/tiny5/files/tiny5-latin-400-normal.woff2",
+  src: "../../node_modules/@fontsource/jersey-10/files/jersey-10-latin-400-normal.woff2",
   variable: "--fuente-cuerpo",
   display: "swap",
 });
