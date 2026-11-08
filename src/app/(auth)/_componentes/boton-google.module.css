@@ -1,0 +1,26 @@
+/* Botón de Google: la "G" en un cuadro blanco a la izquierda del texto.
+   Medidas en píxeles de arte (--u); el cuadro mide lo mismo que el renglón. */
+.boton {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(3 * var(--u));
+  padding-left: calc(2 * var(--u));
+}
+
+.marco {
+  --borde: var(--color-contorno);
+  display: inline-flex;
+  flex: none;
+  padding: var(--u);
+  background: var(--color-blancoLuz);
+  box-shadow: var(--marco);
+}
+
+/* La "G" es una curva: con su suavizado, no con los bordes duros del pixel art. */
+.logo {
+  display: block;
+  width: calc(8 * var(--u));
+  height: calc(8 * var(--u));
+  shape-rendering: geometricPrecision;
+  image-rendering: auto;
+}
