@@ -39,11 +39,14 @@ export interface PartidoDelClub extends PartidoCalendario {
   rival: { nombre: string; escudoPath: string | null } | null;
 }
 
-/** Todos los Partidos del Club (el Calendario los necesita todos), con su Rival. */
+/**
+ * Todos los Partidos del Club (el Calendario los necesita todos), con su Rival.
+ * El Rival del Clásico (con `club_id`) sin escudo propio usa el de su Club.
+ */
 export async function leerPartidos(cliente: Cliente, club: ClubId): Promise<PartidoDelClub[]> {
   const { data, error } = await cliente
     .from("partido")
-    .select("id, inicio, estado, creado_en, rival(nombre, escudo_path)")
+    .select("id, inicio, estado, creado_en, rival(nombre, escudo_path, club(escudo_path))")
     .eq("club_id", club);
   if (error) throw error;
   return data.map((p) => ({
@@ -51,7 +54,7 @@ export async function leerPartidos(cliente: Cliente, club: ClubId): Promise<Part
     inicio: new Date(p.inicio),
     estado: p.estado,
     creadoEn: new Date(p.creado_en),
-    rival: p.rival ? { nombre: p.rival.nombre, escudoPath: p.rival.escudo_path } : null,
+    rival: p.rival ? { nombre: p.rival.nombre, escudoPath: p.rival.escudo_path ?? p.rival.club?.escudo_path ?? null } : null,
   }));
 }
 
