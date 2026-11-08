@@ -1,0 +1,65 @@
+/* La caja de acceso, centrada en la ventana. Medidas en píxeles de arte (--u). */
+.acceso {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(4 * var(--u));
+  min-height: 100dvh;
+  padding: calc(6 * var(--u)) calc(2 * var(--u));
+}
+
+.acceso > main {
+  --ancho-main: min(calc(150 * var(--u)), round(down, calc(100% - 4 * var(--u)), var(--u)));
+  margin: 0;
+}
+
+/* "ElegilosVos" con la fuente de los títulos, sombra dura de 1 píxel de arte
+   a cada lado y 2 abajo (sin desenfoque). Press Start 2P es de 8 px: 8u en
+   pantallas angostas, 16u (el doble exacto) cuando entra. */
+.marca {
+  margin: 0;
+  font-family: var(--fuente-titulos), monospace;
+  font-size: calc(8 * var(--u));
+  line-height: calc(8 * var(--u));
+  color: var(--color-cal);
+  white-space: nowrap;
+  text-shadow:
+    calc(-1 * var(--u)) 0 0 var(--color-contorno),
+    var(--u) 0 0 var(--color-contorno),
+    0 calc(-1 * var(--u)) 0 var(--color-contorno),
+    0 calc(2 * var(--u)) 0 var(--color-contorno);
+}
+
+.vos {
+  color: var(--color-amarillo);
+}
+
+/* El lema, pegado al título y del ancho de la caja. Contorno de 1 píxel de
+   arte para que se lea sobre el césped. */
+.lema {
+  max-width: min(calc(150 * var(--u)), round(down, calc(100% - 4 * var(--u)), var(--u)));
+  margin: calc(-2 * var(--u)) 0 0;
+  text-align: center;
+  color: var(--color-cal);
+  text-shadow:
+    calc(-1 * var(--u)) 0 0 var(--color-contorno),
+    var(--u) 0 0 var(--color-contorno),
+    0 calc(-1 * var(--u)) 0 var(--color-contorno),
+    0 var(--u) 0 var(--color-contorno);
+}
+
+/* 11 letras de 16u más 1u de sombra y 2u de margen a cada lado = 182u: con
+   --px 2 son 364 px CSS; con --px 3 o más la ventana ya mide 660 o más. */
+@media (min-width: 368px) {
+  .marca {
+    font-size: calc(16 * var(--u));
+    line-height: calc(16 * var(--u));
+    text-shadow:
+      calc(-1 * var(--u)) 0 0 var(--color-contorno),
+      var(--u) 0 0 var(--color-contorno),
+      0 calc(-1 * var(--u)) 0 var(--color-contorno),
+      0 calc(2 * var(--u)) 0 var(--color-contorno),
+      var(--u) calc(2 * var(--u)) 0 var(--color-contorno);
+  }
+}

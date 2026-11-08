@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { esquemas, type EsquemaId } from "@/domain/esquemas";
 import { PALETA, anchoTexto, pxPara } from "@/domain/pixel";
-import { ALTO_CAJA, LADO_CAMISETA_EN_CANCHA, disponer, rotulo, siluetaDePuestoLibre, type Disposicion, type Rect } from "./index";
+import { ALTO_CAJA, LADO_CAMISETA_EN_CANCHA, canchaDeFondo, disponer, rotulo, siluetaDePuestoLibre, type Disposicion, type Rect } from "./index";
 
 // Apellidos largos reales del seed.
 const LARGOS = [
@@ -186,5 +186,43 @@ describe("siluetaDePuestoLibre", () => {
       expect(fila).toHaveLength(24);
       for (const c of fila) expect(c === null || colores.has(c)).toBe(true);
     }
+  });
+});
+
+describe("canchaDeFondo", () => {
+  const colores = new Set<string>(Object.values(PALETA));
+  const tamano = (m: ReturnType<typeof canchaDeFondo>) => ({ alto: m.length, ancho: m[0]?.length ?? 0 });
+
+  it("mide exactamente lo pedido, en vertical y en horizontal", () => {
+    for (const [ancho, alto] of [
+      [180, 400],
+      [480, 300],
+      [97, 61],
+    ]) {
+      const m = canchaDeFondo(ancho, alto);
+      expect(tamano(m)).toEqual({ ancho, alto });
+      for (const fila of m) expect(fila).toHaveLength(ancho);
+    }
+  });
+
+  it("es el mismo césped que la cancha del armado", () => {
+    const d = disponer({ ancho: 360, alto: 640, px: 2, esquema: "4-4-2", suplentes: 0 });
+    expect(canchaDeFondo(d.cancha.ancho, d.cancha.alto)).toEqual(d.dibujo);
+  });
+
+  it("es opaca, usa la paleta y tiene líneas de cal", () => {
+    const m = canchaDeFondo(200, 120);
+    let cal = 0;
+    for (const fila of m)
+      for (const c of fila) {
+        expect(c !== null && colores.has(c)).toBe(true);
+        if (c === PALETA.cal) cal++;
+      }
+    expect(cal).toBeGreaterThan(0);
+  });
+
+  it("redondea hacia abajo y no falla con tamaños chicos", () => {
+    expect(tamano(canchaDeFondo(10.9, 5.2))).toEqual({ ancho: 10, alto: 5 });
+    expect(canchaDeFondo(0, 0)).toEqual([]);
   });
 });

@@ -1,0 +1,9 @@
+/* Detrás de todo y sin interceptar toques. */
+.fondo {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--color-fondo);
+}

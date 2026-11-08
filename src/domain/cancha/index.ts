@@ -276,6 +276,17 @@ function hash(a: number, b: number, s: number): number {
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
 }
 
+/**
+ * Solo el césped con sus líneas, de `ancho`×`alto` píxeles de arte (sin
+ * Puestos ni banco): el fondo de las pantallas de acceso. Vertical si es más
+ * alto que ancho; si no, horizontal.
+ */
+export function canchaDeFondo(ancho: number, alto: number): Matriz {
+  const a = Math.max(0, Math.floor(ancho));
+  const h = Math.max(0, Math.floor(alto));
+  return dibujoDeCancha({ x: 0, y: 0, ancho: a, alto: h }, h > a ? "vertical" : "horizontal");
+}
+
 function dibujoDeCancha(cancha: Rect, orientacion: Orientacion): Matriz {
   if (orientacion === "vertical") return canchaVertical(cancha.ancho, cancha.alto);
   // Se dibuja vertical (ancho = alto de pantalla) y se gira: arco propio a la
