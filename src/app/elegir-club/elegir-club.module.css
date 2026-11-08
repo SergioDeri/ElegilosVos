@@ -1,0 +1,36 @@
+/* Elección del Club: dos botones grandes, cada uno con su escudo y los
+   colores de su Club. Medidas en píxeles de arte (--u). */
+.clubes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(calc(56 * var(--u)), 1fr));
+  gap: calc(4 * var(--u));
+  margin: calc(4 * var(--u)) var(--u);
+}
+
+.club {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(3 * var(--u));
+  margin: 0;
+  padding: calc(4 * var(--u)) calc(3 * var(--u)) calc(5 * var(--u));
+}
+
+/* Confirmación: escudo, pregunta, aviso y botones centrados en la caja. */
+.confirmar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.escudoConfirmar {
+  margin-top: calc(3 * var(--u));
+}
+
+/* "Volver" en gris: la acción secundaria, no la del Club. */
+.volver {
+  --acento: var(--color-negroLuz);
+  --acento-tinta: var(--color-cal);
+  --acento-sombra: var(--color-grisOscuro);
+}
