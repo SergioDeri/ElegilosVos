@@ -478,10 +478,6 @@ pass = "env(RESEND_API_KEY)"
 admin_email = "env(EMAIL_FROM)"
 sender_name = "Elegilos Vos"
 
-# Sin credenciales de Google en producción todavía: el botón queda apagado.
-[remotes.produccion.auth.external.google]
-enabled = false
-
 # Lo que Supabase eligió para la instancia de la nube: no lo pisamos con los
 # valores locales. Los vector buckets son del plan Pro y la app no los usa.
 [remotes.produccion.db.pooler]

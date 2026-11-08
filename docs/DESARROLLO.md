@@ -456,7 +456,7 @@ En Vercel marcá las secretas como *Sensitive*. Usá claves distintas para Previ
 ### Deploy
 
 1. **Supabase**: crear el proyecto; `npx supabase link --project-ref <ref>` y `npx supabase db push` (aplica las migraciones; los seeds **no** se aplican). Revisar en *Database → Extensions* que `pg_graphql` no haga falta (la app no usa GraphQL: se puede deshabilitar).
-2. **Auth**: lo que difiere de local está en `[remotes.produccion]` de `supabase/config.toml` (Site URL, redirect, SMTP de Resend, rate limit de emails, Google apagado). Los valores salen de `supabase/.env` (no se commitea): `PROD_SITE_URL`, `PROD_AUTH_CALLBACK_URL`, `RESEND_API_KEY`, `EMAIL_FROM`. Se aplica con `npx supabase config diff` (revisar) y `npx supabase config push`. Lo que no maneja `config push` va en el dashboard. Referencia de lo que tiene que quedar:
+2. **Auth**: lo que difiere de local está en `[remotes.produccion]` de `supabase/config.toml` (Site URL, redirect, SMTP de Resend, rate limit de emails). Google usa las mismas variables que local (`SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID` y `_SECRET`, en `supabase/.env`). Los valores salen de `supabase/.env` (no se commitea): `PROD_SITE_URL`, `PROD_AUTH_CALLBACK_URL`, `RESEND_API_KEY`, `EMAIL_FROM`. Se aplica con `npx supabase config diff` (revisar) y `npx supabase config push`. Lo que no maneja `config push` va en el dashboard. Referencia de lo que tiene que quedar:
    - *Sign In / Providers → Email*: **Confirm email** activado, largo mínimo de contraseña 8, *Secure password change* activado.
    - *Google*: activarlo con Client ID y secret (ver ticket 04).
    - *Multi-Factor*: **TOTP** habilitado (lo exige el backoffice).
