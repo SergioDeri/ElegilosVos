@@ -5,7 +5,7 @@
 // dibuja en CanchaPixel: Camiseta, número y apellido por Puesto, con un
 // detalle opcional (por ejemplo, el porcentaje) en una chapita.
 import type { ClubId } from "@/domain/comun/tipos";
-import { PUESTO_IDS, esPuestoDeArquero, type EsquemaId, type PuestoId } from "@/domain/esquemas";
+import { esPuestoDeArquero, type EsquemaId, type PuestoId } from "@/domain/esquemas";
 import { JugadorConCamiseta } from "@/app/_pixel/jugador-con-camiseta";
 import { CanchaPixel } from "./cancha-pixel";
 import { PuestoLibre } from "./puesto-libre";
@@ -54,7 +54,6 @@ export function CanchaDeLectura(props: {
                   // En la cancha, el Puesto de arquero solo lo ocupa un arquero.
                   jugador={{ nombre: jugador.nombre, numero: jugador.numero, posicionNatural: esPuestoDeArquero(caja.id) ? "ARQ" : "DEF" }}
                   ancho={caja.ancho}
-                  balanceo={PUESTO_IDS.indexOf(caja.id) % 2 === 0 ? 0 : 1}
                 />
               ) : (
                 <PuestoLibre texto={caja.sigla} ancho={caja.ancho} />

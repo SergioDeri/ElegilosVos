@@ -40,7 +40,7 @@ import {
   type AlineacionJson,
   type ResultadoOperacion,
 } from "@/domain/editor";
-import { PUESTO_IDS, esEsquemaId, esquema, esquemas, type PuestoId } from "@/domain/esquemas";
+import { esEsquemaId, esquema, esquemas, type PuestoId } from "@/domain/esquemas";
 import type { JugadorDelClub } from "@/lib/club/lecturas";
 import { NOMBRE_DISPONIBILIDAD } from "@/domain/comun/textos";
 import { MENSAJE_DE_RECHAZO, POSICION } from "./textos";
@@ -415,10 +415,10 @@ function PuestoEnCancha(props: {
       {jugador ? (
         <>
           {salto === undefined ? (
-            <JugadorConCamiseta club={club} jugador={jugador} ancho={caja.ancho} balanceo={faseDeBalanceo(caja.id)} />
+            <JugadorConCamiseta club={club} jugador={jugador} ancho={caja.ancho} />
           ) : (
             <span key={salto} className={efectos.salto}>
-              <JugadorConCamiseta club={club} jugador={jugador} ancho={caja.ancho} balanceo={faseDeBalanceo(caja.id)} />
+              <JugadorConCamiseta club={club} jugador={jugador} ancho={caja.ancho} />
               <Particulas />
             </span>
           )}
@@ -470,11 +470,6 @@ function JugadorDelBanco(props: {
       <JugadorConCamiseta club={club} jugador={jugador} ancho={ancho} />
     </button>
   );
-}
-
-/** Media cancha se balancea desfasada de la otra. */
-function faseDeBalanceo(puesto: PuestoId): 0 | 1 {
-  return PUESTO_IDS.indexOf(puesto) % 2 === 0 ? 0 : 1;
 }
 
 /** Destinos de las partículas, en píxeles de arte (múltiplos de 4: 4 pasos enteros). */

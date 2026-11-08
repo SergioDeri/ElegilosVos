@@ -24,28 +24,6 @@
 }
 
 /* ---------------------------------------------------------------------------
-   Balanceo en la cancha: 2 fotogramas a 4 FPS, la mitad desfasada
-   --------------------------------------------------------------------------- */
-@media (prefers-reduced-motion: no-preference) {
-  .balanceo {
-    animation: balanceo 500ms step-end infinite;
-  }
-
-  .balanceoDesfasado {
-    animation: balanceo 500ms step-end -250ms infinite;
-  }
-}
-
-@keyframes balanceo {
-  0% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(calc(-1 * var(--u)));
-  }
-}
-
-/* ---------------------------------------------------------------------------
    Salto al soltar una Camiseta en un Puesto, con partículas cuadradas
    --------------------------------------------------------------------------- */
 .salto {
