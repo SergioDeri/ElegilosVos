@@ -12,7 +12,7 @@ Spec: `.scratch/diseno-pixel-art/spec.md`. ADR 0004 (pixel art en DOM con `--px`
 
 **Blocked by:** 03, 04
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] Las transiciones entre pantallas van por bloques o por pasos
 - [x] Soltar una Camiseta en un Puesto dispara el salto y las partículas cuadradas, alineados a la grilla

@@ -4,7 +4,7 @@
 
 **Blocked by:** 05, 09
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] El Hincha ve el Parcial de su Club (el 11, los porcentajes por Esquema y los porcentajes por Puesto)
 - [ ] El Parcial se actualiza al cambiar Alineaciones (con la caché que se haya definido, como máximo un minuto)

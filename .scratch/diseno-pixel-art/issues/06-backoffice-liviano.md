@@ -6,7 +6,7 @@ Spec: `.scratch/diseno-pixel-art/spec.md`. ADR 0004 (pixel art en DOM con `--px`
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] Todas las pantallas del backoffice usan la paleta, la fuente y los bordes pixel
 - [x] No hay sprites ni animaciones en el backoffice

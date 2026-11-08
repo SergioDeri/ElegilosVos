@@ -6,7 +6,7 @@ Spec: `.scratch/diseno-pixel-art/spec.md`. ADR 0004 (pixel art en DOM con `--px`
 
 **Blocked by:** 02
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] El dominio expone la disposición: a partir del espacio en píxeles CSS, `--px`, el Esquema y la cantidad de suplentes, devuelve la orientación, el tamaño de la cancha en píxeles de arte (`floor(espacio / --px)`), el dibujo de la cancha, la posición entera de cada Puesto y cómo se reparte el banco
 - [x] Tests: para todos los Esquemas del catálogo y las pantallas 390x844, 360x740, 844x390, 1470x739 y 1920x1080, con apellidos largos reales del seed, ninguna caja (Camiseta más apellido) se superpone con otra y todas caen dentro de la cancha

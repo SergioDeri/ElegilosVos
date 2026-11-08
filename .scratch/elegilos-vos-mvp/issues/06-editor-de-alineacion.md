@@ -11,7 +11,7 @@ Una operaci√≥n que viola una invariante se rechaza y el estado no cambia. Tambi√
 
 **Blocked by:** 02
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] Colocar, mover, intercambiar, reemplazar desde el Plantel y quitar se comportan como se describe
 - [ ] Un Jugador nunca queda en dos Puestos

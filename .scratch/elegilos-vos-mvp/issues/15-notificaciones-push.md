@@ -10,7 +10,7 @@ Cada notificación se envía una sola vez por Hincha y por evento. Las suscripci
 
 **Blocked by:** 07, 12
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] El Hincha puede activar y desactivar las notificaciones; en iOS ve las instrucciones de PWA
 - [ ] Los cuatro eventos disparan su notificación solo a los Hinchas del Club que corresponde

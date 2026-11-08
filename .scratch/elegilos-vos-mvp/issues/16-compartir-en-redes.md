@@ -4,7 +4,7 @@
 
 **Blocked by:** 12
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] El Hincha genera y comparte la imagen de su Alineación
 - [ ] Cualquiera con el link puede ver la imagen del 11 Elegido

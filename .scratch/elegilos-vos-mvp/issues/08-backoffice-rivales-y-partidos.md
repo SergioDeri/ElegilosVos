@@ -4,7 +4,7 @@
 
 **Blocked by:** 07, 03
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] Alta, edición y baja de Rivales con escudo; un Rival dado de baja no se ofrece para Partidos nuevos
 - [ ] Alta de Partido con Club, Rival e inicio en hora de Montevideo, guardado en UTC

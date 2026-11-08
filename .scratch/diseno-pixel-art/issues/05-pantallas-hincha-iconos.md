@@ -6,7 +6,7 @@ Spec: `.scratch/diseno-pixel-art/spec.md`. ADR 0004 (pixel art en DOM con `--px`
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] Los íconos de 8x8 salen de la paleta y se ven nítidos a cualquier `--px`
 - [x] El inicio, la cuenta, los avisos y los estados vacíos usan fuentes, paneles y acentos pixel

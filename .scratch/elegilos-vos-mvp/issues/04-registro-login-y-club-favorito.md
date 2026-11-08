@@ -4,7 +4,7 @@
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] Registro e inicio de sesión con Google funcionando (con instrucciones en el README para configurar las credenciales en local)
 - [ ] Registro con email y contraseña; sin verificar el código no se puede usar la app

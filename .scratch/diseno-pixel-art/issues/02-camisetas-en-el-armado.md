@@ -17,7 +17,7 @@ Spec: `.scratch/diseno-pixel-art/spec.md`. ADR 0004 (pixel art en DOM con `--px`
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] El dominio devuelve la matriz 24x24 de la Camiseta según Club y posición natural, con número estampado opcional; las 4 Camisetas son fijas en el código, no en la base
 - [x] Tests: cada matriz mide 24x24, usa solo colores de la paleta y es simétrica salvo el sombreado y los bastones; la de arquero corresponde a ARQ; el número queda dentro del torso, rodeado de contorno; snapshot de las 4 Camisetas

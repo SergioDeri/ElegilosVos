@@ -6,7 +6,7 @@ Spec: `.scratch/diseno-pixel-art/spec.md`. ADR 0004 (pixel art en DOM con `--px`
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] Hay una validación de dominio, al lado de la validación de imágenes que ya existe: el archivo tiene que ser PNG por su firma y declarar 48x48 en su cabecera. Devuelve los motivos `vacia`, `tamano`, `formato` y `dimensiones`, y cada uno tiene tests
 - [x] La subida de escudo de los Rivales usa la validación nueva

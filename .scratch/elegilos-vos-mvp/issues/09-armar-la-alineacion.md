@@ -4,7 +4,7 @@
 
 **Blocked by:** 03, 06, 04
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] El Hincha ve su próximo Partido y la cuenta regresiva al cierre
 - [ ] Puede elegir Esquema y arrastrar, intercambiar, reemplazar y quitar Jugadores en el celular y en la compu

@@ -9,7 +9,7 @@ Convenciones para el trabajo en paralelo (documentarlas en el README):
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] El proyecto levanta en local, junto con Supabase local
 - [ ] Las migraciones crean las tablas del dominio con RLS habilitado y sin políticas abiertas

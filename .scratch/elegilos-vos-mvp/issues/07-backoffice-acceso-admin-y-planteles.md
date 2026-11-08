@@ -9,7 +9,7 @@ El cambio de Disponibilidad deja un registro (evento) que usarán los tickets 10
 
 **Blocked by:** 04
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] Una cuenta sin rol de Admin no accede al backoffice, ni por URL ni por API
 - [ ] Un Admin sin 2FA verificado en la sesión no puede hacer ninguna escritura de Admin

@@ -10,7 +10,7 @@
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] Un Club sin Partidos no tiene Votación abierta
 - [ ] Con Partidos consecutivos, la Votación del segundo abre exactamente en el inicio del primero más 2 horas

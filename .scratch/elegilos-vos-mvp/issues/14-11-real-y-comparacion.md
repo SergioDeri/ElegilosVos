@@ -4,7 +4,7 @@
 
 **Blocked by:** 07, 12
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] El Admin puede cargar y corregir el 11 Real de un Partido, con exactamente 11 Jugadores del Club
 - [ ] El Hincha ve la Coincidencia entre el 11 Elegido y el 11 Real cuando el 11 Real está cargado

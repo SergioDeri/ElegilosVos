@@ -10,7 +10,7 @@
 
 **Blocked by:** 02
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] Gana el Esquema con más votos, y las Alineaciones vacías no suman
 - [ ] Una Alineación de otro Esquema aporta votos a los Puestos equivalentes del Esquema ganador

@@ -6,7 +6,7 @@ Spec: `.scratch/diseno-pixel-art/spec.md`. ADR 0004 (pixel art en DOM con `--px`
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] El módulo de dominio de arte pixel existe, es puro (no importa React, Next ni Supabase) y expone la paleta, `--px` y el texto bitmap desde su API pública
 - [x] Ningún color del arte se define fuera de la paleta

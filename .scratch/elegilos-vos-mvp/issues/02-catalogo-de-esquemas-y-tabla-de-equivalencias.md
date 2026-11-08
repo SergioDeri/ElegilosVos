@@ -4,7 +4,7 @@
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] Cada Esquema tiene exactamente 11 Puestos y exactamente 1 Puesto de arquero
 - [ ] La Tabla de Equivalencias cubre todos los pares (origen, destino) y todos los Puestos de origen

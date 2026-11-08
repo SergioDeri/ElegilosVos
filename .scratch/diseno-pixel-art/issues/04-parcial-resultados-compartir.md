@@ -6,7 +6,7 @@ Spec: `.scratch/diseno-pixel-art/spec.md`. ADR 0004 (pixel art en DOM con `--px`
 
 **Blocked by:** 03
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] El Parcial se ve en la cancha pixel, con la misma disposición sin choques
 - [ ] El 11 Elegido y el 11 Real se ven en la cancha pixel (el 11 Real no tiene Esquema: se muestra como hoy, con el estilo nuevo)

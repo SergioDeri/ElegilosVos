@@ -4,7 +4,7 @@
 
 **Blocked by:** 05, 09
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] Al pasar la hora de cierre, el próximo ciclo del cron genera el 11 Elegido
 - [ ] Volver a correr el cierre no cambia ni duplica el resultado

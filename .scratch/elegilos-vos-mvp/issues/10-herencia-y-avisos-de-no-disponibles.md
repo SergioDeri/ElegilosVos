@@ -4,7 +4,7 @@
 
 **Blocked by:** 09
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] Al abrir una Votación, cada Hincha con Alineación en el Partido anterior del Club tiene una Alineación heredada para el nuevo Partido
 - [ ] La herencia excluye a los no Disponibles y a los que salieron del Plantel

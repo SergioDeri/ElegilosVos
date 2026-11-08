@@ -4,7 +4,7 @@
 
 **Blocked by:** 04, 09
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] El Hincha puede borrar su cuenta después de confirmarlo
 - [ ] Después del borrado no queda ningún dato personal suyo en la base de datos

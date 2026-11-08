@@ -451,3 +451,42 @@ enabled = true
 # formatted with uppercase keywords, indent 2, max width 180, trailing commas,
 # and column/key alignment. Set to "null" to emit raw, unformatted SQL.
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":180,\"commaStyle\":\"trailing\"}"
+
+# --- Producción ---------------------------------------------------------------
+# Lo que difiere del Supabase local. `npx supabase config diff` / `config push`
+# lo aplican al proyecto de la nube; los valores secretos salen de supabase/.env
+# (PROD_SITE_URL, PROD_AUTH_CALLBACK_URL, RESEND_API_KEY, EMAIL_FROM). Ver docs/DESARROLLO.md, "Deploy".
+[remotes.produccion]
+project_id = "zfzwhyvufzpboavbwcdn"
+
+[remotes.produccion.auth]
+site_url = "env(PROD_SITE_URL)"
+additional_redirect_urls = ["env(PROD_AUTH_CALLBACK_URL)"]
+
+[remotes.produccion.auth.email]
+secure_password_change = true
+
+[remotes.produccion.auth.rate_limit]
+email_sent = 30
+
+[remotes.produccion.auth.email.smtp]
+enabled = true
+host = "smtp.resend.com"
+port = 465
+user = "resend"
+pass = "env(RESEND_API_KEY)"
+admin_email = "env(EMAIL_FROM)"
+sender_name = "Elegilos Vos"
+
+# Sin credenciales de Google en producción todavía: el botón queda apagado.
+[remotes.produccion.auth.external.google]
+enabled = false
+
+# Lo que Supabase eligió para la instancia de la nube: no lo pisamos con los
+# valores locales. Los vector buckets son del plan Pro y la app no los usa.
+[remotes.produccion.db.pooler]
+default_pool_size = 15
+max_client_conn = 200
+
+[remotes.produccion.storage.vector]
+enabled = false
