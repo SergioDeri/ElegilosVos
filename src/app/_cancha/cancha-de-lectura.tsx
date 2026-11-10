@@ -4,7 +4,7 @@
 // link público. Recibe datos serializables desde Server Components y los
 // dibuja en CanchaPixel: Camiseta, número y apellido por Puesto, con un
 // detalle opcional (por ejemplo, el porcentaje) en una chapita.
-import type { ClubId } from "@/domain/comun/tipos";
+import { SELECCION, type ClubOSeleccion } from "@/domain/comun/tipos";
 import { esPuestoDeArquero, type EsquemaId, type PuestoId } from "@/domain/esquemas";
 import { JugadorConCamiseta } from "@/app/_pixel/jugador-con-camiseta";
 import { CanchaPixel } from "./cancha-pixel";
@@ -25,7 +25,7 @@ export interface PuestoDeLectura {
 }
 
 export function CanchaDeLectura(props: {
-  club: ClubId;
+  club: ClubOSeleccion;
   esquema: EsquemaId;
   puestos: Partial<Record<PuestoId, PuestoDeLectura>>;
   "aria-label": string;
@@ -35,6 +35,8 @@ export function CanchaDeLectura(props: {
     <div className={estilos.contenedor}>
       <CanchaPixel
         esquema={esquema}
+        // En la Selección el nombre completo puede ir en dos renglones.
+        renglones={club === SELECCION ? 2 : 1}
         role="list"
         aria-label={props["aria-label"]}
         puesto={(caja) => {

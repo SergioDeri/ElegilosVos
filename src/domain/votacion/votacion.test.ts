@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { FilaAlineacion } from "@/domain/armado";
 import type { ResultadoConteo } from "@/domain/conteo";
-import { contarVotacion, soloAgregados, type FilaJugadorParaConteo } from "./index";
+import { aparicionesDeVotacion, contarVotacion, soloAgregados, type FilaJugadorParaConteo } from "./index";
 
 const jugadores: FilaJugadorParaConteo[] = [
   { id: "arq", numero: 1, posicion_natural: "ARQ", disponibilidad: "disponible", en_plantel: true },
@@ -95,5 +95,19 @@ describe("soloAgregados", () => {
 
   it("el resultado vacío queda igual", () => {
     expect(soloAgregados({ vacio: true, alineacionesQueCuentan: 0 })).toEqual({ vacio: true, alineacionesQueCuentan: 0 });
+  });
+});
+
+describe("aparicionesDeVotacion (filas de la base → apariciones de los destacados)", () => {
+  it("cuenta en cuántas filas figura cada Jugador, sobre las filas con al menos un Jugador", () => {
+    const filas = [fila({ ARQ: "arq", LI: "def" }), fila({ ARQ: "arq2", LD: "def" }), fila({})];
+    expect(aparicionesDeVotacion(filas)).toEqual({
+      alineaciones: 2,
+      porJugador: [
+        { jugadorId: "arq", apariciones: 1 },
+        { jugadorId: "arq2", apariciones: 1 },
+        { jugadorId: "def", apariciones: 2 },
+      ],
+    });
   });
 });

@@ -14,6 +14,7 @@ import { asegurarHerencia } from "@/lib/herencia/asegurar";
 import { cargarAlineacion } from "../_alineacion/datos";
 import { EditorAlineacion } from "../_alineacion/editor-alineacion";
 import { AvisoNoDisponibles } from "../_herencia/aviso-no-disponibles";
+import { EnlaceParcial } from "../parcial/enlace-parcial";
 import { cargarPantallaDeLaSeleccion } from "../_partido/pantalla";
 import { TarjetaPartido } from "../_partido/tarjeta-partido";
 
@@ -60,6 +61,7 @@ export default async function Seleccion({ searchParams }: PageProps<"/seleccion"
       )}
 
       <TarjetaPartido pantalla={pantalla} partido={partido} votacion={votacion} />
+      {votacion.estado === "abierta" && <EnlaceParcial href={`${RUTA_SELECCION}/parcial?partido=${partido.id}`} />}
 
       {votacion.estado === "abierta" && alineacion && <AvisoNoDisponibles alineacion={alineacion} jugadores={jugadores} />}
       {votacion.estado !== "anulada" && (
