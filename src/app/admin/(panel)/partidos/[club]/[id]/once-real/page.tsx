@@ -1,14 +1,15 @@
 // 11 Real de un Partido (ticket 14): el Admin marca los 11 titulares que puso
 // el DT (sin Esquema), lo corrige o lo borra. Se carga desde el inicio del
-// Partido.
+// Partido. También para la Selección (Selección, ticket 11), entre sus
+// elegibles, que no llevan número.
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { coincidencia, onceDesdeJson } from "@/domain/cierre";
 import { formatearHoraUy } from "@/domain/comun/horario";
 import { requerirAdmin } from "@/lib/auth/admin";
 import { crearClienteServidor } from "@/lib/supabase/server";
-import { NOMBRE_CLUB } from "@/domain/comun/textos";
-import { esClubId, numeroDeClubDeLaBase } from "@/domain/comun/tipos";
+import { nombreDeClubOSeleccion } from "@/domain/comun/textos";
+import { esClubOSeleccion, numeroDeClubDeLaBase, SELECCION } from "@/domain/comun/tipos";
 import { ETIQUETA_POSICION } from "../../../../../_comun/etiquetas";
 import { FormularioBorrarOnceReal, FormularioOnceReal } from "./formularios";
 
@@ -19,7 +20,7 @@ function horaActual(): Date {
 export default async function PaginaOnceReal({ params }: PageProps<"/admin/partidos/[club]/[id]/once-real">) {
   await requerirAdmin();
   const { club, id } = await params;
-  if (!esClubId(club)) notFound();
+  if (!esClubOSeleccion(club)) notFound();
 
   const supabase = await crearClienteServidor();
   const [{ data: partido }, { data: jugadores, error }, { data: onceReal }, { data: resultado }] = await Promise.all([
@@ -29,7 +30,8 @@ export default async function PaginaOnceReal({ params }: PageProps<"/admin/parti
       .select("id, nombre, numero, posicion_natural, en_plantel")
       .eq("club_id", club)
       .order("en_plantel", { ascending: false })
-      .order("numero"),
+      .order("numero")
+      .order("nombre"),
     supabase.from("once_real").select("jugadores, actualizado_en").eq("partido_id", id).maybeSingle(),
     supabase.from("resultado_votacion").select("estado, once").eq("partido_id", id).maybeSingle(),
   ]);
@@ -47,7 +49,7 @@ export default async function PaginaOnceReal({ params }: PageProps<"/admin/parti
   return (
     <main>
       <h1>
-        11 Real: {NOMBRE_CLUB[club]} vs {partido.rival?.nombre ?? "?"}
+        11 Real: {nombreDeClubOSeleccion(club)} vs {partido.rival?.nombre ?? "?"}
       </h1>
       <p>Inicio: {formatearHoraUy(inicio)} (hora de Uruguay)</p>
       <p>
@@ -72,7 +74,7 @@ export default async function PaginaOnceReal({ params }: PageProps<"/admin/parti
             jugadores={jugadores.map((j) => ({
               id: j.id,
               nombre: j.nombre,
-              numero: numeroDeClubDeLaBase(j.numero),
+              numero: club === SELECCION ? null : numeroDeClubDeLaBase(j.numero),
               posicion: ETIQUETA_POSICION[j.posicion_natural],
               enPlantel: j.en_plantel,
             }))}

@@ -148,8 +148,7 @@ export async function cargarHistorial(supabase: Cliente, club: ClubOSeleccion): 
   return data
     .filter((r) => r.partido)
     .map((r) => {
-      // El 11 Real de la Selección es del ticket 11 del feature Selección.
-      const onceReal = club === SELECCION ? null : (r.partido!.once_real?.jugadores ?? null);
+      const onceReal = r.partido!.once_real?.jugadores ?? null;
       const estado = estadoResultadoDeLaBase(r.estado);
       return {
         partido: aPartido(r.partido!),

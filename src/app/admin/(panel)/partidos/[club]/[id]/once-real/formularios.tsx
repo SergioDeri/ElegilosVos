@@ -1,15 +1,18 @@
 "use client";
 
-// Formulario del 11 Real (UI mínima): casillas de los Jugadores del Club.
+// Formulario del 11 Real (UI mínima): casillas de los Jugadores del Club o de
+// los elegibles de la Selección (sin número).
 import { useActionState, useState } from "react";
-import type { ClubId } from "@/domain/comun/tipos";
+import type { ClubOSeleccion } from "@/domain/comun/tipos";
 import { JUGADORES_DEL_ONCE_REAL } from "@/domain/once-real";
+import { nombreEnElPlantel } from "@/domain/planteles";
 import { borrarOnceReal, guardarOnceReal, type EstadoOnceReal } from "./acciones";
 
 export interface JugadorParaMarcar {
   id: string;
   nombre: string;
-  numero: number;
+  /** null en la Selección. */
+  numero: number | null;
   posicion: string;
   enPlantel: boolean;
 }
@@ -23,14 +26,14 @@ function Casilla({ j, marcados, cambiar }: { j: JugadorParaMarcar; marcados: Set
     <li>
       <label>
         <input type="checkbox" name="jugador" value={j.id} checked={marcados.has(j.id)} onChange={() => cambiar(j.id)} />{" "}
-        {j.numero}. {j.nombre} ({j.posicion})
+        {nombreEnElPlantel(j)} ({j.posicion})
       </label>
     </li>
   );
 }
 
 export function FormularioOnceReal(props: {
-  club: ClubId;
+  club: ClubOSeleccion;
   partidoId: string;
   jugadores: JugadorParaMarcar[];
   marcados: string[];
