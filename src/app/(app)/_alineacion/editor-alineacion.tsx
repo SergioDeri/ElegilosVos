@@ -86,13 +86,27 @@ export interface PropsEditor {
   /** false: solo lectura (sin Votación abierta). */
   editable: boolean;
   /**
+   * Se muestra cuando hay una Alineación guardada (la de la base o una
+   * guardada en esta visita). P. ej. la invitación a elegir Club del Hincha
+   * sin Club (Selección, ticket 06).
+   */
+  conAlineacionGuardada?: ReactNode;
+  /**
    * Selección: ids de los convocados, si ya hay Convocatoria (null o sin
    * pasar: no hay). Solo se marcan; los no convocados se siguen eligiendo.
    */
   convocados?: readonly string[] | null;
 }
 
-export function EditorAlineacion({ partidoId, club, inicial, jugadores, editable, convocados = null }: PropsEditor) {
+export function EditorAlineacion({
+  partidoId,
+  club,
+  inicial,
+  jugadores,
+  editable,
+  conAlineacionGuardada,
+  convocados = null,
+}: PropsEditor) {
   const router = useRouter();
   const [alineacion, setAlineacion] = useState<Alineacion>(() => {
     const leida = inicial ? desdeJson(inicial) : null;
@@ -103,7 +117,7 @@ export function EditorAlineacion({ partidoId, club, inicial, jugadores, editable
   const [aviso, setAviso] = useState<string | null>(null);
   // Último Puesto donde se soltó una Camiseta: salta y suelta partículas.
   const [salto, setSalto] = useState<{ puesto: PuestoId; vez: number } | null>(null);
-  const { estado: guardado, programar, reintentar } = useGuardadoAutomatico(partidoId);
+  const { estado: guardado, guardoAlgunaVez, programar, reintentar } = useGuardadoAutomatico(partidoId);
   // Si el servidor dice que la Votación cerró, se recarga la pantalla (solo lectura).
   useEffect(() => {
     if (guardado.tipo === "cerrada") router.refresh();
@@ -259,6 +273,7 @@ export function EditorAlineacion({ partidoId, club, inicial, jugadores, editable
           </label>
           {editable && <IndicadorGuardado estado={guardado} reintentar={reintentar} />}
         </div>
+        {(inicial !== null || guardoAlgunaVez) && conAlineacionGuardada}
 
         {/* Alto fijo: que aparezca un aviso o las acciones no mueve la cancha. */}
         <div className={estilos.renglon}>

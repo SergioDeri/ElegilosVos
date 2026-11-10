@@ -1,21 +1,22 @@
 // Mi cuenta (ticket 13): datos del Hincha y borrado de cuenta.
 // Organizada en secciones: "Tus datos", "Notificaciones" (ticket 15) y
-// "Borrar cuenta".
+// "Borrar cuenta". El Hincha sin Club Favorito (eligió "solo Selección",
+// Selección ticket 06) lo puede elegir desde acá, una sola vez.
 import Link from "next/link";
-import { requerirHincha } from "@/lib/auth/sesion";
-import { RUTA_INICIO } from "@/lib/auth/rutas";
+import { requerirHinchada } from "@/lib/auth/sesion";
+import { RUTA_ELEGIR_CLUB, inicioDelHincha } from "@/lib/auth/rutas";
 import { SeccionNotificaciones } from "./_notificaciones/seccion-notificaciones";
 import { FormularioBorrarCuenta } from "./formulario-borrar-cuenta";
 import { NOMBRE_CLUB } from "@/domain/comun/textos";
 import estilos from "./cuenta.module.css";
 
 export default async function PaginaCuenta() {
-  const hincha = await requerirHincha();
+  const hincha = await requerirHinchada();
 
   return (
     <main>
       <p>
-        <Link href={RUTA_INICIO}>← Volver</Link>
+        <Link href={inicioDelHincha(hincha)}>← Volver</Link>
       </p>
       <h1>Mi cuenta</h1>
 
@@ -25,12 +26,21 @@ export default async function PaginaCuenta() {
           <dt>Email</dt>
           <dd>{hincha.email ?? "Sin email"}</dd>
           <dt>Club Favorito</dt>
-          <dd>{NOMBRE_CLUB[hincha.clubFavorito]}</dd>
+          <dd>{hincha.clubFavorito ? NOMBRE_CLUB[hincha.clubFavorito] : "Todavía no elegiste (votás solo por la Selección)"}</dd>
         </dl>
-        <p>Tu Club Favorito no se puede cambiar desde la app.</p>
+        {hincha.clubFavorito ? (
+          <p>Tu Club Favorito no se puede cambiar desde la app.</p>
+        ) : (
+          <p>
+            Podés elegir tu Club Favorito cuando quieras, una sola vez: después no se puede cambiar.{" "}
+            <Link href={RUTA_ELEGIR_CLUB} className="boton">
+              Elegir mi Club
+            </Link>
+          </p>
+        )}
       </section>
 
-      <SeccionNotificaciones className={estilos.seccion} />
+      <SeccionNotificaciones className={estilos.seccion} club={hincha.clubFavorito} />
 
       <section aria-labelledby="seccion-borrar" className={estilos.seccion}>
         <h2 id="seccion-borrar">Borrar cuenta</h2>

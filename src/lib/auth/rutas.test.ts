@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { RUTA_SESION_HUERFANA, decidirAcceso, rutaSegura } from "./rutas";
+import { RUTA_ELEGIR_CLUB, RUTA_INICIO, RUTA_SELECCION, RUTA_SESION_HUERFANA, decidirAcceso, inicioDelHincha, rutaSegura } from "./rutas";
 
 describe("decidirAcceso", () => {
   it("sin sesión, una ruta de la app manda al login recordando a dónde iba", () => {
@@ -75,5 +75,23 @@ describe("rutaSegura", () => {
 
   it("descarta destinos demasiado largos", () => {
     expect(rutaSegura(`/${"a".repeat(2048)}`)).toBe("/");
+  });
+});
+
+describe("inicioDelHincha (Selección, ticket 06)", () => {
+  it("con Club Favorito, el inicio de su Club", () => {
+    expect(inicioDelHincha({ clubFavorito: "penarol", eligioSoloSeleccion: false })).toBe(RUTA_INICIO);
+  });
+
+  it("si eligió solo la Selección y después un Club, el de su Club", () => {
+    expect(inicioDelHincha({ clubFavorito: "nacional", eligioSoloSeleccion: true })).toBe(RUTA_INICIO);
+  });
+
+  it("sin Club pero con \"solo Selección\" elegido, directo a la Selección", () => {
+    expect(inicioDelHincha({ clubFavorito: null, eligioSoloSeleccion: true })).toBe(RUTA_SELECCION);
+  });
+
+  it("si todavía no eligió nada, a elegir", () => {
+    expect(inicioDelHincha({ clubFavorito: null, eligioSoloSeleccion: false })).toBe(RUTA_ELEGIR_CLUB);
   });
 });

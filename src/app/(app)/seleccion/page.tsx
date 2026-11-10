@@ -6,22 +6,28 @@
 // abierta, la cancha queda en solo lectura con el motivo. Si ya salió la
 // Convocatoria del Partido (ticket 09), se marca a los convocados; los no
 // convocados se siguen pudiendo elegir.
+//
+// Es la pantalla de cualquier Hincha, también del que no tiene Club Favorito
+// (eligió "solo Selección", ticket 06): a ese, después de guardar su
+// Alineación, se le invita a elegir Club.
 import Link from "next/link";
 import { aJson } from "@/domain/editor";
 import { formatearHoraUy } from "@/domain/comun/horario";
 import { SELECCION } from "@/domain/comun/tipos";
-import { requerirHincha } from "@/lib/auth/sesion";
+import { requerirHinchada } from "@/lib/auth/sesion";
 import { RUTA_SELECCION } from "@/lib/auth/rutas";
 import { leerConvocados } from "@/lib/convocatoria/lecturas";
+import { asegurarHerencia } from "@/lib/herencia/asegurar";
 import { cargarAlineacion } from "../_alineacion/datos";
 import { EditorAlineacion } from "../_alineacion/editor-alineacion";
 import { AvisoNoDisponibles } from "../_herencia/aviso-no-disponibles";
 import { EnlaceParcial } from "../parcial/enlace-parcial";
 import { cargarPantallaDeLaSeleccion } from "../_partido/pantalla";
 import { TarjetaPartido } from "../_partido/tarjeta-partido";
+import { InvitacionElegirClub } from "../_seleccion/invitacion-elegir-club";
 
 export default async function Seleccion({ searchParams }: PageProps<"/seleccion">) {
-  await requerirHincha();
+  const hincha = await requerirHinchada();
   const { partido: elegido } = await searchParams;
   const pantalla = await cargarPantallaDeLaSeleccion(typeof elegido === "string" ? elegido : undefined);
   const { votacion, partido, jugadores, opciones } = pantalla;
@@ -37,6 +43,8 @@ export default async function Seleccion({ searchParams }: PageProps<"/seleccion"
     );
   }
 
+  // Herencia (ticket 07): al entrar, se materializa la de cada Votación abierta (no depender solo del cron).
+  if (votacion.estado === "abierta") await asegurarHerencia(hincha.id, SELECCION, pantalla.ahora);
   const [alineacion, convocados] = await Promise.all([
     cargarAlineacion(pantalla.supabase, partido.id),
     leerConvocados(pantalla.supabase, partido.id),
@@ -77,6 +85,7 @@ export default async function Seleccion({ searchParams }: PageProps<"/seleccion"
           jugadores={jugadores}
           editable={votacion.estado === "abierta"}
           convocados={convocados}
+          conAlineacionGuardada={hincha.clubFavorito === null && <InvitacionElegirClub key="invitacion" />}
         />
       )}
     </main>

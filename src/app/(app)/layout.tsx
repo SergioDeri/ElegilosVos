@@ -1,18 +1,26 @@
-// Layout de la app del Hincha. Toda página dentro de (app) exige sesión y
-// Club Favorito elegido: sin sesión va al login, sin Club a /elegir-club.
-// (El proxy ya redirige sin sesión; esto es la verificación real del lado
-// del servidor.) Las Server Actions de estas páginas igual tienen que llamar
-// a requerirHincha(): los layouts no protegen las acciones.
+// Layout de la app del Hincha. Toda página dentro de (app) exige sesión y que
+// el Hincha haya elegido su hinchada (Club Favorito o "solo Selección"): sin
+// sesión va al login, sin elegir a /elegir-club. (El proxy ya redirige sin
+// sesión; esto es la verificación real del lado del servidor.) Las pantallas
+// de un Club, además, llaman a requerirHincha(), que manda a la Selección al
+// Hincha sin Club. Las Server Actions igual tienen que llamar a
+// requerirHincha() o requerirHinchada(): los layouts no protegen las acciones.
+//
+// Hincha sin Club (Selección, ticket 06): la marca lleva a la Selección y no
+// hay selector "mi club / Selección" ni links a pantallas de un Club. Hincha
+// con Club: el selector y, una vez por dispositivo, el aviso de la Selección.
 //
 // Tema: los acentos y la barra del sistema toman los colores del Club
 // Favorito (`data-club`, ver @/domain/pixel).
 import type { Viewport } from "next";
 import Link from "next/link";
 import { colorDeSistema, temaDe } from "@/domain/pixel";
-import { obtenerHincha, requerirHincha } from "@/lib/auth/sesion";
+import { obtenerHincha, requerirHinchada } from "@/lib/auth/sesion";
+import { inicioDelHincha } from "@/lib/auth/rutas";
 import { NOMBRE_CLUB } from "@/domain/comun/textos";
 import { MenuUsuario } from "./_barra/menu-usuario";
 import { SelectorHinchada } from "./_barra/selector-hinchada";
+import { AvisoSeleccion } from "./_seleccion/aviso-seleccion";
 import barra from "./_barra/barra.module.css";
 
 export async function generateViewport(): Promise<Viewport> {
@@ -21,16 +29,18 @@ export async function generateViewport(): Promise<Viewport> {
 }
 
 export default async function LayoutApp({ children }: LayoutProps<"/">) {
-  const hincha = await requerirHincha();
+  const hincha = await requerirHinchada();
+  const club = hincha.clubFavorito;
   return (
-    <div data-club={temaDe(hincha.clubFavorito)} className="app-hincha">
+    <div data-club={temaDe(club)} className="app-hincha">
       <header className="barra-app">
-        <Link href="/" className={barra.marca} aria-label="Elegilos Vos: ir al inicio">
+        <Link href={inicioDelHincha(hincha)} className={barra.marca} aria-label="Elegilos Vos: ir al inicio">
           Elegilos<span className={barra.vos}>Vos</span>
         </Link>
-        <SelectorHinchada club={NOMBRE_CLUB[hincha.clubFavorito]} />
-        <MenuUsuario />
+        {club && <SelectorHinchada club={NOMBRE_CLUB[club]} />}
+        <MenuUsuario conClub={club !== null} />
       </header>
+      {club && <AvisoSeleccion />}
       {children}
     </div>
   );

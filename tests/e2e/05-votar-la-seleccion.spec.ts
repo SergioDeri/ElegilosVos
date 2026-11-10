@@ -38,7 +38,7 @@ async function colocar(page: Page, jugador: string, posicion: string, puesto: st
   await expect(page.getByRole("button", { name: `${puesto}: ${jugador}` })).toBeVisible();
 }
 
-test("fecha doble: el Hincha elige el Partido y arma los dos por separado", async ({ page, crearHincha }) => {
+test("fecha doble: el Hincha elige el Partido, la segunda arranca con la copia de la primera y cada una sigue por su lado", async ({ page, crearHincha }) => {
   const hincha = await crearHincha({ club: "penarol" });
   const [peru, venezuela] = await Promise.all([partidoContra(PERU), partidoContra(VENEZUELA)]);
   await iniciarSesion(page, hincha);
@@ -60,18 +60,22 @@ test("fecha doble: el Hincha elige el Partido y arma los dos por separado", asyn
   await colocar(page, "José María Giménez", "DEF", "Lateral izquierdo");
   await expect.poll(() => guardada(hincha.id, peru)).toEqual({ ARQ: "Sergio Rochet", LI: "José María Giménez" });
 
+  // Herencia (ticket 07): la segunda arranca con una copia de lo que tiene en la primera, que sigue abierta.
   await partidos.getByRole("link", { name: `vs ${VENEZUELA}` }).click();
   await expect(page.getByRole("heading", { name: `Selección vs ${VENEZUELA}` })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Arquero: vacío" })).toBeVisible();
-  await colocar(page, "Santiago Mele", "ARQ", "Arquero");
-  await expect.poll(() => guardada(hincha.id, venezuela)).toEqual({ ARQ: "Santiago Mele" });
+  await expect(page.getByRole("button", { name: "Arquero: Sergio Rochet" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Lateral izquierdo: José María Giménez" })).toBeVisible();
+  await colocar(page, "Mathías Olivera", "DEF", "Lateral derecho");
+  await expect
+    .poll(() => guardada(hincha.id, venezuela))
+    .toEqual({ ARQ: "Sergio Rochet", LI: "José María Giménez", LD: "Mathías Olivera" });
 
   // Cada una siguió por su lado.
   await partidos.getByRole("link", { name: `vs ${PERU}` }).click();
   await expect(page.getByRole("heading", { name: `Selección vs ${PERU}` })).toBeVisible();
   await expect(page.getByRole("button", { name: "Arquero: Sergio Rochet" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Lateral izquierdo: José María Giménez" })).toBeVisible();
-  expect(await guardada(hincha.id, venezuela)).toEqual({ ARQ: "Santiago Mele" });
+  await expect(page.getByRole("button", { name: "Lateral derecho: vacío" })).toBeVisible();
+  expect(await guardada(hincha.id, peru)).toEqual({ ARQ: "Sergio Rochet", LI: "José María Giménez" });
 });
 
 test("un Hincha de Nacional arma su Alineación de la Selección y sigue ahí al recargar", async ({ page, crearHincha }) => {

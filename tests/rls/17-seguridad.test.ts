@@ -85,6 +85,8 @@ describe("tablas y vistas de public", () => {
       { rol: "authenticated", tabla: "once_real", privilegios: "DELETE,INSERT,SELECT" },
       { rol: "authenticated", tabla: "partido", privilegios: "DELETE,SELECT" },
       { rol: "authenticated", tabla: "perfil", privilegios: "SELECT" },
+      // Interruptores "mi club" y "Selección" (Selección, ticket 13).
+      { rol: "authenticated", tabla: "preferencia_notificacion", privilegios: "SELECT" },
       { rol: "authenticated", tabla: "resultado_votacion", privilegios: "SELECT" },
       { rol: "authenticated", tabla: "rival", privilegios: "DELETE,INSERT,SELECT,UPDATE" },
       { rol: "authenticated", tabla: "suscripcion_push", privilegios: "DELETE,SELECT" },
@@ -122,6 +124,13 @@ describe("tablas y vistas de public", () => {
       { rol: "authenticated", tabla: "once_real", privilegio: "UPDATE", columnas: "jugadores" },
       { rol: "authenticated", tabla: "partido", privilegio: "INSERT", columnas: "club_id,estado,inicio,rival_id" },
       { rol: "authenticated", tabla: "partido", privilegio: "UPDATE", columnas: "estado,inicio,rival_id" },
+      {
+        rol: "authenticated",
+        tabla: "preferencia_notificacion",
+        privilegio: "INSERT",
+        columnas: "hincha_id,mi_club,seleccion",
+      },
+      { rol: "authenticated", tabla: "preferencia_notificacion", privilegio: "UPDATE", columnas: "mi_club,seleccion" },
       {
         rol: "authenticated",
         tabla: "suscripcion_push",
@@ -193,6 +202,7 @@ describe("funciones de public", () => {
         "buscar_hinchas(text)", // es_admin()
         "cambiar_club_favorito(uuid,text)", // es_admin()
         "elegir_club_favorito(text)", // auth.uid(), solo el propio perfil
+        "elegir_solo_seleccion()", // auth.uid(), solo el propio perfil (Selección, ticket 06)
         "es_admin()", // bool del propio usuario
         "mi_club_favorito()", // Club del propio usuario
         "partido_tiene_alineaciones(uuid)", // es_admin()

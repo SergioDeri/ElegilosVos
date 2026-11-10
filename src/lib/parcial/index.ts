@@ -11,7 +11,7 @@ import "server-only";
 import { unstable_cache } from "next/cache";
 import { SELECCION } from "@/domain/comun/tipos";
 import type { ResultadoConteo } from "@/domain/conteo";
-import { requerirHincha } from "@/lib/auth/sesion";
+import { requerirHincha, requerirHinchada } from "@/lib/auth/sesion";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { contarPartido } from "@/lib/votacion/conteo";
@@ -75,11 +75,11 @@ export function calcularParcialDeLaSeleccionCacheado(partidoId: string): Promise
 
 /**
  * Parcial de la Selección para el Hincha de la sesión: cualquier Hincha (de
- * los dos Clubes; un solo resultado, sin separar por hinchada), si el Partido
- * es de la Selección y su Votación está abierta.
+ * los dos Clubes o sin Club; un solo resultado, sin separar por hinchada), si
+ * el Partido es de la Selección y su Votación está abierta.
  */
 export async function obtenerParcialDeLaSeleccion(partidoId: string): Promise<ParcialParaHincha<ParcialDeLaSeleccion>> {
-  await requerirHincha();
+  await requerirHinchada();
   const supabase = await crearClienteServidor();
   return parcialParaHincha(supabase, SELECCION, partidoId, calcularParcialDeLaSeleccionCacheado);
 }

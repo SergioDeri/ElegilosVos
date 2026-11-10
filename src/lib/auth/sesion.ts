@@ -1,8 +1,9 @@
 // Sesión del Hincha del lado del servidor (Server Components, Server Actions,
 // Route Handlers). Úsenlo en toda página o acción que necesite al Hincha:
 //
-//   const hincha = await requerirHincha();   // sesión + Club Favorito elegido
-//   hincha.clubFavorito                       // "penarol" | "nacional"
+//   const hincha = await requerirHincha();    // sesión + Club Favorito elegido
+//   hincha.clubFavorito                        // "penarol" | "nacional"
+//   const h = await requerirHinchada();        // sesión + Club o "solo Selección"
 //
 // La autorización de los datos igual la hace RLS; esto es para la navegación.
 import "server-only";
@@ -10,12 +11,14 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 import { clubIdDeLaBase, type ClubId, type Rol } from "@/domain/comun/tipos";
 import { crearClienteServidor } from "@/lib/supabase/server";
-import { RUTA_ELEGIR_CLUB, RUTA_LOGIN, RUTA_SESION_HUERFANA } from "./rutas";
+import { RUTA_ELEGIR_CLUB, RUTA_LOGIN, RUTA_SESION_HUERFANA, inicioDelHincha } from "./rutas";
 
 export type HinchaEnSesion = {
   id: string;
   email: string | null;
   clubFavorito: ClubId | null;
+  /** Eligió "Quiero votar solo por la Selección" (Selección, ticket 06), aunque después haya elegido Club. */
+  eligioSoloSeleccion: boolean;
   rol: Rol;
 };
 
@@ -37,7 +40,7 @@ const leerSesion = cache(async (): Promise<Sesion> => {
   // RLS: el Hincha solo puede leer su propio perfil.
   const { data: perfil } = await supabase
     .from("perfil")
-    .select("club_favorito_id, rol")
+    .select("club_favorito_id, eligio_solo_seleccion, rol")
     .eq("id", claims.sub)
     .maybeSingle();
   if (!perfil) return { tipo: "huerfana" };
@@ -48,6 +51,7 @@ const leerSesion = cache(async (): Promise<Sesion> => {
       id: claims.sub,
       email: typeof claims.email === "string" ? claims.email : null,
       clubFavorito: perfil.club_favorito_id === null ? null : clubIdDeLaBase(perfil.club_favorito_id),
+      eligioSoloSeleccion: perfil.eligio_solo_seleccion,
       rol: perfil.rol,
     },
   };
@@ -71,9 +75,24 @@ export async function requerirSesion(): Promise<HinchaEnSesion> {
   return sesion.hincha;
 }
 
-/** Exige sesión y Club Favorito elegido (si no, a elegirlo). */
+/**
+ * Exige sesión y Club Favorito elegido: para las pantallas y acciones de un
+ * Club. Sin Club va a su inicio (`inicioDelHincha`): la Selección si eligió
+ * "solo Selección", si no a elegir Club.
+ */
 export async function requerirHincha(): Promise<HinchaConClub> {
   const hincha = await requerirSesion();
-  if (!hincha.clubFavorito) redirect(RUTA_ELEGIR_CLUB);
+  if (!hincha.clubFavorito) redirect(inicioDelHincha(hincha));
   return { ...hincha, clubFavorito: hincha.clubFavorito };
+}
+
+/**
+ * Exige sesión y que el Hincha ya haya elegido su hinchada: un Club Favorito
+ * o "solo Selección" (si no, a elegir). Para lo que sirve a cualquier Hincha:
+ * la Selección, la cuenta y el layout de la app. `clubFavorito` puede ser null.
+ */
+export async function requerirHinchada(): Promise<HinchaEnSesion> {
+  const hincha = await requerirSesion();
+  if (!hincha.clubFavorito && !hincha.eligioSoloSeleccion) redirect(RUTA_ELEGIR_CLUB);
+  return hincha;
 }

@@ -1,15 +1,16 @@
 "use client";
 
 // Menú del usuario en la barra de la app: un botón con el ícono de usuario que
-// abre un panel con Mi cuenta, Mis formaciones y Cerrar sesión. Se cierra al
-// elegir una opción, al tocar afuera o con Escape.
+// abre un panel con Mi cuenta, Mis formaciones (solo con Club Favorito: son
+// las de su Club) y Cerrar sesión. Se cierra al elegir una opción, al tocar
+// afuera o con Escape.
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { BotonCerrarSesion } from "@/app/_sesion/boton-cerrar-sesion";
 import { Icono } from "@/app/_pixel/icono";
 import estilos from "./barra.module.css";
 
-export function MenuUsuario() {
+export function MenuUsuario({ conClub }: { conClub: boolean }) {
   const [abierto, setAbierto] = useState(false);
   const contenedor = useRef<HTMLDivElement>(null);
   const boton = useRef<HTMLButtonElement>(null);
@@ -55,11 +56,13 @@ export function MenuUsuario() {
               Mi cuenta
             </Link>
           </li>
-          <li>
-            <Link href="/mis-formaciones" onClick={cerrar}>
-              Mis formaciones
-            </Link>
-          </li>
+          {conClub && (
+            <li>
+              <Link href="/mis-formaciones" onClick={cerrar}>
+                Mis formaciones
+              </Link>
+            </li>
+          )}
         </ul>
         <BotonCerrarSesion />
       </nav>

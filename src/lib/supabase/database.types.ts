@@ -243,14 +243,14 @@ isOneToOne: false
                   ]
                 },"perfil": {
                   Row: {
-                    "actualizado_en": string,"club_favorito_id": string | null,"creado_en": string,"id": string,"rol": Database["public"]['Enums']["rol"]
+                    "actualizado_en": string,"club_favorito_id": string | null,"creado_en": string,"eligio_solo_seleccion": boolean,"id": string,"rol": Database["public"]['Enums']["rol"]
                   }
                   ComputedFields: never
                   Insert: {
-                    "actualizado_en"?: string,"club_favorito_id"?: string | null,"creado_en"?: string,"id": string,"rol"?: Database["public"]['Enums']["rol"]
+                    "actualizado_en"?: string,"club_favorito_id"?: string | null,"creado_en"?: string,"eligio_solo_seleccion"?: boolean,"id": string,"rol"?: Database["public"]['Enums']["rol"]
                   }
                   Update: {
-                    "actualizado_en"?: string,"club_favorito_id"?: string | null,"creado_en"?: string,"id"?: string,"rol"?: Database["public"]['Enums']["rol"]
+                    "actualizado_en"?: string,"club_favorito_id"?: string | null,"creado_en"?: string,"eligio_solo_seleccion"?: boolean,"id"?: string,"rol"?: Database["public"]['Enums']["rol"]
                   }
                   Relationships: [
                     {
@@ -258,6 +258,26 @@ isOneToOne: false
       columns: ["club_favorito_id"]
 isOneToOne: false
       referencedRelation: "club"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"preferencia_notificacion": {
+                  Row: {
+                    "actualizado_en": string,"hincha_id": string,"mi_club": boolean,"seleccion": boolean
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "actualizado_en"?: string,"hincha_id"?: string,"mi_club"?: boolean,"seleccion"?: boolean
+                  }
+                  Update: {
+                    "actualizado_en"?: string,"hincha_id"?: string,"mi_club"?: boolean,"seleccion"?: boolean
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "preferencia_notificacion_hincha_id_fkey"
+      columns: ["hincha_id"]
+isOneToOne: true
+      referencedRelation: "perfil"
       referencedColumns: ["id"]
     }
                   ]
@@ -343,6 +363,9 @@ isOneToOne: false
                            },
 "elegir_club_favorito":
 { Args: { "club": string }; Returns: string
+                           },
+"elegir_solo_seleccion":
+{ Args: Record<PropertyKey, never>; Returns: undefined
                            },
 "es_admin":
 { Args: Record<PropertyKey, never>; Returns: boolean
