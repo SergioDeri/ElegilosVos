@@ -3,7 +3,7 @@
 // Server Actions de las notificaciones push (ticket 15). Actúan siempre sobre
 // el Hincha de la sesión (cliente con RLS): nunca reciben un id de Hincha.
 import { LARGO_MAXIMO_ENDPOINT, validarSuscripcion } from "@/domain/notificaciones";
-import { requerirHincha } from "@/lib/auth/sesion";
+import { requerirHinchada } from "@/lib/auth/sesion";
 import { crearClienteServidor } from "@/lib/supabase/server";
 
 export type ResultadoAccion = { ok: true } | { ok: false; error: string };
@@ -12,7 +12,7 @@ const LARGO_MAXIMO_USER_AGENT = 512;
 
 /** Guarda la suscripción de este navegador (`PushSubscription.toJSON()`) a nombre del Hincha de la sesión. */
 export async function activarNotificaciones(suscripcion: unknown, userAgent: unknown): Promise<ResultadoAccion> {
-  await requerirHincha();
+  await requerirHinchada();
   const validacion = validarSuscripcion(suscripcion);
   if (!validacion.ok) return { ok: false, error: "El navegador devolvió una suscripción inválida." };
   const { endpoint, p256dh, auth } = validacion.suscripcion;
@@ -33,7 +33,7 @@ export async function activarNotificaciones(suscripcion: unknown, userAgent: unk
 
 /** Borra la suscripción de este navegador (solo si es del Hincha de la sesión: RLS). */
 export async function desactivarNotificaciones(endpoint: unknown): Promise<ResultadoAccion> {
-  await requerirHincha();
+  await requerirHinchada();
   if (typeof endpoint !== "string" || endpoint.length > LARGO_MAXIMO_ENDPOINT) {
     return { ok: false, error: "Suscripción inválida." };
   }
@@ -45,7 +45,7 @@ export async function desactivarNotificaciones(endpoint: unknown): Promise<Resul
 
 /** Si la suscripción de este navegador está guardada a nombre del Hincha de la sesión. */
 export async function suscripcionGuardada(endpoint: unknown): Promise<boolean> {
-  await requerirHincha();
+  await requerirHinchada();
   if (typeof endpoint !== "string" || endpoint.length > LARGO_MAXIMO_ENDPOINT) return false;
   const supabase = await crearClienteServidor();
   const { data } = await supabase.from("suscripcion_push").select("id").eq("endpoint", endpoint).maybeSingle();

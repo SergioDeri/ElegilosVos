@@ -2,12 +2,18 @@
 
 import { useState, useTransition } from "react";
 import { Escudo } from "@/app/_pixel/escudo";
-import { elegirClubFavorito } from "./acciones";
+import { NOMBRE_SELECCION } from "@/domain/comun/textos";
+import { elegirClubFavorito, elegirSoloSeleccion } from "./acciones";
 import estilos from "./elegir-club.module.css";
 
 type Club = { id: string; nombre: string; escudo: string | null };
 
-export function FormularioElegirClub({ clubes }: { clubes: Club[] }) {
+/**
+ * `ofrecerSoloSeleccion`: la primera vez (registro) se ofrece también "Quiero
+ * votar solo por la Selección" (Selección, ticket 06); quien ya la eligió y
+ * vuelve a elegir Club solo ve los Clubes.
+ */
+export function FormularioElegirClub({ clubes, ofrecerSoloSeleccion }: { clubes: Club[]; ofrecerSoloSeleccion: boolean }) {
   const [elegido, setElegido] = useState<Club | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [guardando, iniciar] = useTransition();
@@ -21,10 +27,21 @@ export function FormularioElegirClub({ clubes }: { clubes: Club[] }) {
     });
   }
 
+  function soloSeleccion() {
+    setError(null);
+    iniciar(async () => {
+      const resultado = await elegirSoloSeleccion();
+      if (resultado?.error) setError(resultado.error);
+    });
+  }
+
   if (!elegido) {
     return (
       <div>
-        <p>Vas a armar la Alineación de tu Club Favorito. Una vez elegido, no se puede cambiar.</p>
+        <p>
+          Vas a armar la Alineación de tu Club Favorito, y también la de la {NOMBRE_SELECCION}. Una vez elegido, el
+          Club no se puede cambiar.
+        </p>
         <div className={estilos.clubes}>
           {clubes.map((club) => (
             // data-club: el botón toma los colores del Club (tema de @/domain/pixel).
@@ -34,6 +51,18 @@ export function FormularioElegirClub({ clubes }: { clubes: Club[] }) {
             </button>
           ))}
         </div>
+        {ofrecerSoloSeleccion && (
+          <>
+            <button type="button" onClick={soloSeleccion} disabled={guardando}>
+              Quiero votar solo por la {NOMBRE_SELECCION}
+            </button>
+            <p>
+              Si elegís votar solo por la {NOMBRE_SELECCION}, no te quedás afuera: podés elegir tu Club más tarde desde
+              Mi cuenta (una sola vez, como cualquier Hincha).
+            </p>
+            {error && <p role="alert">{error}</p>}
+          </>
+        )}
       </div>
     );
   }

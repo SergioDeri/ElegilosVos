@@ -1,9 +1,13 @@
 // Elección del Club Favorito: exige sesión; si ya lo eligió, no hay nada que
 // hacer acá (no se puede cambiar) y vuelve al inicio. Mismo marco que el login.
+// La primera vez ofrece también "Quiero votar solo por la Selección" (Selección,
+// ticket 06); quien la eligió vuelve acá para elegir Club más tarde (desde Mi
+// cuenta o la invitación), y entonces solo ve los Clubes.
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PantallaAcceso } from "@/app/_acceso/pantalla-acceso";
 import { BotonCerrarSesion } from "@/app/_sesion/boton-cerrar-sesion";
-import { RUTA_INICIO } from "@/lib/auth/rutas";
+import { RUTA_INICIO, RUTA_SELECCION } from "@/lib/auth/rutas";
 import { requerirSesion } from "@/lib/auth/sesion";
 import { urlEscudo } from "@/lib/imagenes/subida";
 import { crearClienteServidor } from "@/lib/supabase/server";
@@ -23,8 +27,14 @@ export default async function PaginaElegirClub() {
     <PantallaAcceso>
       <main>
         <h1>¿De qué cuadro sos?</h1>
-        <FormularioElegirClub clubes={clubes} />
-        <BotonCerrarSesion />
+        <FormularioElegirClub clubes={clubes} ofrecerSoloSeleccion={!hincha.eligioSoloSeleccion} />
+        {hincha.eligioSoloSeleccion ? (
+          <p>
+            <Link href={RUTA_SELECCION}>← Seguir solo con la Selección</Link>
+          </p>
+        ) : (
+          <BotonCerrarSesion />
+        )}
       </main>
     </PantallaAcceso>
   );

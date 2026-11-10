@@ -1,0 +1,21 @@
+/* Aviso de la Selección e invitación a elegir Club (Selección, ticket 06):
+   una caja de aviso con el texto y las acciones en un renglón que se parte. */
+.aviso {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--u) calc(3 * var(--u));
+}
+
+.aviso p {
+  flex: 1 1 calc(80 * var(--u));
+  margin: 0;
+}
+
+/* Fuera del <main>: mismo ancho y centrado que el marco de la pantalla. */
+.fueraDelMarco {
+  --ancho-aviso: min(var(--ancho-max-main), round(down, calc(100% - 4 * var(--u)), var(--u)));
+  box-sizing: border-box;
+  width: var(--ancho-aviso);
+  margin-left: round(down, calc((100% - var(--ancho-aviso)) / 2), var(--u));
+}

@@ -45,6 +45,23 @@ export function decidirAcceso(ruta: string, conSesion: boolean): Decision {
   return { tipo: "seguir" };
 }
 
+/** Lo que hace falta del perfil para saber a dónde va un Hincha con sesión. */
+export type EleccionDelHincha = {
+  clubFavorito: string | null;
+  /** Eligió "Quiero votar solo por la Selección" (aunque después haya elegido Club). */
+  eligioSoloSeleccion: boolean;
+};
+
+/**
+ * El inicio de un Hincha con sesión (Selección, ticket 06): el de su Club si
+ * tiene Club Favorito; la Selección si eligió "solo Selección" y todavía no
+ * eligió Club; si no eligió nada, la pantalla de elegir.
+ */
+export function inicioDelHincha({ clubFavorito, eligioSoloSeleccion }: EleccionDelHincha): string {
+  if (clubFavorito) return RUTA_INICIO;
+  return eligioSoloSeleccion ? RUTA_SELECCION : RUTA_ELEGIR_CLUB;
+}
+
 const LARGO_MAXIMO_DESTINO = 1024;
 
 /**
