@@ -1,10 +1,13 @@
 // Imagen de la Alineación del Hincha de la SESIÓN para un Partido (ticket 16).
 // Nunca acepta un Hincha del pedido: el id sale de la sesión y la lectura va
 // con el cliente del usuario (RLS: solo su propia Alineación). No es pública
-// ni se cachea.
+// ni se cachea. También la de la Selección (Selección, ticket 12), para
+// cualquier Hincha con perfil, con o sin Club, con el escudo de la Selección.
 import type { NextRequest } from "next/server";
+import { SELECCION } from "@/domain/comun/tipos";
 import { obtenerHincha } from "@/lib/auth/sesion";
 import { modeloMiAlineacion } from "@/lib/compartir/datos";
+import { escudoDeLaSeleccion } from "@/lib/compartir/escudo";
 import { imagenDe } from "@/lib/compartir/imagen";
 import { crearClienteServidor } from "@/lib/supabase/server";
 
@@ -15,10 +18,13 @@ export async function GET(_pedido: NextRequest, ctx: RouteContext<"/api/imagen/m
   const hincha = await obtenerHincha();
   if (!hincha) return new Response("Iniciá sesión", { status: 401, headers: SIN_CACHE });
 
-  const modelo = await modeloMiAlineacion(await crearClienteServidor(), hincha.id, partidoId);
+  const cliente = await crearClienteServidor();
+  const modelo = await modeloMiAlineacion(cliente, hincha.id, partidoId);
   if (!modelo) return new Response("No encontrado", { status: 404, headers: SIN_CACHE });
-  return imagenDe(modelo, {
-    ...SIN_CACHE,
-    "Content-Disposition": `inline; filename="${modelo.nombreArchivo}"`,
-  });
+  const escudo = modelo.clubId === SELECCION ? await escudoDeLaSeleccion(cliente) : null;
+  return imagenDe(
+    modelo,
+    { ...SIN_CACHE, "Content-Disposition": `inline; filename="${modelo.nombreArchivo}"` },
+    { escudo },
+  );
 }

@@ -1,15 +1,14 @@
 // Vista de un resultado de Votación: 11 Elegido en la cancha, votos, el 11
-// Real y las Coincidencias del Hincha, o el motivo por el que no hay 11
-// Elegido. La usan también los resultados de la Selección (Selección, tickets
-// 10 y 11), con nombre completo y sin número, y por ahora sin compartir
-// (ticket 12).
+// Real, las Coincidencias del Hincha y el botón de compartir, o el motivo por
+// el que no hay 11 Elegido. La usan también los resultados de la Selección
+// (Selección, tickets 10, 11 y 12), con nombre completo y sin número.
 import Link from "next/link";
 import { BotonCompartir } from "@/app/_compartir/boton-compartir";
 import type { EstadoResultado } from "@/domain/cierre";
 import { formatearHoraUy } from "@/domain/comun/horario";
 import { esquema } from "@/domain/esquemas";
 import type { ItemHistorial, JugadorResultado, PartidoResultado, ResultadoVista } from "./datos";
-import { SELECCION, type ClubOSeleccion } from "@/domain/comun/tipos";
+import type { ClubOSeleccion } from "@/domain/comun/tipos";
 import { coincidencias } from "@/domain/once-real";
 import { CanchaDeLectura } from "@/app/_cancha/cancha-de-lectura";
 import estilos from "./resultados.module.css";
@@ -53,8 +52,6 @@ export function VistaResultado(props: {
 }) {
   const { resultado, jugadores, misJugadores } = props;
   const onceReal = props.onceReal ?? null;
-  // Compartir en la Selección: ticket 12.
-  const seleccion = props.club === SELECCION;
 
   if (!resultado) {
     return (
@@ -122,13 +119,11 @@ export function VistaResultado(props: {
           }),
         )}
       />
-      {!seleccion && (
-        <BotonCompartir
-          urlImagen={`/api/imagen/once-elegido/${props.partido.id}`}
-          enlace={`/compartir/once-elegido/${props.partido.id}`}
-          titulo="El 11 Elegido por la hinchada"
-        />
-      )}
+      <BotonCompartir
+        urlImagen={`/api/imagen/once-elegido/${props.partido.id}`}
+        enlace={`/compartir/once-elegido/${props.partido.id}`}
+        titulo="El 11 Elegido por la hinchada"
+      />
       <table>
         <thead>
           <tr>

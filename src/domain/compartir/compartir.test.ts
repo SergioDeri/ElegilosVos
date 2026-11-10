@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { esquema } from "@/domain/esquemas";
-import { LARGO_MAXIMO_NOMBRE, LARGO_MAXIMO_RIVAL, modeloDeImagen, type EntradaImagen } from "./index";
+import {
+  LARGO_MAXIMO_NOMBRE,
+  LARGO_MAXIMO_RENGLON_SELECCION,
+  LARGO_MAXIMO_RIVAL,
+  modeloDeImagen,
+  type EntradaImagen,
+} from "./index";
 
 
 const jugadores = esquema("4-3-3").puestos.map((p, i) => ({ id: `j${i}`, nombre: `Jugador ${i}`, numero: i + 1 }));
@@ -112,5 +118,106 @@ describe("modeloDeImagen: textos", () => {
 
   it("describe la imagen en un texto alternativo con el Club, el Rival y el Esquema", () => {
     expect(modeloDeImagen(entrada()).alt).toBe("Mi 11 de Peñarol vs Nacional en 4-3-3");
+  });
+});
+
+describe("modeloDeImagen: la Selección", () => {
+  const seleccion = (cambios: Partial<EntradaImagen> = {}) =>
+    entrada({ club: "seleccion", rival: "Paraguay", jugadores: jugadores.map((j) => ({ ...j, numero: null })), ...cambios });
+  const conNombre = (nombre: string) =>
+    modeloDeImagen(seleccion({ jugadores: [{ id: "j0", nombre, numero: null }] })).puestos[0]!;
+
+  it("muestra el nombre completo sin número, aunque no entre en una línea", () => {
+    const puesto = conNombre("Giorgian De Arrascaeta");
+    expect(puesto.nombre).toBe("Giorgian De Arrascaeta");
+    expect(puesto.numero).toBeNull();
+  });
+
+  it("si el nombre no entra en una línea lo parte en dos entre palabras, sin cortarlo", () => {
+    const { renglones } = conNombre("Giorgian De Arrascaeta");
+    expect(renglones).toEqual(["Giorgian De", "Arrascaeta"]);
+    expect(conNombre("  Luis   Suárez ").renglones).toEqual(["Luis Suárez"]);
+    expect(conNombre("Federico Valverde").renglones).toEqual(["Federico", "Valverde"]);
+  });
+
+  it("entran en dos renglones nombres reales largos", () => {
+    for (const nombre of ["Giorgian De Arrascaeta", "Rodrigo Bentancur Colmán", "Maximiliano Araújo", "Sebastián Cáceres"]) {
+      const { renglones, nombre: completo } = conNombre(nombre);
+      expect(completo).toBe(nombre);
+      expect(renglones.join(" ")).toBe(nombre);
+      expect(renglones.length).toBeLessThanOrEqual(2);
+      for (const r of renglones) expect(r.length).toBeLessThanOrEqual(LARGO_MAXIMO_RENGLON_SELECCION);
+    }
+  });
+
+  it("una palabra que no entra no se corta", () => {
+    expect(conNombre("Supercalifragilisticoespialidoso").renglones).toEqual(["Supercalifragilisticoespialidoso"]);
+  });
+
+  it("un Puesto vacante no tiene renglones", () => {
+    const modelo = modeloDeImagen(seleccion({ asignaciones: [] }));
+    expect(modelo.puestos.every((p) => p.nombre === null && p.renglones.length === 0)).toBe(true);
+  });
+
+  it("nombra a la Selección en los textos y en el archivo", () => {
+    const modelo = modeloDeImagen(seleccion({ tipo: "once_elegido" }));
+    expect(modelo.club).toBe("Selección");
+    expect(modelo.clubId).toBe("seleccion");
+    expect(modelo.partido).toBe("Selección vs Paraguay");
+    expect(modelo.nombreArchivo).toBe("11-elegido-seleccion-vs-paraguay-2026-11-10.png");
+  });
+
+  it("el 11 Elegido destaca al Gran Ausente final con su nombre completo y su porcentaje", () => {
+    const modelo = modeloDeImagen(
+      seleccion({
+        tipo: "once_elegido",
+        jugadores: [...jugadores.map((j) => ({ ...j, numero: null })), { id: "afuera", nombre: "Luis Suárez", numero: null }],
+        destacado: { tipo: "gran_ausente", jugadores: [{ jugadorId: "afuera", apariciones: 2, porcentaje: 200 / 3 }] },
+      }),
+    );
+    expect(modelo.destacado).toEqual({ titulo: "Gran Ausente final", jugadores: [{ nombre: "Luis Suárez", porcentaje: "66,7 %" }] });
+  });
+
+  it("mientras no hay Gran Ausente destaca al Más Pedido, con todos los empatados", () => {
+    const modelo = modeloDeImagen(
+      seleccion({
+        tipo: "once_elegido",
+        destacado: {
+          tipo: "mas_pedido",
+          jugadores: [
+            { jugadorId: "j2", apariciones: 3, porcentaje: 100 },
+            { jugadorId: "j1", apariciones: 3, porcentaje: 100 },
+          ],
+        },
+      }),
+    );
+    expect(modelo.destacado).toEqual({
+      titulo: "Más Pedido",
+      jugadores: [
+        { nombre: "Jugador 1", porcentaje: "100 %" },
+        { nombre: "Jugador 2", porcentaje: "100 %" },
+      ],
+    });
+  });
+
+  it("sin destacado, o en la imagen de Mi 11, no destaca a nadie", () => {
+    const destacado = { tipo: "mas_pedido" as const, jugadores: [{ jugadorId: "j1", apariciones: 1, porcentaje: 100 }] };
+    expect(modeloDeImagen(seleccion({ tipo: "once_elegido", destacado: null })).destacado).toBeNull();
+    expect(modeloDeImagen(seleccion({ tipo: "mi_alineacion", destacado })).destacado).toBeNull();
+  });
+});
+
+describe("modeloDeImagen: los Clubes no cambian", () => {
+  it("el rótulo es el nombre acortado en un renglón, con número y sin destacado", () => {
+    const modelo = modeloDeImagen(
+      entrada({
+        tipo: "once_elegido",
+        jugadores: [{ id: "j0", nombre: "Leonardo Fernández", numero: 10 }],
+        destacado: { tipo: "mas_pedido", jugadores: [{ jugadorId: "j0", apariciones: 1, porcentaje: 100 }] },
+      }),
+    );
+    expect(modelo.puestos[0]).toMatchObject({ nombre: "Fernández", renglones: ["Fernández"], numero: 10 });
+    expect(modelo.destacado).toBeNull();
+    expect(modelo.clubId).toBe("penarol");
   });
 });

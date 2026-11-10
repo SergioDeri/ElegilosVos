@@ -116,6 +116,7 @@ describe("imagen del 11 Elegido", () => {
     expect(modelo!.titulo).toBe("El 11 Elegido por la hinchada");
     expect(modelo!.esquema).toBe("4-3-3");
     expect(modelo!.puestos.every((p) => p.nombre !== null)).toBe(true);
+    expect(modelo!.destacado).toBeNull(); // el destacado es solo de la Selección
 
     const texto = JSON.stringify(modelo);
     for (const nombre of ["hinchaPenarol", "hinchaNacional", "admin"] as const) {
@@ -127,10 +128,10 @@ describe("imagen del 11 Elegido", () => {
     // de diseño pixel) son del Partido y del resultado, no de los Hinchas: la
     // página pública los usa para las Camisetas y la cancha.
     expect(Object.keys(modelo!).sort()).toEqual(
-      ["alt", "club", "clubId", "esquema", "esquemaId", "fecha", "nombreArchivo", "partido", "puestos", "rival", "titulo"].sort(),
+      ["alt", "club", "clubId", "destacado", "esquema", "esquemaId", "fecha", "nombreArchivo", "partido", "puestos", "rival", "titulo"].sort(),
     );
     for (const p of modelo!.puestos) {
-      expect(Object.keys(p).sort()).toEqual(["nombre", "numero", "puesto", "sigla", "x", "yDesdeArriba"].sort());
+      expect(Object.keys(p).sort()).toEqual(["nombre", "numero", "puesto", "renglones", "sigla", "x", "yDesdeArriba"].sort());
     }
   });
 

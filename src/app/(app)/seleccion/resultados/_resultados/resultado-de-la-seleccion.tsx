@@ -2,7 +2,7 @@
 // Ausente final destacado (si ya hay Convocatoria y algún no convocado figura)
 // y el 11 Elegido con la vista de los Clubes (nombre completo, sin número,
 // Camisetas de la Selección), el 11 Real y las Coincidencias de la Alineación
-// del Hincha (ticket 11). Compartir (ticket 12) todavía no está en la Selección.
+// del Hincha (ticket 11), con el botón de compartir (ticket 12).
 import { VistaDestacado } from "@/app/_parcial/vista-parcial";
 import { SELECCION } from "@/domain/comun/tipos";
 import type { Destacado } from "@/domain/destacados";

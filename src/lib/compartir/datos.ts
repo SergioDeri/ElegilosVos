@@ -6,15 +6,22 @@
 // - modeloOnceElegido: con la SERVICE ROLE (la imagen es pública). Lee solo
 //   `resultado_votacion` con estado `con_once`, el Partido, el Rival y los
 //   Jugadores del 11: nada de Hinchas ni de Alineaciones.
+//
+// En la Selección (Selección, ticket 12) los Jugadores no llevan número y el
+// 11 Elegido suma el destacado: `destacado(apariciones congeladas,
+// convocados)`, o sea el Gran Ausente final con Convocatoria y el Más Pedido
+// sin ella (las apariciones son agregadas: no dicen quién votó).
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { alineacionDesdeFila, COLUMNAS_ALINEACION } from "@/domain/armado";
 import { onceDesdeJson } from "@/domain/cierre";
 import { esUuid } from "@/domain/comun/ids";
 import { NOMBRE_RIVAL_DESCONOCIDO } from "@/domain/comun/textos";
-import { esClubId, numeroDeClubDeLaBase, type ClubId } from "@/domain/comun/tipos";
+import { esClubOSeleccion, numeroDeClubDeLaBase, SELECCION, type ClubOSeleccion } from "@/domain/comun/tipos";
 import { modeloDeImagen, type ModeloImagen } from "@/domain/compartir";
+import { destacado } from "@/domain/destacados";
 import { esEsquemaId, type EsquemaId } from "@/domain/esquemas";
+import { leerGranAusenteFinal } from "@/lib/cierre/gran-ausente";
 import { fechaDeImagen } from "@/lib/compartir/fecha";
 import type { Database } from "@/lib/supabase/database.types";
 
@@ -34,7 +41,7 @@ export async function modeloMiAlineacion(cliente: Cliente, hinchaId: string, par
     .eq("partido_id", partidoId)
     .maybeSingle();
   if (error) throw error;
-  if (!fila?.partido || !esClubId(fila.partido.club_id)) return null;
+  if (!fila?.partido || !esClubOSeleccion(fila.partido.club_id)) return null;
 
   const alineacion = alineacionDesdeFila(fila);
   const ids = Object.values(alineacion.puestos).map((o) => o!.jugadorId);
@@ -51,8 +58,8 @@ export async function modeloMiAlineacion(cliente: Cliente, hinchaId: string, par
   });
 }
 
-/** El modelo de la imagen del 11 Elegido, con el Club y el Esquema para dibujarlo en la cancha pixel. */
-export type ModeloOnceElegido = ModeloImagen & { clubId: ClubId; esquemaId: EsquemaId };
+/** El modelo de la imagen del 11 Elegido, con el Esquema para dibujarlo en la cancha pixel. */
+export type ModeloOnceElegido = ModeloImagen & { esquemaId: EsquemaId };
 
 /** La imagen del 11 Elegido del Partido, o null si no existe o su Votación no tuvo 11 Elegido. */
 export async function modeloOnceElegido(clienteServicio: Cliente, partidoId: string): Promise<ModeloOnceElegido | null> {
@@ -64,28 +71,35 @@ export async function modeloOnceElegido(clienteServicio: Cliente, partidoId: str
     .eq("estado", "con_once")
     .maybeSingle();
   if (error) throw error;
-  if (!fila?.partido || !fila.esquema || !esEsquemaId(fila.esquema) || !esClubId(fila.partido.club_id)) return null;
+  if (!fila?.partido || !fila.esquema || !esEsquemaId(fila.esquema) || !esClubOSeleccion(fila.partido.club_id)) return null;
+  const club = fila.partido.club_id;
 
   const once = onceDesdeJson(fila.once);
-  const ids = once.flatMap((a) => (a.jugadorId ? [a.jugadorId] : []));
-  const jugadores = await leerJugadores(clienteServicio, fila.partido.club_id, ids);
+  const final = club === SELECCION ? await leerGranAusenteFinal(clienteServicio, partidoId) : null;
+  const elDestacado = final ? destacado(final.apariciones, final.convocados) : null;
+  const ids = [...once.flatMap((a) => (a.jugadorId ? [a.jugadorId] : [])), ...(elDestacado?.jugadores.map((j) => j.jugadorId) ?? [])];
+  const jugadores = await leerJugadores(clienteServicio, club, ids);
 
   const modelo = modeloDeImagen({
     tipo: "once_elegido",
-    club: fila.partido.club_id,
+    club,
     rival: fila.partido.rival?.nombre ?? NOMBRE_RIVAL_DESCONOCIDO,
     ...fechaDeImagen(new Date(fila.partido.inicio)),
     esquema: fila.esquema,
     asignaciones: once,
     jugadores,
+    destacado: elDestacado,
   });
-  return { ...modelo, clubId: fila.partido.club_id, esquemaId: fila.esquema };
+  return { ...modelo, esquemaId: fila.esquema };
 }
 
-/** Solo los Jugadores pedidos, del Club del Partido (incluye bajas: la imagen los nombra igual). */
-async function leerJugadores(cliente: Cliente, club: ClubId, ids: string[]) {
+/**
+ * Solo los Jugadores pedidos, del Club (o la Selección) del Partido (incluye
+ * bajas: la imagen los nombra igual). Los de la Selección no llevan número.
+ */
+async function leerJugadores(cliente: Cliente, club: ClubOSeleccion, ids: string[]) {
   if (ids.length === 0) return [];
-  const { data, error } = await cliente.from("jugador").select("id, nombre, numero").eq("club_id", club).in("id", ids);
+  const { data, error } = await cliente.from("jugador").select("id, nombre, numero").eq("club_id", club).in("id", [...new Set(ids)]);
   if (error) throw error;
-  return data.map((j) => ({ ...j, numero: numeroDeClubDeLaBase(j.numero) }));
+  return data.map((j) => ({ ...j, numero: club === SELECCION ? null : numeroDeClubDeLaBase(j.numero) }));
 }

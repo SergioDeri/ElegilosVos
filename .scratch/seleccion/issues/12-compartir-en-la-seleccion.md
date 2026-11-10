@@ -4,11 +4,11 @@
 
 **Blocked by:** 10
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Imagen del 11 Elegido de la Selección con el destacado que corresponda
-- [ ] Imagen de mi Alineación de la Selección
-- [ ] Nombres completos sin número y sin cortar en las imágenes, con tests del modelo de imagen
-- [ ] Las imágenes de los Clubes no cambian
-- [ ] Tests de RLS siguiendo los de compartir existentes
-- [ ] Antes de terminar: `npm run typecheck && npm run lint && npm test && npm run test:rls` && npm run test:e2e
+- [x] Imagen del 11 Elegido de la Selección con el destacado que corresponda
+- [x] Imagen de mi Alineación de la Selección
+- [x] Nombres completos sin número y sin cortar en las imágenes, con tests del modelo de imagen
+- [x] Las imágenes de los Clubes no cambian
+- [x] Tests de RLS siguiendo los de compartir existentes
+- [x] Antes de terminar: `npm run typecheck && npm run lint && npm test && npm run test:rls` && npm run test:e2e
