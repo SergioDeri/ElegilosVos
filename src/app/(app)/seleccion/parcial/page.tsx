@@ -1,5 +1,6 @@
 // Parcial de la Selección (Selección, ticket 08): el 11 que va ganando, los
-// porcentajes por Esquema y por Puesto y el Más Pedido, con los votos de
+// porcentajes por Esquema y por Puesto y el Más Pedido (o, con Convocatoria,
+// el Gran Ausente provisorio: ticket 09), con los votos de
 // todos los Hinchas (un solo resultado, sin separar por hinchada). En una
 // fecha doble hay uno por Partido: se elige con `?partido=<id>`, como en el
 // armado. Se calcula en el servidor (service role, solo agregados, caché

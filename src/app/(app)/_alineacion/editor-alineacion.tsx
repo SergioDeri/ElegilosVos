@@ -85,9 +85,14 @@ export interface PropsEditor {
   jugadores: JugadorDelClub[];
   /** false: solo lectura (sin Votación abierta). */
   editable: boolean;
+  /**
+   * Selección: ids de los convocados, si ya hay Convocatoria (null o sin
+   * pasar: no hay). Solo se marcan; los no convocados se siguen eligiendo.
+   */
+  convocados?: readonly string[] | null;
 }
 
-export function EditorAlineacion({ partidoId, club, inicial, jugadores, editable }: PropsEditor) {
+export function EditorAlineacion({ partidoId, club, inicial, jugadores, editable, convocados = null }: PropsEditor) {
   const router = useRouter();
   const [alineacion, setAlineacion] = useState<Alineacion>(() => {
     const leida = inicial ? desdeJson(inicial) : null;
@@ -106,6 +111,7 @@ export function EditorAlineacion({ partidoId, club, inicial, jugadores, editable
   const puedeEditar = editable && guardado.tipo !== "cerrada" && guardado.tipo !== "invalida";
 
   const porId = useMemo(() => new Map(jugadores.map((j) => [j.id, j])), [jugadores]);
+  const convocado = useMemo(() => (convocados ? new Set(convocados) : null), [convocados]);
   const libres = banco(alineacion, jugadores);
   const noDisponibles = jugadores.filter((j) => j.enPlantel && j.disponibilidad !== "disponible");
 
@@ -274,6 +280,13 @@ export function EditorAlineacion({ partidoId, club, inicial, jugadores, editable
           )}
         </div>
 
+        {convocado && (
+          <p className={estilos.convocatoria}>
+            Ya salió la Convocatoria: los convocados llevan una <span className={estilos.convocado}>C</span>. Podés poner
+            igual a un no convocado, para reclamarlo con tu voto.
+          </p>
+        )}
+
         <CanchaPixel
           className={estilos.area}
           esquema={alineacion.esquema}
@@ -293,6 +306,7 @@ export function EditorAlineacion({ partidoId, club, inicial, jugadores, editable
                 caja={caja}
                 jugador={jugador}
                 jugadorIdDesconocido={ocupado && !jugador ? ocupado.jugadorId : undefined}
+                convocado={convocado ? convocado.has(ocupado?.jugadorId ?? "") : undefined}
                 editable={puedeEditar}
                 seleccionado={seleccion?.tipo === "puesto" && seleccion.puesto === caja.id}
                 salto={salto?.puesto === caja.id ? salto.vez : undefined}
@@ -308,6 +322,7 @@ export function EditorAlineacion({ partidoId, club, inicial, jugadores, editable
                     <JugadorDelBanco
                       club={club}
                       jugador={j}
+                      convocado={convocado ? convocado.has(j.id) : undefined}
                       ancho={b.anchoItem}
                       editable={puedeEditar}
                       seleccionado={seleccion?.tipo === "jugador" && seleccion.jugadorId === j.id}
@@ -380,20 +395,22 @@ function PuestoEnCancha(props: {
   caja: CajaDePuesto;
   jugador: JugadorDelClub | undefined;
   jugadorIdDesconocido: string | undefined;
+  /** undefined: no hay Convocatoria. */
+  convocado: boolean | undefined;
   editable: boolean;
   seleccionado: boolean;
   /** Cuántas veces se soltó una Camiseta acá (cambia: salta de nuevo). */
   salto: number | undefined;
   alTocar: () => void;
 }) {
-  const { club, caja, jugador, editable, seleccionado, salto, alTocar } = props;
+  const { club, caja, jugador, convocado, editable, seleccionado, salto, alTocar } = props;
   const etiqueta = caja.etiqueta;
   const ocupado = !!jugador || !!props.jugadorIdDesconocido;
   const soltable = useDroppable({ id: idPuesto(caja.id), disabled: !editable });
   const arrastrable = useDraggable({ id: idPuesto(caja.id), disabled: !editable || !ocupado, data: { ancho: caja.ancho } });
   const noDisponible = jugador && (jugador.disponibilidad !== "disponible" || !jugador.enPlantel);
   const descripcion = jugador
-    ? `${etiqueta}: ${conNumero(jugador)}${noDisponible ? " (no disponible)" : ""}`
+    ? `${etiqueta}: ${conNumero(jugador)}${textoConvocatoria(convocado)}${noDisponible ? " (no disponible)" : ""}`
     : `${etiqueta}: vacío`;
 
   return (
@@ -426,6 +443,7 @@ function PuestoEnCancha(props: {
               <Particulas />
             </span>
           )}
+          {convocado && <MarcaConvocado />}
           {noDisponible && <span className={estilos.alerta}>!</span>}
         </>
       ) : (
@@ -447,12 +465,14 @@ function Banco(props: { editable: boolean; cantidad: number; children: ReactNode
 function JugadorDelBanco(props: {
   club: ClubOSeleccion;
   jugador: JugadorDelClub;
+  /** undefined: no hay Convocatoria. */
+  convocado: boolean | undefined;
   ancho: number;
   editable: boolean;
   seleccionado: boolean;
   alTocar: () => void;
 }) {
-  const { club, jugador, ancho, editable, seleccionado, alTocar } = props;
+  const { club, jugador, convocado, ancho, editable, seleccionado, alTocar } = props;
   const { setNodeRef, listeners, attributes, isDragging } = useDraggable({
     id: idJugador(jugador.id),
     disabled: !editable,
@@ -465,14 +485,28 @@ function JugadorDelBanco(props: {
       {...listeners}
       {...attributes}
       aria-pressed={seleccionado}
-      aria-label={`${conNumero(jugador)}, ${POSICION[jugador.posicionNatural]}`}
+      aria-label={`${conNumero(jugador)}, ${POSICION[jugador.posicionNatural]}${textoConvocatoria(convocado)}`}
       onClick={alTocar}
       className={estilos.ficha}
       data-seleccionado={seleccionado}
       data-arrastrando={isDragging}
     >
       <JugadorConCamiseta club={club} jugador={jugador} ancho={ancho} />
+      {convocado && <MarcaConvocado />}
     </button>
+  );
+}
+
+/** ", convocado" / ", no convocado" para lectores de pantalla; nada sin Convocatoria. */
+function textoConvocatoria(convocado: boolean | undefined): string {
+  return convocado === undefined ? "" : convocado ? ", convocado" : ", no convocado";
+}
+
+function MarcaConvocado() {
+  return (
+    <span className={estilos.convocado} aria-hidden>
+      C
+    </span>
   );
 }
 

@@ -144,3 +144,18 @@
   cursor: grabbing;
 }
 
+
+/* Selección con Convocatoria: los convocados llevan una "C" (ticket 09). */
+.convocado {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 0 var(--u);
+  background: var(--color-amarillo);
+  color: var(--color-contorno);
+  box-shadow: 0 0 0 var(--u) var(--color-contorno);
+}
+
+.convocatoria .convocado {
+  position: static;
+}

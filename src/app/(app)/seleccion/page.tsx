@@ -3,13 +3,16 @@
 // Selección. La Votación abre 14 días antes de cada Partido, así que en una
 // fecha doble hay dos abiertas a la vez: el Hincha elige el Partido
 // (`?partido=<id>`) y arma cada Alineación por separado. Sin Votación
-// abierta, la cancha queda en solo lectura con el motivo.
+// abierta, la cancha queda en solo lectura con el motivo. Si ya salió la
+// Convocatoria del Partido (ticket 09), se marca a los convocados; los no
+// convocados se siguen pudiendo elegir.
 import Link from "next/link";
 import { aJson } from "@/domain/editor";
 import { formatearHoraUy } from "@/domain/comun/horario";
 import { SELECCION } from "@/domain/comun/tipos";
 import { requerirHincha } from "@/lib/auth/sesion";
 import { RUTA_SELECCION } from "@/lib/auth/rutas";
+import { leerConvocados } from "@/lib/convocatoria/lecturas";
 import { cargarAlineacion } from "../_alineacion/datos";
 import { EditorAlineacion } from "../_alineacion/editor-alineacion";
 import { AvisoNoDisponibles } from "../_herencia/aviso-no-disponibles";
@@ -34,7 +37,10 @@ export default async function Seleccion({ searchParams }: PageProps<"/seleccion"
     );
   }
 
-  const alineacion = await cargarAlineacion(pantalla.supabase, partido.id);
+  const [alineacion, convocados] = await Promise.all([
+    cargarAlineacion(pantalla.supabase, partido.id),
+    leerConvocados(pantalla.supabase, partido.id),
+  ]);
 
   return (
     <main>
@@ -70,6 +76,7 @@ export default async function Seleccion({ searchParams }: PageProps<"/seleccion"
           inicial={alineacion ? aJson(alineacion) : null}
           jugadores={jugadores}
           editable={votacion.estado === "abierta"}
+          convocados={convocados}
         />
       )}
     </main>
