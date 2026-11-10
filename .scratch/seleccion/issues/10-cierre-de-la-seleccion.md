@@ -4,11 +4,11 @@
 
 **Blocked by:** 09
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] El cron de cierre procesa la Selección, incluidas dos Votaciones que cierran cerca
-- [ ] Las apariciones quedan congeladas con el resultado inmutable
-- [ ] Resultados de la Selección: 11 Elegido y Gran Ausente final
-- [ ] Convocatoria cargada después del cierre → aparece el Gran Ausente sin modificar el resultado
-- [ ] Tests de RLS: la Convocatoria no se edita después de publicado el Gran Ausente final; el resultado sigue inmutable
-- [ ] Antes de terminar: `npm run typecheck && npm run lint && npm test && npm run test:rls` && npm run test:e2e
+- [x] El cron de cierre procesa la Selección, incluidas dos Votaciones que cierran cerca
+- [x] Las apariciones quedan congeladas con el resultado inmutable
+- [x] Resultados de la Selección: 11 Elegido y Gran Ausente final
+- [x] Convocatoria cargada después del cierre → aparece el Gran Ausente sin modificar el resultado
+- [x] Tests de RLS: la Convocatoria no se edita después de publicado el Gran Ausente final; el resultado sigue inmutable
+- [x] Antes de terminar: `npm run typecheck && npm run lint && npm test && npm run test:rls` && npm run test:e2e

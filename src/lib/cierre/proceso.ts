@@ -16,17 +16,20 @@
 //   * Las Alineaciones son las guardadas cuando corre el proceso. Después del
 //     cierre ningún Hincha puede escribirlas, pero si alguien borra su cuenta
 //     entre el cierre y el proceso, su Alineación ya no cuenta.
-//   * Solo cuentan las Alineaciones de Hinchas cuyo Club Favorito de hoy es
-//     el Club del Partido (`leerAlineacionesDelPartido`, corrección A).
+//   * En un Club solo cuentan las Alineaciones de Hinchas cuyo Club Favorito
+//     de hoy es el Club del Partido (`leerAlineacionesDelPartido`, corrección A).
 //   * La Disponibilidad se reconstruye a la hora de cierre con
 //     `evento_disponibilidad`; la pertenencia al Plantel, el número y la
 //     posición natural se toman AL MOMENTO DE CORRER el cierre (no tienen
 //     historial). Con el cron cada minuto la diferencia con la hora de cierre
 //     es despreciable, así que no se reconstruyen.
-//   * La Selección todavía no se cierra (lo hace el ticket 10 del feature
-//     Selección): sus Partidos se saltean y quedan sin resultado, también los
-//     cancelados. `cerrarVotacion` de un Partido de la Selección devuelve
-//     `estado: null`, como si todavía no correspondiera cerrar.
+//   * En la Selección (ticket 10 del feature Selección) cuentan las
+//     Alineaciones de todos los Hinchas, y además se congelan las apariciones
+//     de cada Jugador (`resultado_votacion.apariciones`): de ahí, con la
+//     Convocatoria, se deriva el Gran Ausente final (`leerGranAusenteFinal`
+//     de ./gran-ausente). En una fecha doble cada Votación se cierra a su
+//     hora; la herencia de antes del cierre también copia a la otra si sigue
+//     abierta (ticket 07).
 import {
   decidirCierre,
   disponibilidadAlCierre,
@@ -34,17 +37,17 @@ import {
   resultadoDelConteo,
   type EstadoResultado,
 } from "@/domain/cierre";
-import { clubIdDeLaBase, esClubId, type ClubId } from "@/domain/comun/tipos";
+import { clubOSeleccionDeLaBase, esClubOSeleccion, SELECCION, type ClubOSeleccion } from "@/domain/comun/tipos";
 import { materializarHerencias } from "@/lib/herencia/materializar";
-import { contarVotacion } from "@/domain/votacion";
+import { aparicionesDeVotacion, contarVotacion } from "@/domain/votacion";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/lib/supabase/database.types";
 import { leerAlineacionesDelPartido, leerJugadoresParaConteo } from "@/lib/votacion/conteo";
 
 type ClienteSupabase = SupabaseClient<Database>;
 
-/** Cambios de Disponibilidad del Club desde `desde` (paginado por id). */
-async function leerCambiosDesde(cliente: ClienteSupabase, club: ClubId, desde: Date) {
+/** Cambios de Disponibilidad del Club (o de la Selección) desde `desde` (paginado por id). */
+async function leerCambiosDesde(cliente: ClienteSupabase, club: ClubOSeleccion, desde: Date) {
   const cambios: { jugadorId: string; disponibilidadAnterior: Database["public"]["Enums"]["disponibilidad"]; momento: Date }[] = [];
   let ultimoId: string | null = null;
   for (;;) {
@@ -100,13 +103,14 @@ async function congelar(cliente: ClienteSupabase, votacion: VotacionFila, ahora:
     once: Json | null;
     detalle: Json | null;
     alineaciones_que_cuentan: number;
+    apariciones: Json | null;
   };
   if (decision.accion === "registrar") {
-    aInsertar = { estado: decision.estado, esquema: null, once: null, detalle: null, alineaciones_que_cuentan: 0 };
+    aInsertar = { estado: decision.estado, esquema: null, once: null, detalle: null, alineaciones_que_cuentan: 0, apariciones: null };
   } else {
     // Herencias que el cron del ticket 10 no llegó a materializar: se crean
     // como si fuera justo antes del cierre, para que esos votos cuenten.
-    const club = clubIdDeLaBase(votacion.club_id);
+    const club = clubOSeleccionDeLaBase(votacion.club_id);
     await materializarHerencias(cliente, new Date(cierra.getTime() - 1), { club });
     // Lectura + adaptación + conteo del ticket 11 (sin hincha_id; el detalle
     // ya sale por `soloAgregados`), con la Disponibilidad al cierre.
@@ -115,13 +119,18 @@ async function congelar(cliente: ClienteSupabase, votacion: VotacionFila, ahora:
       leerJugadoresParaConteo(cliente, club),
       leerCambiosDesde(cliente, club, cierra),
     ]);
-    const r = resultadoDelConteo(contarVotacion(filas, disponibilidadAlCierre(jugadores, cambios, cierra)));
+    const r = resultadoDelConteo(
+      contarVotacion(filas, disponibilidadAlCierre(jugadores, cambios, cierra)),
+      // Solo la Selección tiene Más Pedido y Gran Ausente: sus apariciones se congelan.
+      club === SELECCION ? aparicionesDeVotacion(filas) : null,
+    );
     aInsertar = {
       estado: r.estado,
       esquema: r.esquema,
       once: r.once as unknown as Json,
       detalle: r.detalle as unknown as Json,
       alineaciones_que_cuentan: r.alineacionesQueCuentan,
+      apariciones: r.apariciones as unknown as Json | null,
     };
   }
 
@@ -165,7 +174,7 @@ export async function cerrarVotacion(cliente: ClienteSupabase, partidoId: string
   ]);
   if (errorPartido) throw errorPartido;
   if (errorVotacion) throw errorVotacion;
-  if (!partido || !votacion || !esClubId(partido.club_id)) return { partidoId, estado: null, creado: false };
+  if (!partido || !votacion || !esClubOSeleccion(partido.club_id)) return { partidoId, estado: null, creado: false };
   return congelar(cliente, { ...votacion, club_id: partido.club_id }, ahora);
 }
 
@@ -183,8 +192,8 @@ export async function cerrarVotacionesVencidas(cliente: ClienteSupabase, ahora: 
   const { data, error } = await cliente.rpc("votaciones_por_cerrar", { ahora: ahora.toISOString() });
   if (error) throw error;
   const resumen: ResumenCierre = { cerrados: [], errores: [] };
-  // Solo los Clubes: la Selección todavía no se cierra (ticket 10).
-  for (const votacion of (data ?? []).filter((v) => esClubId(v.club_id))) {
+  // Clubes y Selección (en una fecha doble, las dos Votaciones en orden de cierre).
+  for (const votacion of data ?? []) {
     try {
       resumen.cerrados.push(await congelar(cliente, votacion, ahora));
     } catch (e) {

@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { esUuid } from "@/domain/comun/ids";
 import { requerirAdmin } from "@/lib/auth/admin";
 import { crearClienteServidor } from "@/lib/supabase/server";
-import { cargarDatosDeConvocatorias } from "../datos";
+import { cargarDatosDeConvocatorias, convocatoriaFija } from "../datos";
 import { BotonBorrarConvocatoria, FormularioConvocatoria } from "../formulario";
 
 export default async function PaginaConvocatoria({ params }: PageProps<"/admin/convocatorias/[id]">) {
@@ -15,22 +15,42 @@ export default async function PaginaConvocatoria({ params }: PageProps<"/admin/c
   const { elegibles, partidos, convocatorias } = await cargarDatosDeConvocatorias(supabase);
   const convocatoria = convocatorias.find((c) => c.id === id);
   if (!convocatoria) notFound();
+  const fija = await convocatoriaFija(supabase, convocatoria.partidos);
 
   return (
     <main>
-      <h1>Corregir la Convocatoria</h1>
-      <p>
-        Mientras la Votación de sus Partidos sigue abierta, el Parcial muestra el Gran Ausente provisorio con esta
-        Convocatoria.
-      </p>
-      <FormularioConvocatoria
-        id={convocatoria.id}
-        elegibles={elegibles}
-        partidos={partidos}
-        convocados={convocatoria.jugadores}
-        aplicaA={convocatoria.partidos}
-      />
-      <BotonBorrarConvocatoria id={convocatoria.id} />
+      <h1>{fija ? "Convocatoria" : "Corregir la Convocatoria"}</h1>
+      {fija ? (
+        <>
+          <p role="status">
+            Ya se publicó el Gran Ausente final de un Partido de esta Convocatoria: quedó fija y no se puede corregir ni
+            borrar.
+          </p>
+          <ul>
+            {elegibles
+              .filter((j) => convocatoria.jugadores.includes(j.id))
+              .map((j) => (
+                <li key={j.id}>{j.nombre}</li>
+              ))}
+          </ul>
+        </>
+      ) : (
+        <>
+          <p>
+            Mientras la Votación de sus Partidos sigue abierta, el Parcial muestra el Gran Ausente provisorio con esta
+            Convocatoria. Cuando se publica el Gran Ausente final (al cierre, o al cargarla si la Votación ya cerró),
+            queda fija.
+          </p>
+          <FormularioConvocatoria
+            id={convocatoria.id}
+            elegibles={elegibles}
+            partidos={partidos}
+            convocados={convocatoria.jugadores}
+            aplicaA={convocatoria.partidos}
+          />
+          <BotonBorrarConvocatoria id={convocatoria.id} />
+        </>
+      )}
       <p>
         <Link href="/admin/convocatorias">Volver a las Convocatorias</Link>
       </p>

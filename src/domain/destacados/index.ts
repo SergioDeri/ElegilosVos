@@ -5,6 +5,7 @@
  *   const apariciones = contarApariciones(alineaciones); // las mismas que el Conteo, incluidas las heredadas (ADR-0002)
  *   destacado(apariciones);                // sin Convocatoria: el Más Pedido
  *   destacado(apariciones, convocados);    // con Convocatoria: el Gran Ausente (o null)
+ *   granAusenteFinal(congeladas, convocados); // al cierre (ticket 10): el Gran Ausente final, o null
  *
  * Las **apariciones** de un Jugador son en cuántas Alineaciones figura, en
  * cualquier Puesto de su Esquema (los Puestos que no son del Esquema se
@@ -100,5 +101,42 @@ export function destacado(apariciones: Apariciones, convocatoria?: Convocatoria 
         apariciones: j.apariciones,
         porcentaje: (j.apariciones / apariciones.alineaciones) * 100,
       })),
+  };
+}
+
+// ---------- Al cierre (Selección, ticket 10) ----------
+
+/**
+ * El **Gran Ausente final**: el Gran Ausente con las apariciones congeladas
+ * al cierre de la Votación (`resultado_votacion.apariciones`) y la
+ * Convocatoria del Partido. No se guarda: se deriva, así que si la
+ * Convocatoria se carga después del cierre aparece sin tocar el resultado.
+ * `null` sin apariciones congeladas, sin Convocatoria todavía (al cierre no
+ * hay Más Pedido final) o si ningún no convocado figura.
+ */
+export function granAusenteFinal(
+  congeladas: Apariciones | null,
+  convocatoria: Convocatoria | null | undefined,
+): Destacado | null {
+  if (!congeladas || !convocatoria) return null;
+  return destacado(congeladas, convocatoria);
+}
+
+function esAparicionesDeJugador(v: unknown): v is AparicionesDeJugador {
+  if (typeof v !== "object" || v === null) return false;
+  const a = v as Record<string, unknown>;
+  return typeof a.jugadorId === "string" && typeof a.apariciones === "number";
+}
+
+/** Las apariciones congeladas (jsonb). `null` si no hay o no tienen la forma esperada. */
+export function aparicionesDesdeJson(valor: unknown): Apariciones | null {
+  if (typeof valor !== "object" || valor === null || Array.isArray(valor)) return null;
+  const v = valor as Record<string, unknown>;
+  if (typeof v.alineaciones !== "number" || !Array.isArray(v.porJugador) || !v.porJugador.every(esAparicionesDeJugador)) {
+    return null;
+  }
+  return {
+    alineaciones: v.alineaciones,
+    porJugador: v.porJugador.map((j) => ({ jugadorId: j.jugadorId, apariciones: j.apariciones })),
   };
 }

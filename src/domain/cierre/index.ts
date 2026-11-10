@@ -5,12 +5,14 @@
  *   (esperar, contar o registrarla sin 11 Elegido).
  * - `disponibilidadAlCierre`: la Disponibilidad de cada Jugador a la hora de
  *   cierre, deshaciendo los cambios registrados después.
- * - `resultadoDelConteo`: el resultado a congelar a partir de `contar`.
+ * - `resultadoDelConteo`: el resultado a congelar a partir de `contar` (en la
+ *   Selección, con las apariciones de cada Jugador: Selección, ticket 10).
  * - `coincidencia`: Jugadores en común entre dos onces (sin importar el Puesto).
  * - `onceDesdeJson`: lectura tolerante del 11 congelado (jsonb).
  */
 import type { Disponibilidad } from "@/domain/comun/tipos";
 import type { Asignacion, ResultadoConteo } from "@/domain/conteo";
+import type { Apariciones } from "@/domain/destacados";
 import { PUESTO_IDS, type EsquemaId, type PuestoId } from "@/domain/esquemas";
 
 /** Estados del resultado congelado (columna `resultado_votacion.estado`). */
@@ -94,11 +96,22 @@ export interface ResultadoACongelar {
   /** La salida completa de `contar` (no tiene datos de Hinchas). */
   readonly detalle: ResultadoConteo;
   readonly alineacionesQueCuentan: number;
+  /**
+   * En la Selección, en cuántas Alineaciones figura cada Jugador (de
+   * `contarApariciones`, con las mismas Alineaciones que el Conteo): de acá
+   * se deriva el Gran Ausente final. `null` en los Clubes.
+   */
+  readonly apariciones: Apariciones | null;
 }
 
-export function resultadoDelConteo(conteo: ResultadoConteo): ResultadoACongelar {
+/**
+ * El resultado a congelar. `apariciones` solo en la Selección (en los Clubes
+ * no hay Más Pedido ni Gran Ausente): se congelan con el resultado, aunque no
+ * haya 11 Elegido.
+ */
+export function resultadoDelConteo(conteo: ResultadoConteo, apariciones: Apariciones | null = null): ResultadoACongelar {
   if (conteo.vacio) {
-    return { estado: "sin_alineaciones", esquema: null, once: null, detalle: conteo, alineacionesQueCuentan: 0 };
+    return { estado: "sin_alineaciones", esquema: null, once: null, detalle: conteo, alineacionesQueCuentan: 0, apariciones };
   }
   return {
     estado: "con_once",
@@ -106,6 +119,7 @@ export function resultadoDelConteo(conteo: ResultadoConteo): ResultadoACongelar 
     once: conteo.once,
     detalle: conteo,
     alineacionesQueCuentan: conteo.alineacionesQueCuentan,
+    apariciones,
   };
 }
 

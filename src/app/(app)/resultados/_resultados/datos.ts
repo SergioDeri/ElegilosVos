@@ -1,12 +1,13 @@
-// Lecturas de las pantallas de resultados (servidor). Todo con el cliente del
-// usuario (RLS: solo su Club y su propia Alineación), salvo el cierre a
-// pedido, que usa la service role y solo para un Partido que el Hincha ya
-// pudo leer.
+// Lecturas de las pantallas de resultados (servidor), de un Club o de la
+// Selección (Selección, ticket 10: `/seleccion/resultados`). Todo con el
+// cliente del usuario (RLS: los resultados de su Club y los de la Selección, y
+// su propia Alineación), salvo el cierre a pedido, que usa la service role y
+// solo para un Partido que el Hincha ya pudo leer.
 import "server-only";
 import { alineacionDesdeFila, COLUMNAS_ALINEACION } from "@/domain/armado";
 import { CIERRE_ANTES_DEL_INICIO_MS, cierreDeVotacion } from "@/domain/calendario";
 import { coincidencia, estadoResultadoDeLaBase, onceDesdeJson, type EstadoResultado } from "@/domain/cierre";
-import { numeroDeClubDeLaBase, type ClubId } from "@/domain/comun/tipos";
+import { numeroDeClubDeLaBase, SELECCION, type ClubOSeleccion } from "@/domain/comun/tipos";
 import type { Asignacion } from "@/domain/conteo";
 import { esEsquemaId, type EsquemaId } from "@/domain/esquemas";
 import { cerrarVotacion } from "@/lib/cierre/proceso";
@@ -34,15 +35,16 @@ export interface ResultadoVista {
 
 export interface JugadorResultado {
   nombre: string;
-  numero: number;
+  /** null en la Selección (sin número). */
+  numero: number | null;
 }
 
 function aPartido(p: { id: string; inicio: string; estado: string; rival: { nombre: string } | null }): PartidoResultado {
   return { id: p.id, inicio: new Date(p.inicio), cancelado: p.estado === "cancelado", rival: p.rival?.nombre ?? NOMBRE_RIVAL_DESCONOCIDO };
 }
 
-/** Un Partido del Club del Hincha (o null si no existe o es de otro Club). */
-export async function cargarPartido(supabase: Cliente, club: ClubId, id: string): Promise<PartidoResultado | null> {
+/** Un Partido del Club del Hincha o de la Selección (o null si no existe o es de otro). */
+export async function cargarPartido(supabase: Cliente, club: ClubOSeleccion, id: string): Promise<PartidoResultado | null> {
   if (!esUuid(id)) return null;
   const { data, error } = await supabase
     .from("partido")
@@ -61,7 +63,7 @@ export async function cargarPartido(supabase: Cliente, club: ClubId, id: string)
  * después del cierre conserva su 11 Elegido aunque su inicio nuevo quede
  * más adelante.
  */
-export async function cargarUltimoPartidoCerrado(supabase: Cliente, club: ClubId, ahora: Date): Promise<PartidoResultado | null> {
+export async function cargarUltimoPartidoCerrado(supabase: Cliente, club: ClubOSeleccion, ahora: Date): Promise<PartidoResultado | null> {
   const [porInicio, porResultado] = await Promise.all([
     supabase
       .from("partido")
@@ -72,7 +74,7 @@ export async function cargarUltimoPartidoCerrado(supabase: Cliente, club: ClubId
       .order("inicio", { ascending: false })
       .limit(1)
       .maybeSingle(),
-    // RLS: solo resultados del Club del Hincha.
+    // RLS: los del Club del Hincha y los de la Selección; se filtra por dueño.
     supabase
       .from("resultado_votacion")
       .select("cierre, partido!inner(id, inicio, estado, club_id, rival(nombre))")
@@ -106,15 +108,18 @@ export async function cargarResultado(supabase: Cliente, partido: PartidoResulta
     console.error("No se pudo cerrar la Votación a pedido", partido.id, e);
     return null;
   }
-  return leerResultado(supabase, partido.id);
+  // Next memoiza los GET iguales durante el render: sin la señal, la segunda
+  // lectura devolvería la primera (sin resultado) aunque el cierre ya lo creó.
+  return leerResultado(supabase, partido.id, new AbortController().signal);
 }
 
-async function leerResultado(supabase: Cliente, partidoId: string): Promise<ResultadoVista | null> {
-  const { data, error } = await supabase
+async function leerResultado(supabase: Cliente, partidoId: string, signal?: AbortSignal): Promise<ResultadoVista | null> {
+  let consulta = supabase
     .from("resultado_votacion")
     .select("estado, esquema, once, alineaciones_que_cuentan, calculado_en")
-    .eq("partido_id", partidoId)
-    .maybeSingle();
+    .eq("partido_id", partidoId);
+  if (signal) consulta = consulta.abortSignal(signal);
+  const { data, error } = await consulta.maybeSingle();
   if (error) throw error;
   if (!data) return null;
   return {
@@ -133,16 +138,18 @@ export interface ItemHistorial {
   aciertoOnceReal: number | null;
 }
 
-/** Historial: los resultados del Club con su Partido, del más reciente al más viejo. */
-export async function cargarHistorial(supabase: Cliente): Promise<ItemHistorial[]> {
+/** Historial: los resultados del Club (o de la Selección) con su Partido, del más reciente al más viejo. */
+export async function cargarHistorial(supabase: Cliente, club: ClubOSeleccion): Promise<ItemHistorial[]> {
   const { data, error } = await supabase
     .from("resultado_votacion")
-    .select("estado, once, partido(id, inicio, estado, rival(nombre), once_real(jugadores))");
+    .select("estado, once, partido!inner(id, inicio, estado, club_id, rival(nombre), once_real(jugadores))")
+    .eq("partido.club_id", club);
   if (error) throw error;
   return data
     .filter((r) => r.partido)
     .map((r) => {
-      const onceReal = r.partido!.once_real?.jugadores ?? null;
+      // El 11 Real de la Selección es del ticket 11 del feature Selección.
+      const onceReal = club === SELECCION ? null : (r.partido!.once_real?.jugadores ?? null);
       const estado = estadoResultadoDeLaBase(r.estado);
       return {
         partido: aPartido(r.partido!),
@@ -161,11 +168,13 @@ export async function cargarOnceReal(supabase: Cliente, partidoId: string): Prom
   return data?.jugadores ?? null;
 }
 
-/** Jugadores del Club por id (incluye bajas: el historial los nombra). */
-export async function cargarJugadores(supabase: Cliente, club: ClubId): Promise<Map<string, JugadorResultado>> {
+/** Jugadores del Club (o de la Selección, sin número) por id (incluye bajas: el historial los nombra). */
+export async function cargarJugadores(supabase: Cliente, club: ClubOSeleccion): Promise<Map<string, JugadorResultado>> {
   const { data, error } = await supabase.from("jugador").select("id, nombre, numero").eq("club_id", club);
   if (error) throw error;
-  return new Map(data.map((j) => [j.id, { nombre: j.nombre, numero: numeroDeClubDeLaBase(j.numero) }]));
+  return new Map(
+    data.map((j) => [j.id, { nombre: j.nombre, numero: club === SELECCION ? null : numeroDeClubDeLaBase(j.numero) }]),
+  );
 }
 
 /** Ids de los Jugadores de la Alineación del Hincha para el Partido, o null si no tiene. */

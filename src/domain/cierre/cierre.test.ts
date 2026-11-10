@@ -95,6 +95,36 @@ describe("resultadoDelConteo", () => {
       once: null,
       detalle: { vacio: true, alineacionesQueCuentan: 0 },
       alineacionesQueCuentan: 0,
+      apariciones: null,
+    });
+  });
+
+  it("en un Club no congela apariciones", () => {
+    const conteo = contar({
+      alineaciones: [{ esquema: "4-3-3", esquemaElegidoAMano: true, puestos: { ARQ: { jugadorId: "arq", modificadoEn: en(0) } } }],
+      jugadores,
+    });
+    expect(resultadoDelConteo(conteo).apariciones).toBeNull();
+  });
+
+  it("en la Selección congela las apariciones junto con el 11 Elegido", () => {
+    const conteo = contar({
+      alineaciones: [{ esquema: "4-3-3", esquemaElegidoAMano: true, puestos: { ARQ: { jugadorId: "arq", modificadoEn: en(0) } } }],
+      jugadores,
+    });
+    const apariciones = { alineaciones: 1, porJugador: [{ jugadorId: "arq", apariciones: 1 }] };
+    const r = resultadoDelConteo(conteo, apariciones);
+    expect(r.estado).toBe("con_once");
+    expect(r.apariciones).toEqual(apariciones);
+    // Se guarda en jsonb: JSON puro.
+    expect(JSON.parse(JSON.stringify(r.apariciones))).toEqual(apariciones);
+  });
+
+  it("en la Selección sin Alineaciones que cuentan, congela las apariciones (vacías) igual", () => {
+    const vacias = { alineaciones: 0, porJugador: [] };
+    expect(resultadoDelConteo(contar({ alineaciones: [], jugadores }), vacias)).toMatchObject({
+      estado: "sin_alineaciones",
+      apariciones: vacias,
     });
   });
 

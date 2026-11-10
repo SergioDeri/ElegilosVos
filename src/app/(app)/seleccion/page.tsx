@@ -7,6 +7,9 @@
 // Convocatoria del Partido (ticket 09), se marca a los convocados; los no
 // convocados se siguen pudiendo elegir.
 //
+// Los resultados (11 Elegido y Gran Ausente final, ticket 10) están en
+// /seleccion/resultados.
+//
 // Es la pantalla de cualquier Hincha, también del que no tiene Club Favorito
 // (eligió "solo Selección", ticket 06): a ese, después de guardar su
 // Alineación, se le invita a elegir Club.
@@ -36,6 +39,7 @@ export default async function Seleccion({ searchParams }: PageProps<"/seleccion"
     return (
       <main>
         <h1>Selección</h1>
+        <Link href={`${RUTA_SELECCION}/resultados`}>Ver el 11 Elegido y el historial</Link>
         <p role="status">
           Todavía no hay un próximo Partido de la Selección cargado. Cuando se cargue, vas a poder armar tu 11.
         </p>
@@ -53,6 +57,7 @@ export default async function Seleccion({ searchParams }: PageProps<"/seleccion"
   return (
     <main>
       <h1>Selección</h1>
+      <Link href={`${RUTA_SELECCION}/resultados`}>Ver el 11 Elegido y el historial</Link>
       {opciones.length > 1 && (
         <nav aria-label="Elegí el Partido">
           <p>Hay {opciones.length} Votaciones abiertas. Elegí para qué Partido armás tu 11:</p>
