@@ -9,7 +9,7 @@
 // Coordenadas normalizadas (0..1): x de izquierda a derecha (mirando hacia el
 // arco rival), y desde el arco propio (0) hacia el arco rival (1).
 
-export const ESQUEMA_IDS = ["4-3-3", "4-4-2", "4-2-3-1", "3-5-2", "5-3-2", "4-1-4-1"] as const;
+export const ESQUEMA_IDS = ["4-3-3", "4-4-2", "4-2-3-1", "3-5-2", "5-3-2", "4-1-4-1", "4-3-1-2"] as const;
 export type EsquemaId = (typeof ESQUEMA_IDS)[number];
 
 export const PUESTO_IDS = [
@@ -171,5 +171,16 @@ export const CATALOGO: Record<EsquemaId, Esquema> = {
     ["INT_D", 0.63, 0.56],
     ["VOL_D", 0.88, 0.58],
     ["DEL", 0.5, 0.85],
+  ]),
+  // Rombo sin volantes por banda: cinco, dos interiores, enganche y dos puntas.
+  "4-3-1-2": definir("4-3-1-2", [
+    ARQUERO,
+    ...LINEA_DE_CUATRO,
+    ["CINCO", 0.5, 0.36],
+    ["INT_I", 0.3, 0.5],
+    ["INT_D", 0.7, 0.5],
+    ["ENG", 0.5, 0.64],
+    ["DEL_I", 0.35, 0.84],
+    ["DEL_D", 0.65, 0.84],
   ]),
 };

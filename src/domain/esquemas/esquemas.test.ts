@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { esEsquemaId, esPuestoDe, esPuestoDeArquero, esquema, esquemaPorDefecto, esquemas } from "./index";
 
 describe("Catálogo de Esquemas", () => {
-  it("tiene los seis Esquemas del MVP, en orden fijo", () => {
-    expect(esquemas().map((e) => e.id)).toEqual(["4-3-3", "4-4-2", "4-2-3-1", "3-5-2", "5-3-2", "4-1-4-1"]);
+  it("tiene los siete Esquemas, en orden fijo", () => {
+    expect(esquemas().map((e) => e.id)).toEqual(["4-3-3", "4-4-2", "4-2-3-1", "3-5-2", "5-3-2", "4-1-4-1", "4-3-1-2"]);
   });
 
   it.each(esquemas().map((e) => [e.id, e] as const))("%s tiene 11 Puestos con ids distintos", (_, e) => {

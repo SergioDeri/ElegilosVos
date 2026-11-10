@@ -7,7 +7,7 @@
 //   puestoEquivalente(origen, puesto, destino) =
 //     EXCEPCIONES[origen][destino][puesto] ?? RECIBE[destino][puesto]
 //
-// Son 6 tablas de 21 filas en lugar de 30 pares × 11 Puestos, y el resultado
+// Son 7 tablas de 21 filas en lugar de 42 pares × 11 Puestos, y el resultado
 // es predecible: un Puesto que existe en el destino se queda en su lugar, y
 // uno que no existe va siempre al mismo lugar, venga del Esquema que venga.
 // Para los pocos casos donde el Esquema de origen cambia la mejor respuesta,
@@ -24,7 +24,7 @@ import { CATALOGO, type EsquemaId, type PuestoId } from "./catalogo";
 
 type Recibe = Readonly<Record<PuestoId, PuestoId>>;
 
-// Comunes a todos los Esquemas con línea de cuatro (4-3-3, 4-4-2, 4-2-3-1, 4-1-4-1).
+// Comunes a todos los Esquemas con línea de cuatro (4-3-3, 4-4-2, 4-2-3-1, 4-1-4-1, 4-3-1-2).
 const DEFENSA_DE_CUATRO = {
   ARQ: "ARQ",
   LI: "LI",
@@ -146,6 +146,25 @@ const RECIBE: Record<EsquemaId, Recibe> = {
     DEL_I: "DEL",
     DEL_D: "DEL",
   },
+  "4-3-1-2": {
+    ...DEFENSA_DE_CUATRO,
+    CINCO: "CINCO",
+    MC_I: "CINCO",
+    MC_D: "INT_D",
+    INT_I: "INT_I",
+    INT_D: "INT_D",
+    // Sin jugadores de banda: el volante por banda cierra al interior de su
+    // lado y el extremo pasa a delantero de su lado (como en el 3-5-2).
+    VOL_I: "INT_I",
+    VOL_D: "INT_D",
+    EXT_I: "DEL_I",
+    EXT_D: "DEL_D",
+    ENG: "ENG",
+    // Mismo criterio que en los Esquemas con dos puntas: el 9 a la derecha.
+    DEL: "DEL_D",
+    DEL_I: "DEL_I",
+    DEL_D: "DEL_D",
+  },
 };
 
 type Excepciones = Partial<Record<EsquemaId, Partial<Record<EsquemaId, Partial<Record<PuestoId, PuestoId>>>>>>;
@@ -160,6 +179,30 @@ const EXCEPCIONES: Excepciones = {
     // el interior izquierdo ya está ocupado.
     "4-3-3": { DEL_I: "INT_I" },
     "4-1-4-1": { DEL_I: "INT_I" },
+    // (*) Los volantes por banda cierran a interiores y el volante central
+    // derecho sube a enganche, en lugar de chocar con el interior derecho.
+    "4-3-1-2": { MC_D: "ENG" },
+  },
+  // (*) Hacia el 4-3-1-2 desde Esquemas con un solo 9 y jugadores de banda,
+  // el jugador de banda derecho cierra a enganche para no chocar con el 9
+  // (que va a delantero derecho). Desde el 4-2-3-1, además, el doble cinco se
+  // reparte entre cinco e interior izquierdo y el extremo derecho baja a interior.
+  "4-3-3": {
+    "4-3-1-2": { EXT_D: "ENG" },
+  },
+  "4-1-4-1": {
+    "4-3-1-2": { VOL_I: "DEL_I", VOL_D: "ENG" },
+  },
+  "4-2-3-1": {
+    "4-3-1-2": { MC_I: "INT_I", MC_D: "CINCO", EXT_D: "INT_D" },
+  },
+  // (*) Desde el 4-3-1-2, el inverso de lo anterior, para no amontonar en el
+  // medio: los interiores y el enganche se abren a las bandas que falten.
+  "4-3-1-2": {
+    "4-3-3": { DEL_I: "EXT_I", DEL_D: "DEL", ENG: "EXT_D" },
+    "4-4-2": { INT_I: "VOL_I", INT_D: "VOL_D", ENG: "MC_D" },
+    "4-2-3-1": { INT_I: "MC_I", CINCO: "MC_D", INT_D: "EXT_D", DEL_I: "EXT_I", DEL_D: "DEL" },
+    "4-1-4-1": { DEL_I: "VOL_I", ENG: "VOL_D", DEL_D: "DEL" },
   },
 };
 

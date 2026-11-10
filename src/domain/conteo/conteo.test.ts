@@ -140,7 +140,7 @@ describe("Motor de Conteo", () => {
       expect(porEsquema["3-5-2"]).toEqual([1, (1 / 3) * 100]);
       expect(porEsquema["4-3-3"]).toEqual([0, 0]);
       // Todos los Esquemas, en el orden del catálogo.
-      expect(r.esquemas.map((e) => e.esquema)).toEqual(["4-3-3", "4-4-2", "4-2-3-1", "3-5-2", "5-3-2", "4-1-4-1"]);
+      expect(r.esquemas.map((e) => e.esquema)).toEqual(["4-3-3", "4-4-2", "4-2-3-1", "3-5-2", "5-3-2", "4-1-4-1", "4-3-1-2"]);
     });
 
     it("una Alineación con un Jugador colocado cuenta aunque ese Jugador ya no esté Disponible", () => {
@@ -466,7 +466,7 @@ describe("Motor de Conteo", () => {
     it("con la misma entrada da la misma salida, aunque cambie el orden de Alineaciones, Puestos y Jugadores", () => {
       const ids = plantel.map((j) => j.id);
       const deCampo = plantel.filter((j) => j.posicionNatural !== "ARQ").map((j) => j.id);
-      const esquemasIds: EsquemaId[] = ["4-3-3", "4-4-2", "3-5-2", "4-2-3-1", "5-3-2", "4-1-4-1"];
+      const esquemasIds: EsquemaId[] = ["4-3-3", "4-4-2", "3-5-2", "4-2-3-1", "5-3-2", "4-1-4-1", "4-3-1-2"];
       let s = 7;
       const azar = (n: number) => {
         s = (s * 1103515245 + 12345) % 2147483648;
@@ -498,7 +498,7 @@ describe("Motor de Conteo", () => {
 
   describe("rendimiento", () => {
     it("cuenta 50.000 Alineaciones en tiempo razonable", () => {
-      const esquemasIds: EsquemaId[] = ["4-3-3", "4-4-2", "3-5-2", "4-2-3-1", "5-3-2", "4-1-4-1"];
+      const esquemasIds: EsquemaId[] = ["4-3-3", "4-4-2", "3-5-2", "4-2-3-1", "5-3-2", "4-1-4-1", "4-3-1-2"];
       const deCampo = plantel.filter((j) => j.posicionNatural !== "ARQ").map((j) => j.id);
       const plantelGrande = [
         ...plantel,

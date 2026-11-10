@@ -25,7 +25,7 @@ Elegilos Vos gives that opinion a place to live:
 1. **Sign up** with Google or with an email and password (email is verified with a one-time code).
 2. **Choose your club**, Peñarol or Nacional. This is permanent: you only ever vote for your own club.
 3. **Build your lineup** for the next match:
-   - pick a formation (4-3-3, 4-4-2, 4-2-3-1, 3-5-2, 5-3-2 or 4-1-4-1);
+   - pick a formation (4-3-3, 4-4-2, 4-2-3-1, 3-5-2, 5-3-2, 4-1-4-1 or 4-3-1-2);
    - drag players from the bench onto the pitch (mouse, touch, or keyboard), or tap a player and then tap a position;
    - only available players can be picked (injured or suspended players are shown separately), and only goalkeepers can play in goal.
 4. **There is no submit button.** Your lineup saves automatically as you go. Whatever you have saved when voting closes is your vote. Incomplete lineups still count.
