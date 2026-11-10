@@ -161,6 +161,33 @@ export function validarEscudo({ tamano, cabecera }: { tamano: number; cabecera: 
 }
 
 // -----------------------------------------------------------------------------
+// El Plantel en el backoffice
+// -----------------------------------------------------------------------------
+
+const ORDEN_POSICION: Record<PosicionNatural, number> = { ARQ: 0, DEF: 1, MED: 2, DEL: 3 };
+
+/**
+ * El Plantel ordenado para el backoffice: por posición natural y después por
+ * número (en un Club) o por nombre (en la Selección, que no lleva número). No
+ * modifica la lista.
+ */
+export function ordenarPlantel<J extends { nombre: string; numero: number | null; posicionNatural: PosicionNatural }>(
+  jugadores: readonly J[],
+): J[] {
+  return [...jugadores].sort(
+    (a, b) =>
+      ORDEN_POSICION[a.posicionNatural] - ORDEN_POSICION[b.posicionNatural] ||
+      (a.numero !== null && b.numero !== null ? a.numero - b.numero : 0) ||
+      a.nombre.localeCompare(b.nombre, "es"),
+  );
+}
+
+/** "10. Leonardo Fernández" en un Club; solo el nombre en la Selección (sin número). */
+export function nombreEnElPlantel(jugador: { nombre: string; numero: number | null }): string {
+  return jugador.numero === null ? jugador.nombre : `${jugador.numero}. ${jugador.nombre}`;
+}
+
+// -----------------------------------------------------------------------------
 // Nombre corto
 // -----------------------------------------------------------------------------
 

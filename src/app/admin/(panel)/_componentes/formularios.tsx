@@ -3,7 +3,16 @@
 // Formularios del backoffice (UI mínima). La validación real la hacen las
 // Server Actions (src/domain/planteles) y la autorización, Postgres.
 import { useActionState } from "react";
-import { CLUBES, DISPONIBILIDADES, POSICIONES_NATURALES, type ClubId, type Disponibilidad, type PosicionNatural } from "@/domain/comun/tipos";
+import {
+  CLUBES,
+  DISPONIBILIDADES,
+  POSICIONES_NATURALES,
+  SELECCION,
+  type ClubId,
+  type ClubOSeleccion,
+  type Disponibilidad,
+  type PosicionNatural,
+} from "@/domain/comun/tipos";
 import { LARGO_MAXIMO_MOTIVO, LARGO_MAXIMO_NOMBRE } from "@/domain/planteles";
 import { NOMBRE_CLUB, NOMBRE_DISPONIBILIDAD } from "@/domain/comun/textos";
 import { ETIQUETA_POSICION } from "../../_comun/etiquetas";
@@ -25,7 +34,16 @@ function Mensaje({ estado }: { estado: EstadoFormulario }) {
   return estado.mensaje ? <p role={estado.ok ? "status" : "alert"}>{estado.mensaje}</p> : null;
 }
 
-function CamposDatos({ estado, valores }: { estado: EstadoFormulario; valores?: { nombre: string; numero: number; posicionNatural: PosicionNatural } }) {
+/** `conNumero`: los Jugadores de un Club llevan número; los de la Selección, no. */
+function CamposDatos({
+  estado,
+  conNumero,
+  valores,
+}: {
+  estado: EstadoFormulario;
+  conNumero: boolean;
+  valores?: { nombre: string; numero: number | null; posicionNatural: PosicionNatural };
+}) {
   return (
     <>
       <p>
@@ -34,12 +52,16 @@ function CamposDatos({ estado, valores }: { estado: EstadoFormulario; valores?: 
         </label>
         <ErrorDeCampo texto={estado.errores?.nombre} />
       </p>
-      <p>
-        <label>
-          Número <input name="numero" type="number" min={1} max={99} defaultValue={valores?.numero} required />
-        </label>
+      {conNumero ? (
+        <p>
+          <label>
+            Número <input name="numero" type="number" min={1} max={99} defaultValue={valores?.numero ?? undefined} required />
+          </label>
+          <ErrorDeCampo texto={estado.errores?.numero} />
+        </p>
+      ) : (
         <ErrorDeCampo texto={estado.errores?.numero} />
-      </p>
+      )}
       <p>
         <label>
           Posición natural{" "}
@@ -84,11 +106,11 @@ function CamposDisponibilidad({ estado, valores }: { estado: EstadoFormulario; v
   );
 }
 
-export function FormularioAlta({ club }: { club: ClubId }) {
+export function FormularioAlta({ club }: { club: ClubOSeleccion }) {
   const [estado, accion, enviando] = useActionState(crearJugador.bind(null, club), INICIAL);
   return (
     <form action={accion}>
-      <CamposDatos estado={estado} />
+      <CamposDatos estado={estado} conNumero={club !== SELECCION} />
       <CamposDisponibilidad estado={estado} />
       <Mensaje estado={estado} />
       <button type="submit" disabled={enviando}>
@@ -98,11 +120,12 @@ export function FormularioAlta({ club }: { club: ClubId }) {
   );
 }
 
-export function FormularioDatos(props: { id: string; nombre: string; numero: number; posicionNatural: PosicionNatural }) {
+/** Con `numero` null (Jugador de la Selección) el formulario no pide número. */
+export function FormularioDatos(props: { id: string; nombre: string; numero: number | null; posicionNatural: PosicionNatural }) {
   const [estado, accion, enviando] = useActionState(editarDatosJugador.bind(null, props.id), INICIAL);
   return (
     <form action={accion}>
-      <CamposDatos estado={estado} valores={props} />
+      <CamposDatos estado={estado} conNumero={props.numero !== null} valores={props} />
       <Mensaje estado={estado} />
       <button type="submit" disabled={enviando}>
         Guardar datos

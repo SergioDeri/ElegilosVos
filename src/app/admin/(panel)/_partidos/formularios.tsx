@@ -3,7 +3,7 @@
 // Formularios de Rivales y Partidos (UI mínima). La validación real la hacen
 // las Server Actions (@/domain/partidos) y la autorización, Postgres.
 import { useActionState } from "react";
-import { CLUBES, type ClubId } from "@/domain/comun/tipos";
+import { CLUBES, type ClubId, type ClubOSeleccion } from "@/domain/comun/tipos";
 import { LARGO_MAXIMO_NOMBRE_RIVAL } from "@/domain/partidos";
 import { CampoEscudo } from "../_componentes/campo-escudo";
 import { NOMBRE_CLUB } from "@/domain/comun/textos";
@@ -159,7 +159,7 @@ function CampoInicio({ estado, inicio }: { estado: EstadoPartido; inicio?: strin
   );
 }
 
-export function FormularioAltaPartido({ club, rivales }: { club: ClubId; rivales: OpcionRival[] }) {
+export function FormularioAltaPartido({ club, rivales }: { club: ClubOSeleccion; rivales: OpcionRival[] }) {
   const [estado, accion, enviando] = useActionState(crearPartido.bind(null, club), {});
   return (
     <form action={accion}>

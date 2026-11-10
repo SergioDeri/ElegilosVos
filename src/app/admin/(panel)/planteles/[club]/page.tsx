@@ -1,30 +1,28 @@
-// Plantel de un Club en el backoffice: Jugadores en el Plantel y dados de baja.
+// Plantel de un Club o de la Selección en el backoffice: Jugadores en el
+// Plantel y dados de baja. Los de la Selección (los elegibles) no llevan número.
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requerirAdmin } from "@/lib/auth/admin";
 import { crearClienteServidor } from "@/lib/supabase/server";
-import { NOMBRE_CLUB, NOMBRE_DISPONIBILIDAD } from "@/domain/comun/textos";
-import { esClubId, numeroDeClubDeLaBase } from "@/domain/comun/tipos";
-import { ETIQUETA_POSICION } from "../../../_comun/etiquetas";
-
-const ORDEN_POSICION = { ARQ: 0, DEF: 1, MED: 2, DEL: 3 } as const;
+import { NOMBRE_DISPONIBILIDAD } from "@/domain/comun/textos";
+import { esClubOSeleccion, SELECCION } from "@/domain/comun/tipos";
+import { ordenarPlantel } from "@/domain/planteles";
+import { deClubOSeleccion, ETIQUETA_POSICION } from "../../../_comun/etiquetas";
 
 export default async function PaginaPlantel({ params }: PageProps<"/admin/planteles/[club]">) {
   await requerirAdmin();
   const { club } = await params;
-  if (!esClubId(club)) notFound();
+  if (!esClubOSeleccion(club)) notFound();
+  const conNumero = club !== SELECCION;
 
   const supabase = await crearClienteServidor();
   const { data: jugadores, error } = await supabase
     .from("jugador")
     .select("id, nombre, numero, posicion_natural, disponibilidad, motivo_disponibilidad, en_plantel")
-    .eq("club_id", club)
-    .order("numero");
+    .eq("club_id", club);
   if (error) throw error;
 
-  const ordenados = jugadores.map((j) => ({ ...j, numero: numeroDeClubDeLaBase(j.numero) })).sort(
-    (a, b) => ORDEN_POSICION[a.posicion_natural] - ORDEN_POSICION[b.posicion_natural] || a.numero - b.numero,
-  );
+  const ordenados = ordenarPlantel(jugadores.map((j) => ({ ...j, posicionNatural: j.posicion_natural })));
   const enPlantel = ordenados.filter((j) => j.en_plantel);
   const deBaja = ordenados.filter((j) => !j.en_plantel);
 
@@ -32,7 +30,7 @@ export default async function PaginaPlantel({ params }: PageProps<"/admin/plante
     <table>
       <thead>
         <tr>
-          <th>N.º</th>
+          {conNumero && <th>N.º</th>}
           <th>Nombre</th>
           <th>Posición</th>
           <th>Disponibilidad</th>
@@ -41,7 +39,7 @@ export default async function PaginaPlantel({ params }: PageProps<"/admin/plante
       <tbody>
         {lista.map((j) => (
           <tr key={j.id}>
-            <td>{j.numero}</td>
+            {conNumero && <td>{j.numero}</td>}
             <td>
               <Link href={`/admin/jugadores/${j.id}`}>{j.nombre}</Link>
             </td>
@@ -58,7 +56,13 @@ export default async function PaginaPlantel({ params }: PageProps<"/admin/plante
 
   return (
     <main>
-      <h1>Plantel de {NOMBRE_CLUB[club]}</h1>
+      <h1>Plantel {deClubOSeleccion(club)}</h1>
+      {!conNumero && (
+        <p>
+          Los elegibles de la Selección, convocados o no. No llevan número. Un Jugador de un Club se carga aparte acá, con su
+          propia Disponibilidad.
+        </p>
+      )}
       <p>
         <Link href={`/admin/planteles/${club}/nuevo`}>Dar de alta un Jugador</Link>
       </p>

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   nombreCorto,
+  nombreEnElPlantel,
+  ordenarPlantel,
   CABECERA_ESCUDO,
   LADO_ESCUDO,
   TAMANO_MAXIMO_ESCUDO,
@@ -203,5 +205,50 @@ describe("el número según el Plantel", () => {
     const r = validarJugador({ ...sinNumero, plantel: "penarol" });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(Object.keys(r.errores)).toEqual(["numero"]);
+  });
+});
+
+describe("el Plantel en el backoffice", () => {
+  it("ordena por posición natural y, en un Club, por número", () => {
+    const club = [
+      { nombre: "Cristian Olivera", numero: 9, posicionNatural: "DEL" },
+      { nombre: "Washington Aguerre", numero: 1, posicionNatural: "ARQ" },
+      { nombre: "Leonardo Fernández", numero: 10, posicionNatural: "MED" },
+      { nombre: "Eric Remedi", numero: 5, posicionNatural: "MED" },
+    ] as const;
+    expect(ordenarPlantel(club).map((j) => j.numero)).toEqual([1, 5, 10, 9]);
+  });
+
+  it("en la Selección, sin número, ordena por posición natural y nombre", () => {
+    const seleccion = [
+      { nombre: "Ronald Araújo", numero: null, posicionNatural: "DEF" },
+      { nombre: "Sergio Rochet", numero: null, posicionNatural: "ARQ" },
+      { nombre: "Federico Valverde", numero: null, posicionNatural: "MED" },
+      { nombre: "José María Giménez", numero: null, posicionNatural: "DEF" },
+      { nombre: "Darwin Núñez", numero: null, posicionNatural: "DEL" },
+      { nombre: "Álvaro Rodríguez", numero: null, posicionNatural: "DEL" },
+    ] as const;
+    expect(ordenarPlantel(seleccion).map((j) => j.nombre)).toEqual([
+      "Sergio Rochet",
+      "José María Giménez",
+      "Ronald Araújo",
+      "Federico Valverde",
+      "Álvaro Rodríguez",
+      "Darwin Núñez",
+    ]);
+  });
+
+  it("no modifica la lista original", () => {
+    const lista = [
+      { nombre: "B", numero: 2, posicionNatural: "DEL" },
+      { nombre: "A", numero: 1, posicionNatural: "ARQ" },
+    ] as const;
+    ordenarPlantel(lista);
+    expect(lista[0].nombre).toBe("B");
+  });
+
+  it("muestra al Jugador de un Club con su número y al de la Selección sin número", () => {
+    expect(nombreEnElPlantel({ nombre: "Leonardo Fernández", numero: 10 })).toBe("10. Leonardo Fernández");
+    expect(nombreEnElPlantel({ nombre: "Federico Valverde", numero: null })).toBe("Federico Valverde");
   });
 });
