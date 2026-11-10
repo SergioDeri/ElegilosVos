@@ -3,7 +3,9 @@
 // Selección. La Votación abre 14 días antes de cada Partido, así que en una
 // fecha doble hay dos abiertas a la vez: el Hincha elige el Partido
 // (`?partido=<id>`) y arma cada Alineación por separado. Sin Votación
-// abierta, la cancha queda en solo lectura con el motivo.
+// abierta, la cancha queda en solo lectura con el motivo. Si ya salió la
+// Convocatoria del Partido (ticket 09), se marca a los convocados; los no
+// convocados se siguen pudiendo elegir.
 //
 // Es la pantalla de cualquier Hincha, también del que no tiene Club Favorito
 // (eligió "solo Selección", ticket 06): a ese, después de guardar su
@@ -14,6 +16,7 @@ import { formatearHoraUy } from "@/domain/comun/horario";
 import { SELECCION } from "@/domain/comun/tipos";
 import { requerirHinchada } from "@/lib/auth/sesion";
 import { RUTA_SELECCION } from "@/lib/auth/rutas";
+import { leerConvocados } from "@/lib/convocatoria/lecturas";
 import { asegurarHerencia } from "@/lib/herencia/asegurar";
 import { cargarAlineacion } from "../_alineacion/datos";
 import { EditorAlineacion } from "../_alineacion/editor-alineacion";
@@ -42,7 +45,10 @@ export default async function Seleccion({ searchParams }: PageProps<"/seleccion"
 
   // Herencia (ticket 07): al entrar, se materializa la de cada Votación abierta (no depender solo del cron).
   if (votacion.estado === "abierta") await asegurarHerencia(hincha.id, SELECCION, pantalla.ahora);
-  const alineacion = await cargarAlineacion(pantalla.supabase, partido.id);
+  const [alineacion, convocados] = await Promise.all([
+    cargarAlineacion(pantalla.supabase, partido.id),
+    leerConvocados(pantalla.supabase, partido.id),
+  ]);
 
   return (
     <main>
@@ -78,6 +84,7 @@ export default async function Seleccion({ searchParams }: PageProps<"/seleccion"
           inicial={alineacion ? aJson(alineacion) : null}
           jugadores={jugadores}
           editable={votacion.estado === "abierta"}
+          convocados={convocados}
           conAlineacionGuardada={hincha.clubFavorito === null && <InvitacionElegirClub key="invitacion" />}
         />
       )}

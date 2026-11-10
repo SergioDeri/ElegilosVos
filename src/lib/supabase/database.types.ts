@@ -63,6 +63,72 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"convocatoria": {
+                  Row: {
+                    "actualizado_en": string,"creado_en": string,"id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "actualizado_en"?: string,"creado_en"?: string,"id"?: string
+                  }
+                  Update: {
+                    "actualizado_en"?: string,"creado_en"?: string,"id"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"convocatoria_jugador": {
+                  Row: {
+                    "convocatoria_id": string,"jugador_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "convocatoria_id": string,"jugador_id": string
+                  }
+                  Update: {
+                    "convocatoria_id"?: string,"jugador_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "convocatoria_jugador_convocatoria_id_fkey"
+      columns: ["convocatoria_id"]
+isOneToOne: false
+      referencedRelation: "convocatoria"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "convocatoria_jugador_jugador_id_fkey"
+      columns: ["jugador_id"]
+isOneToOne: false
+      referencedRelation: "jugador"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"convocatoria_partido": {
+                  Row: {
+                    "convocatoria_id": string,"partido_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "convocatoria_id": string,"partido_id": string
+                  }
+                  Update: {
+                    "convocatoria_id"?: string,"partido_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "convocatoria_partido_convocatoria_id_fkey"
+      columns: ["convocatoria_id"]
+isOneToOne: false
+      referencedRelation: "convocatoria"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "convocatoria_partido_partido_id_fkey"
+      columns: ["partido_id"]
+isOneToOne: true
+      referencedRelation: "partido"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"evento_disponibilidad": {
                   Row: {
                     "club_id": string,"disponibilidad_anterior": Database["public"]['Enums']["disponibilidad"],"disponibilidad_nueva": Database["public"]['Enums']["disponibilidad"],"id": string,"jugador_id": string,"momento": string,"motivo": string | null
@@ -303,6 +369,9 @@ isOneToOne: false
                            },
 "es_admin":
 { Args: Record<PropertyKey, never>; Returns: boolean
+                           },
+"guardar_convocatoria":
+{ Args: { "convocatoria": string,"jugadores": (string)[],"partidos": (string)[] }; Returns: string
                            },
 "mi_club_favorito":
 { Args: Record<PropertyKey, never>; Returns: string

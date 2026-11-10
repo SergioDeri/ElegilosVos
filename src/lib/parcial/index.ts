@@ -2,7 +2,7 @@
 //
 //   const parcial = await obtenerParcial(partidoId);  // Hincha: solo de su Club y con la Votación abierta
 //   const resultado = await calcularParcialCacheado(partidoId); // SIN control de acceso: solo backoffice (tras requerirAdmin)
-//   const seleccion = await obtenerParcialDeLaSeleccion(partidoId); // cualquier Hincha; con el Más Pedido (ticket 08 del feature Selección)
+//   const seleccion = await obtenerParcialDeLaSeleccion(partidoId); // cualquier Hincha; con el Más Pedido o, con Convocatoria, el Gran Ausente (tickets 08 y 09 de la Selección)
 //
 // El cálculo lee TODAS las Alineaciones del Partido con la service role (RLS no
 // deja leer las ajenas), corre el Motor de Conteo y devuelve solo el resultado

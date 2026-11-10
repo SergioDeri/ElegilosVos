@@ -24,6 +24,9 @@ export default function InicioBackoffice() {
           <Link href="/admin/partidos/seleccion">Partidos de la Selección</Link>
         </li>
         <li>
+          <Link href="/admin/convocatorias">Convocatorias de la Selección</Link>
+        </li>
+        <li>
           <Link href="/admin/clubes">Clubes: escudos</Link>
         </li>
         <li>

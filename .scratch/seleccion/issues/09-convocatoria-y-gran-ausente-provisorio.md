@@ -4,11 +4,11 @@
 
 **Blocked by:** 08
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Pantalla de Convocatoria en el backoffice: elegibles y Partidos a los que se aplica
-- [ ] El armado marca a los convocados; los no convocados se siguen pudiendo elegir
-- [ ] El Parcial muestra el Gran Ausente provisorio cuando hay Convocatoria
-- [ ] Destacados: Gran Ausente con Convocatoria, empates, ningún no convocado elegido, con tests
-- [ ] Tests de RLS: la Convocatoria se lee con sesión y solo la escribe un Admin con 2FA; un Partido no queda en dos Convocatorias
-- [ ] Antes de terminar: `npm run typecheck && npm run lint && npm test && npm run test:rls` && npm run test:e2e
+- [x] Pantalla de Convocatoria en el backoffice: elegibles y Partidos a los que se aplica
+- [x] El armado marca a los convocados; los no convocados se siguen pudiendo elegir
+- [x] El Parcial muestra el Gran Ausente provisorio cuando hay Convocatoria
+- [x] Destacados: Gran Ausente con Convocatoria, empates, ningún no convocado elegido, con tests
+- [x] Tests de RLS: la Convocatoria se lee con sesión y solo la escribe un Admin con 2FA; un Partido no queda en dos Convocatorias
+- [x] Antes de terminar: `npm run typecheck && npm run lint && npm test && npm run test:rls` && npm run test:e2e
