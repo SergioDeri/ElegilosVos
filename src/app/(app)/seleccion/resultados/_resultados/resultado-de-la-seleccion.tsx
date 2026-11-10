@@ -1,8 +1,8 @@
 // Resultado de una Votación de la Selección (Selección, ticket 10): el Gran
 // Ausente final destacado (si ya hay Convocatoria y algún no convocado figura)
 // y el 11 Elegido con la vista de los Clubes (nombre completo, sin número,
-// Camisetas de la Selección). El 11 Real, la Coincidencia (ticket 11) y
-// compartir (ticket 12) todavía no están en la Selección.
+// Camisetas de la Selección). El 11 Real y la Coincidencia (ticket 11)
+// todavía no están en la Selección; compartir sí (ticket 12).
 import { VistaDestacado } from "@/app/_parcial/vista-parcial";
 import { SELECCION } from "@/domain/comun/tipos";
 import type { Destacado } from "@/domain/destacados";

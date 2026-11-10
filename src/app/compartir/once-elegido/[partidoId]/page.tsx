@@ -1,7 +1,9 @@
 // Página pública del 11 Elegido de un Partido (ticket 16): es el link que se
 // comparte en redes. Sin sesión. Su metadata Open Graph apunta a la imagen
 // generada en /api/imagen/once-elegido/<partidoId>. En la página, el 11 va en
-// la cancha pixel con las Camisetas y los acentos del Club (ticket 04).
+// la cancha pixel con las Camisetas y los acentos del Club (ticket 04). En la
+// Selección (Selección, ticket 12), nombres completos sin número y el
+// destacado (Gran Ausente final o Más Pedido) arriba de la cancha.
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -48,6 +50,18 @@ export default async function PaginaOnceElegidoPublico({ params }: PageProps<"/c
         <p>
           {modelo.fecha} · Esquema {modelo.esquema}
         </p>
+        {modelo.destacado && (
+          <section aria-label={modelo.destacado.titulo}>
+            <h3>{modelo.destacado.titulo}</h3>
+            <ul>
+              {modelo.destacado.jugadores.map((j) => (
+                <li key={j.nombre}>
+                  {j.nombre}: en el {j.porcentaje} de las Alineaciones
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
         <CanchaDeLectura
           club={modelo.clubId}
           esquema={modelo.esquemaId}
@@ -57,7 +71,7 @@ export default async function PaginaOnceElegidoPublico({ params }: PageProps<"/c
               p.puesto,
               {
                 jugador: p.nombre ? { nombre: p.nombre, numero: p.numero } : null,
-                descripcion: `${p.sigla}: ${p.nombre ? `${p.numero}. ${p.nombre}` : "Vacante"}`,
+                descripcion: `${p.sigla}: ${p.nombre ? (p.numero === null ? p.nombre : `${p.numero}. ${p.nombre}`) : "Vacante"}`,
               },
             ]),
           )}

@@ -1,8 +1,8 @@
 // Vista de un resultado de Votación: 11 Elegido en la cancha, votos y la
 // Coincidencia del Hincha, o el motivo por el que no hay 11 Elegido. La usan
 // también los resultados de la Selección (Selección, ticket 10), con nombre
-// completo y sin número, y por ahora sin Coincidencia, 11 Real (ticket 11) ni
-// compartir (ticket 12).
+// completo y sin número, y por ahora sin Coincidencia ni 11 Real (ticket 11).
+// El botón de compartir va en los dos (Selección, ticket 12).
 import Link from "next/link";
 import { BotonCompartir } from "@/app/_compartir/boton-compartir";
 import { coincidencia, type EstadoResultado } from "@/domain/cierre";
@@ -51,7 +51,7 @@ export function VistaResultado(props: {
   onceReal?: string[] | null;
 }) {
   const { resultado, jugadores } = props;
-  // Coincidencia y 11 Real de la Selección: ticket 11; compartir: ticket 12.
+  // Coincidencia y 11 Real de la Selección: ticket 11.
   const seleccion = props.club === SELECCION;
   const misJugadores = seleccion ? null : props.misJugadores;
   const onceReal = seleccion ? null : props.onceReal;
@@ -116,13 +116,11 @@ export function VistaResultado(props: {
           }),
         )}
       />
-      {!seleccion && (
-        <BotonCompartir
-          urlImagen={`/api/imagen/once-elegido/${props.partido.id}`}
-          enlace={`/compartir/once-elegido/${props.partido.id}`}
-          titulo="El 11 Elegido por la hinchada"
-        />
-      )}
+      <BotonCompartir
+        urlImagen={`/api/imagen/once-elegido/${props.partido.id}`}
+        enlace={`/compartir/once-elegido/${props.partido.id}`}
+        titulo="El 11 Elegido por la hinchada"
+      />
       <table>
         <thead>
           <tr>

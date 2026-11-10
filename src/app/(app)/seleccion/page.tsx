@@ -13,9 +13,14 @@
 // Es la pantalla de cualquier Hincha, también del que no tiene Club Favorito
 // (eligió "solo Selección", ticket 06): a ese, después de guardar su
 // Alineación, se le invita a elegir Club.
+//
+// Compartir (ticket 12): el botón pide la imagen de "Mi 11" de la Selección
+// del Partido en pantalla, como el armado del Club.
 import Link from "next/link";
+import { BotonCompartir } from "@/app/_compartir/boton-compartir";
 import { aJson } from "@/domain/editor";
 import { formatearHoraUy } from "@/domain/comun/horario";
+import { NOMBRE_SELECCION } from "@/domain/comun/textos";
 import { SELECCION } from "@/domain/comun/tipos";
 import { requerirHinchada } from "@/lib/auth/sesion";
 import { RUTA_SELECCION } from "@/lib/auth/rutas";
@@ -91,6 +96,13 @@ export default async function Seleccion({ searchParams }: PageProps<"/seleccion"
           editable={votacion.estado === "abierta"}
           convocados={convocados}
           conAlineacionGuardada={hincha.clubFavorito === null && <InvitacionElegirClub key="invitacion" />}
+        />
+      )}
+      {votacion.estado !== "anulada" && (
+        <BotonCompartir
+          urlImagen={`/api/imagen/mi-alineacion/${partido.id}`}
+          titulo={`Mi 11 para ${NOMBRE_SELECCION} vs ${partido.rival?.nombre ?? "Rival a confirmar"}`}
+          sinImagen="Todavía no armaste tu Alineación para este Partido."
         />
       )}
     </main>
