@@ -8,8 +8,11 @@
 //
 // Qué avisar a quién lo decide `avisosPendientes` de `@/domain/notificaciones`,
 // según el Club Favorito y las preferencias de cada Hincha
-// (`preferencia_notificacion`). La Selección solo avisa Votación abierta y
-// Cierra pronto (feature Selección, ticket 13).
+// (`preferencia_notificacion`). La Selección avisa Votación abierta y Cierra
+// pronto (feature Selección, ticket 13), Convocatoria cargada y Gran Ausente
+// final (ticket 14): estos dos se detectan por el estado (hay Convocatoria /
+// hay 11 Elegido con Convocatoria) y no desde la acción del backoffice, así
+// que una Convocatoria cargada tarde se avisa en la siguiente corrida.
 // Cada aviso se registra en `notificacion_enviada` con ON CONFLICT DO NOTHING
 // ANTES de enviarlo, y solo se envía si esta corrida lo insertó: aunque dos
 // corridas se pisen, nadie recibe dos veces la misma notificación (a lo sumo
@@ -19,6 +22,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { alineacionDesdeFila, COLUMNAS_ALINEACION } from "@/domain/armado";
 import { votacionAbierta } from "@/domain/calendario";
 import { estadoResultadoDeLaBase } from "@/domain/cierre";
+import { aparicionesDesdeJson, type Apariciones } from "@/domain/destacados";
 import { CLUBES, esClubId, SELECCION, type ClubId } from "@/domain/comun/tipos";
 import {
   ANTIGUEDAD_MAXIMA_DEL_RESULTADO_MS,
@@ -30,13 +34,17 @@ import {
   type MensajePush,
   type NotificacionEnviada,
   type ResultadoParaAvisos,
+  type ConvocatoriaParaAvisos,
+  type ResultadoDeLaSeleccionParaAvisos,
   type SuscripcionPush,
   type TipoNotificacion,
   preferenciasDesdeFila,
   votacionAbiertaDelClub,
   votacionesAbiertasDeLaSeleccion,
 } from "@/domain/notificaciones";
+import { aparicionesDeVotacion } from "@/domain/votacion";
 import { leerPartidos, leerPlantel } from "@/lib/club/lecturas";
+import { leerAlineacionesDelPartido } from "@/lib/votacion/conteo";
 import type { Database } from "@/lib/supabase/database.types";
 
 type ClienteServicio = SupabaseClient<Database>;
@@ -82,7 +90,10 @@ export async function enviarNotificaciones(
     ? await cargarSeleccion(supabase, ahora)
     : undefined;
   const referencias = new Set<string>();
-  if (seleccion) for (const v of votacionesAbiertasDeLaSeleccion(seleccion, ahora)) referencias.add(v.partidoId);
+  if (seleccion) {
+    for (const v of votacionesAbiertasDeLaSeleccion(seleccion, ahora)) referencias.add(v.partidoId);
+    for (const r of seleccion.resultados ?? []) referencias.add(r.partidoId);
+  }
   for (const c of clubes) {
     const abierta = votacionAbiertaDelClub(c, ahora);
     if (abierta) referencias.add(abierta.partidoId);
@@ -90,6 +101,8 @@ export async function enviarNotificaciones(
     for (const e of c.eventos) referencias.add(e.id);
   }
   const yaEnviadas = await cargarEnviadas(supabase, [...referencias]);
+
+  if (seleccion) seleccion.apariciones = await cargarAparicionesProvisorias(supabase, seleccion, hinchas, yaEnviadas, ahora);
 
   const avisos = avisosPendientes({ ahora, hinchas, clubes, seleccion, yaEnviadas });
   const propios = await registrar(supabase, avisos);
@@ -188,14 +201,111 @@ async function cargarClub(
   };
 }
 
-/** Partidos de la Selección y, de sus Votaciones abiertas, las que ya tienen resultado congelado. */
+/**
+ * Partidos de la Selección; de sus Votaciones abiertas, las que ya tienen
+ * resultado congelado; y para los avisos del ticket 14, las Convocatorias y
+ * los resultados `con_once` que pueden avisarse (Votaciones abiertas, cierres
+ * de las últimas 48 horas y Convocatorias cargadas o corregidas en ese lapso).
+ * Las apariciones provisorias se cargan aparte (`cargarAparicionesProvisorias`).
+ */
 async function cargarSeleccion(supabase: ClienteServicio, ahora: Date): Promise<DatosDeLaSeleccion> {
   const partidos = (await leerPartidos(supabase, SELECCION)).map((p) => ({ ...p, rival: p.rival?.nombre ?? "el Rival" }));
   const abiertas = votacionesAbiertasDeLaSeleccion({ partidos }, ahora).map((v) => v.partidoId);
-  if (abiertas.length === 0) return { partidos };
-  const { data, error } = await supabase.from("resultado_votacion").select("partido_id").in("partido_id", abiertas);
+  const desde = new Date(ahora.getTime() - ANTIGUEDAD_MAXIMA_DEL_RESULTADO_MS).toISOString();
+
+  // Resultados que cerraron hace poco y Convocatorias que se cargaron hace poco.
+  const { data: cerrados, error } = await supabase
+    .from("resultado_votacion")
+    .select("partido_id, estado, cierre, apariciones, partido!inner(club_id)")
+    .eq("partido.club_id", SELECCION)
+    .gte("cierre", desde)
+    .lte("cierre", ahora.toISOString());
   if (error) throw error;
-  return { partidos, partidosConResultado: data.map((r) => r.partido_id) };
+  const recientes = await leerConvocatoriasDePartidos(supabase, { actualizadasDesde: desde, actualizadasHasta: ahora.toISOString() });
+
+  const convocatorias = new Map(recientes.map((c) => [c.partidoId, c]));
+  const faltanConvocatorias = [...new Set([...abiertas, ...cerrados.map((r) => r.partido_id)])].filter(
+    (id) => !convocatorias.has(id),
+  );
+  for (const c of await leerConvocatoriasDePartidos(supabase, { partidos: faltanConvocatorias })) convocatorias.set(c.partidoId, c);
+
+  const resultados = new Map(cerrados.map((r) => [r.partido_id, r]));
+  const faltanResultados = [...new Set([...abiertas, ...convocatorias.keys()])].filter((id) => !resultados.has(id));
+  if (faltanResultados.length) {
+    const { data, error: errorResultados } = await supabase
+      .from("resultado_votacion")
+      .select("partido_id, estado, cierre, apariciones, partido!inner(club_id)")
+      .in("partido_id", faltanResultados);
+    if (errorResultados) throw errorResultados;
+    for (const r of data) resultados.set(r.partido_id, r);
+  }
+
+  const plantel =
+    convocatorias.size > 0 ? (await leerPlantel(supabase, SELECCION)).map((j) => ({ id: j.id, nombre: j.nombre })) : [];
+  return {
+    partidos,
+    partidosConResultado: abiertas.filter((id) => resultados.has(id)),
+    convocatorias: [...convocatorias.values()],
+    resultados: [...resultados.values()].map(
+      (r): ResultadoDeLaSeleccionParaAvisos => ({
+        partidoId: r.partido_id,
+        estado: estadoResultadoDeLaBase(r.estado),
+        cierre: new Date(r.cierre),
+        apariciones: aparicionesDesdeJson(r.apariciones),
+      }),
+    ),
+    plantel,
+  };
+}
+
+/** Convocatorias de Partidos (de la Selección): por Partido o cargadas/corregidas desde una hora. */
+async function leerConvocatoriasDePartidos(
+  supabase: ClienteServicio,
+  filtro: { partidos: string[] } | { actualizadasDesde: string; actualizadasHasta: string },
+): Promise<ConvocatoriaParaAvisos[]> {
+  if ("partidos" in filtro && filtro.partidos.length === 0) return [];
+  let consulta = supabase
+    .from("convocatoria_partido")
+    .select("partido_id, convocatoria!inner(actualizado_en, convocatoria_jugador(jugador_id))");
+  consulta =
+    "partidos" in filtro
+      ? consulta.in("partido_id", filtro.partidos)
+      : consulta
+          .gte("convocatoria.actualizado_en", filtro.actualizadasDesde)
+          .lte("convocatoria.actualizado_en", filtro.actualizadasHasta);
+  const { data, error } = await consulta;
+  if (error) throw error;
+  return data.map((f) => ({
+    partidoId: f.partido_id,
+    convocados: f.convocatoria.convocatoria_jugador.map((j) => j.jugador_id).sort(),
+    actualizadaEn: new Date(f.convocatoria.actualizado_en),
+  }));
+}
+
+/**
+ * Apariciones de las Votaciones abiertas de la Selección con Convocatoria,
+ * para el Gran Ausente provisorio. Solo cuenta las que todavía le deben el
+ * aviso a algún Hincha (contar todas las Alineaciones en cada corrida sería caro).
+ */
+async function cargarAparicionesProvisorias(
+  supabase: ClienteServicio,
+  seleccion: DatosDeLaSeleccion,
+  hinchas: readonly HinchaConSuscripcion[],
+  yaEnviadas: readonly NotificacionEnviada[],
+  ahora: Date,
+): Promise<DatosDeLaSeleccion["apariciones"]> {
+  const destinatarios = hinchas.filter((h) => h.preferencias?.seleccion !== false).map((h) => h.id);
+  const avisados = new Set(
+    yaEnviadas.filter((n) => n.tipo === "convocatoria_cargada").map((n) => `${n.hinchaId}|${n.referencia}`),
+  );
+  const apariciones: { partidoId: string; apariciones: Apariciones }[] = [];
+  for (const { partidoId } of votacionesAbiertasDeLaSeleccion(seleccion, ahora)) {
+    if (!seleccion.convocatorias?.some((c) => c.partidoId === partidoId)) continue;
+    if (destinatarios.every((id) => avisados.has(`${id}|${partidoId}`))) continue;
+    const filas = await leerAlineacionesDelPartido(supabase, partidoId);
+    apariciones.push({ partidoId, apariciones: aparicionesDeVotacion(filas) });
+  }
+  return apariciones;
 }
 
 async function cargarResultados(supabase: ClienteServicio, club: ClubId, ahora: Date): Promise<ResultadoParaAvisos[]> {

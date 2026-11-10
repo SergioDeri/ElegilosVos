@@ -22,12 +22,21 @@
  *
  * Destinatarios: los avisos de un Club van a sus Hinchas con el interruptor
  * "mi club" prendido; los de la Selección, a todos los Hinchas (con Club o
- * sin Club) con "Selección" prendido. De la Selección solo se avisan
- * `votacion_abierta` y `cierra_pronto`, uno por Partido (en una fecha doble
- * hay dos Votaciones abiertas), nombrando al Rival.
+ * sin Club) con "Selección" prendido. De la Selección se avisan
+ * `votacion_abierta`, `cierra_pronto` y además (ticket 14):
+ * - `convocatoria_cargada`: el Partido tiene Convocatoria y su Votación sigue
+ *   abierta, con el Gran Ausente provisorio si lo hay (referencia: Partido).
+ *   Corregir la Convocatoria no vuelve a avisar.
+ * - `gran_ausente_final`: salió el 11 Elegido (`con_once`) y hay Convocatoria:
+ *   al cierre si ya estaba, o cuando el Admin la carga tarde. Lleva el Gran
+ *   Ausente final si alguno no convocado figura (referencia: Partido). Solo si
+ *   lo último (cierre o Convocatoria) fue hace 48 horas o menos.
+ * Todos uno por Partido (en una fecha doble hay dos Votaciones), nombrando al
+ * Rival. `once_elegido` sigue siendo solo de los Clubes.
  */
 import { votacionAbierta, votacionesAbiertas, type PartidoCalendario, type Votacion } from "@/domain/calendario";
 import { SELECCION, type ClubId, type Disponibilidad } from "@/domain/comun/tipos";
+import { destacado, granAusenteFinal, type Apariciones, type Convocatoria, type Destacado } from "@/domain/destacados";
 import type { Alineacion, JugadorDelPlantel } from "@/domain/editor";
 import { jugadoresNoDisponibles, type MotivoNoDisponible } from "@/domain/herencia";
 
@@ -43,6 +52,8 @@ export const TIPOS_DE_NOTIFICACION = [
   "cierra_pronto",
   "once_elegido",
   "jugador_no_disponible",
+  "convocatoria_cargada",
+  "gran_ausente_final",
 ] as const;
 export type TipoNotificacion = (typeof TIPOS_DE_NOTIFICACION)[number];
 
@@ -125,14 +136,40 @@ export interface HinchaConSuscripcion {
   preferencias?: PreferenciasDeNotificacion;
 }
 
+/** Convocatoria de un Partido de la Selección (una fila por Partido al que se aplica). */
+export interface ConvocatoriaParaAvisos {
+  partidoId: string;
+  /** Ids de los convocados. */
+  convocados: Convocatoria;
+  /** Última vez que se cargó o corrigió (`convocatoria.actualizado_en`). */
+  actualizadaEn: Date;
+}
+
+/** Resultado congelado de un Partido de la Selección, con sus apariciones al cierre. */
+export interface ResultadoDeLaSeleccionParaAvisos extends ResultadoParaAvisos {
+  /** `resultado_votacion.apariciones` (null en `anulada` / `nunca_abrio`). */
+  apariciones: Apariciones | null;
+}
+
 /**
- * Partidos de la Selección. Solo Votación abierta y Cierra pronto (uno por
+ * Partidos de la Selección y lo que hace falta para sus avisos (uno por
  * Partido: en una fecha doble puede haber dos Votaciones abiertas).
  */
 export interface DatosDeLaSeleccion {
   partidos: readonly PartidoParaAvisos[];
   /** Partidos de la Selección con resultado congelado: no se avisa nada de su Votación. */
   partidosConResultado?: readonly string[];
+  /** Convocatorias de los Partidos (basta con las de Votaciones abiertas y resultados recientes). */
+  convocatorias?: readonly ConvocatoriaParaAvisos[];
+  /**
+   * Apariciones de las Votaciones ABIERTAS con Convocatoria (para el Gran
+   * Ausente provisorio). Sin ellas, el aviso sale sin Gran Ausente.
+   */
+  apariciones?: readonly { partidoId: string; apariciones: Apariciones }[];
+  /** Resultados congelados de Partidos de la Selección (basta con los recientes). */
+  resultados?: readonly ResultadoDeLaSeleccionParaAvisos[];
+  /** Jugadores de la Selección (para nombrar al Gran Ausente). */
+  plantel?: readonly { id: string; nombre: string }[];
 }
 
 export interface NotificacionEnviada {
@@ -222,8 +259,40 @@ function avisosDeLaSeleccion(datos: DatosDeLaSeleccion, hinchas: readonly Hincha
     const cierraPronto = abierta.cierra.getTime() - ahora.getTime() <= AVISO_DE_CIERRE_MS;
     const mensaje = cierraPronto ? mensajeCierraProntoSeleccion(partido) : mensajeVotacionAbiertaSeleccion(partido);
     for (const h of hinchas) avisos.push({ hinchaId: h.id, ...mensaje });
+
+    const convocatoria = datos.convocatorias?.find((c) => c.partidoId === partido.id);
+    if (convocatoria) {
+      const delPartido = datos.apariciones?.find((a) => a.partidoId === partido.id)?.apariciones;
+      const provisorio = delPartido ? destacado(delPartido, convocatoria.convocados) : null;
+      const aviso = mensajeConvocatoriaCargada(partido, nombresDelDestacado(provisorio, datos.plantel));
+      for (const h of hinchas) avisos.push({ hinchaId: h.id, ...aviso });
+    }
+  }
+
+  // Gran Ausente final: al cierre si ya había Convocatoria, o cuando el Admin
+  // la carga si la Votación ya cerró. Lo que pase último tiene que ser reciente.
+  for (const resultado of datos.resultados ?? []) {
+    if (resultado.estado !== "con_once") continue;
+    const partido = datos.partidos.find((p) => p.id === resultado.partidoId);
+    const convocatoria = datos.convocatorias?.find((c) => c.partidoId === resultado.partidoId);
+    if (!partido || !convocatoria || resultado.cierre > ahora) continue;
+    const desde = Math.max(resultado.cierre.getTime(), convocatoria.actualizadaEn.getTime());
+    const antiguedad = ahora.getTime() - desde;
+    if (antiguedad < 0 || antiguedad > ANTIGUEDAD_MAXIMA_DEL_RESULTADO_MS) continue;
+    const final = granAusenteFinal(resultado.apariciones, convocatoria.convocados);
+    const aviso = mensajeGranAusenteFinal(partido, nombresDelDestacado(final, datos.plantel));
+    for (const h of hinchas) avisos.push({ hinchaId: h.id, ...aviso });
   }
   return avisos;
+}
+
+/** Los nombres del destacado ("A", "A y B", "A, B y C"); null si no hay o no se conocen. */
+function nombresDelDestacado(d: Destacado | null, plantel: DatosDeLaSeleccion["plantel"]): string | null {
+  if (!d) return null;
+  const nombres = d.jugadores.map((j) => plantel?.find((p) => p.id === j.jugadorId)?.nombre);
+  if (nombres.some((n) => !n)) return null;
+  const lista = nombres as string[];
+  return lista.length === 1 ? lista[0]! : `${lista.slice(0, -1).join(", ")} y ${lista.at(-1)}`;
 }
 
 function avisosDelClub(datos: DatosDelClub, hinchas: readonly HinchaConSuscripcion[], ahora: Date): Aviso[] {
@@ -375,6 +444,34 @@ function mensajeCierraProntoSeleccion(partido: PartidoParaAvisos): AvisoSinHinch
       cuerpo: `Faltan menos de 3 horas para elegir tu 11 de la Selección contra ${partido.rival}.`,
       url: urlDeLaSeleccion(partido),
       etiqueta: `votacion:${partido.id}`,
+    },
+  };
+}
+
+function mensajeConvocatoriaCargada(partido: PartidoParaAvisos, granAusente: string | null): AvisoSinHincha {
+  const contra = `Ya está la lista del DT para el partido contra ${partido.rival}.`;
+  return {
+    tipo: "convocatoria_cargada",
+    referencia: partido.id,
+    mensaje: {
+      titulo: "Salió la Convocatoria de la Selección",
+      cuerpo: granAusente ? `${contra} Gran Ausente por ahora: ${granAusente}.` : contra,
+      url: `/seleccion/parcial?partido=${partido.id}`,
+      etiqueta: `convocatoria:${partido.id}`,
+    },
+  };
+}
+
+function mensajeGranAusenteFinal(partido: PartidoParaAvisos, granAusente: string | null): AvisoSinHincha {
+  const once = `Mirá el 11 que eligió la hinchada de la Selección para el partido contra ${partido.rival}.`;
+  return {
+    tipo: "gran_ausente_final",
+    referencia: partido.id,
+    mensaje: {
+      titulo: "Salió el 11 Elegido de la Selección",
+      cuerpo: granAusente ? `${once} Gran Ausente: ${granAusente}.` : once,
+      url: `/seleccion/resultados/${partido.id}`,
+      etiqueta: `once:${partido.id}`,
     },
   };
 }
