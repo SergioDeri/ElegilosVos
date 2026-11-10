@@ -6,7 +6,8 @@
 //
 // Además: un Partido de la Selección no rompe los procesos de los Clubes
 // (cierre, conteo, herencia). El cierre todavía no procesa la Selección
-// (ticket 10): sus Partidos vencidos quedan sin resultado.
+// (ticket 10): sus Partidos vencidos quedan sin resultado. La herencia sí
+// (ticket 07, ver seleccion-07-herencia).
 //
 // El escenario de los procesos vive en 2002, antes de todo Partido del seed.
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
@@ -250,8 +251,8 @@ describe("los procesos de los Clubes con Partidos de la Selección", () => {
     expect(await leerAlineacionesDelPartido(servicio, vencido)).toEqual([]);
   });
 
-  it("la herencia no procesa la Selección", async () => {
+  it("la herencia procesa los Clubes y la Selección (ticket 07) sin romperse", async () => {
     const resultados = await materializarHerencias(servicio, ahora);
-    expect(resultados.map((r) => r.club).sort()).toEqual(["nacional", "penarol"]);
+    expect([...new Set(resultados.map((r) => r.club))].sort()).toEqual(["nacional", "penarol", "seleccion"]);
   });
 });
