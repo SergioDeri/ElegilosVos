@@ -16,16 +16,19 @@ function horaActual(): Date {
 export async function cargarPartidoEnPantalla(hincha: HinchaConClub) {
   const club = NOMBRE_CLUB[hincha.clubFavorito];
   const supabase = await crearClienteServidor();
-  const [partidos, jugadores, escudoDelClub] = await Promise.all([
+  // Todo en paralelo: cada consulta es un viaje a Supabase.
+  const [partidos, jugadores, escudoDelClub, congelados] = await Promise.all([
     leerPartidos(supabase, hincha.clubFavorito),
     leerPlantel(supabase, hincha.clubFavorito),
     leerEscudoDelClub(supabase, hincha.clubFavorito),
+    cargarConOnceElegido(supabase, hincha.clubFavorito),
   ]);
   const ahora = horaActual();
   // Solo los Partidos que no terminaron pueden ir a la pantalla.
-  const conOnceElegido = await cargarConOnceElegido(
-    supabase,
-    partidos.filter((p) => finDePartido(p.inicio).getTime() > ahora.getTime()).map((p) => p.id),
+  const conOnceElegido = new Set(
+    partidos
+      .filter((p) => congelados.has(p.id) && finDePartido(p.inicio).getTime() > ahora.getTime())
+      .map((p) => p.id),
   );
   const votacion = votacionEnPantalla(partidos, ahora, conOnceElegido);
   const partido = votacion ? partidos.find((p) => p.id === votacion.partidoId)! : null;

@@ -1,0 +1,22 @@
+/* "Cargando" con tres puntos que aparecen de a uno, por pasos (sin
+   interpolar). Con "reducir movimiento" los puntos quedan quietos. */
+.cargando::after {
+  content: "...";
+  display: inline-block;
+  width: 3ch;
+  overflow: hidden;
+  vertical-align: bottom;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .cargando::after {
+    animation: puntos 900ms steps(4, jump-none) infinite;
+    width: 0;
+  }
+}
+
+@keyframes puntos {
+  to {
+    width: 3ch;
+  }
+}

@@ -27,10 +27,12 @@ export default async function Inicio() {
   }
 
   const abierta = votacion.estado === "abierta";
-  // La Alineación heredada tiene que contar en el Parcial aunque el Hincha
-  // todavía no haya entrado al armado.
-  if (abierta) await asegurarHerencia(hincha.id, hincha.clubFavorito, pantalla.ahora);
-  const parcial = abierta ? await obtenerParcial(partido.id) : null;
+  // La herencia materializa la Alineación del Hincha aunque no entre al
+  // armado. Va en paralelo con el Parcial (que igual tiene caché de
+  // SEGUNDOS_DE_CACHE_DEL_PARCIAL): esperarla sumaba varios viajes a Supabase.
+  const [, parcial] = abierta
+    ? await Promise.all([asegurarHerencia(hincha.id, hincha.clubFavorito, pantalla.ahora), obtenerParcial(partido.id)])
+    : [undefined, null];
 
   return (
     <main>

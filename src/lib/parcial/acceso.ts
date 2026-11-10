@@ -26,17 +26,14 @@ export async function parcialParaHincha(
   calcular: (partidoId: string) => Promise<ResultadoConteo | null>,
 ): Promise<ParcialParaHincha> {
   if (!esUuid(partidoId)) return { tipo: "prohibido" };
-  const { data: partido, error } = await clienteDelHincha
-    .from("partido")
-    .select("club_id")
-    .eq("id", partidoId)
-    .maybeSingle();
+  // Las dos lecturas van juntas (un solo viaje a Supabase de espera). El
+  // estado de la Votación recién se mira si el Partido es del Club.
+  const [{ data: partido, error }, { data: votacion, error: errorVotacion }] = await Promise.all([
+    clienteDelHincha.from("partido").select("club_id").eq("id", partidoId).maybeSingle(),
+    clienteDelHincha.rpc("votacion_de_partido", { partido: partidoId }).maybeSingle(),
+  ]);
   if (error) throw error;
   if (!partido || partido.club_id !== club) return { tipo: "prohibido" };
-
-  const { data: votacion, error: errorVotacion } = await clienteDelHincha
-    .rpc("votacion_de_partido", { partido: partidoId })
-    .maybeSingle();
   if (errorVotacion) throw errorVotacion;
   if (votacion?.estado !== "abierta") return { tipo: "no_abierta" };
 

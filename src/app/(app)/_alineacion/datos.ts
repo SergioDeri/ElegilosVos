@@ -4,6 +4,7 @@
 import "server-only";
 import type { Alineacion } from "@/domain/editor";
 import { alineacionDesdeFila, COLUMNAS_ALINEACION } from "@/domain/armado";
+import type { ClubId } from "@/domain/comun/tipos";
 import type { crearClienteServidor } from "@/lib/supabase/server";
 
 type Cliente = Awaited<ReturnType<typeof crearClienteServidor>>;
@@ -20,14 +21,17 @@ export async function cargarAlineacion(supabase: Cliente, partidoId: string): Pr
 }
 
 /**
- * Ids de los Partidos (de `ids`) cuya Votación ya tiene resultado congelado
+ * Ids de los Partidos del Club cuya Votación ya tiene resultado congelado
  * (11 Elegido o motivo por el que no lo tuvo). Si el Partido se postergó
  * después del cierre, su Votación es definitiva aunque el Calendario la vea
- * pendiente o abierta.
+ * pendiente o abierta. Filtra por Club (no por ids) para poder leerse en
+ * paralelo con los Partidos.
  */
-export async function cargarConOnceElegido(supabase: Cliente, ids: readonly string[]): Promise<Set<string>> {
-  if (ids.length === 0) return new Set();
-  const { data, error } = await supabase.from("resultado_votacion").select("partido_id").in("partido_id", [...ids]);
+export async function cargarConOnceElegido(supabase: Cliente, club: ClubId): Promise<Set<string>> {
+  const { data, error } = await supabase
+    .from("resultado_votacion")
+    .select("partido_id, partido!inner(club_id)")
+    .eq("partido.club_id", club);
   if (error) throw error;
   return new Set(data.map((r) => r.partido_id));
 }
