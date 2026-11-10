@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ResultadoConteo } from "@/domain/conteo";
 import { esquema } from "@/domain/esquemas";
-import { formatearPorcentaje, vistaDelParcial, type JugadorParaMostrar } from "./index";
+import { formatearPorcentaje, vistaDelDestacado, vistaDelParcial, type JugadorParaMostrar } from "./index";
 
 const jugadores: JugadorParaMostrar[] = [
   { id: "a", nombre: "Arquero Uno", numero: 1 },
@@ -80,6 +80,45 @@ describe("vistaDelParcial", () => {
     const v = vistaDelParcial(resultado, [jugadores[1]!]);
     if (v.vacio) throw new Error("se esperaba vista con datos");
     expect(v.once[0]!.jugador).toEqual({ nombre: "Jugador desconocido", numero: null });
+  });
+});
+
+describe("vistaDelDestacado (el Más Pedido o el Gran Ausente del Parcial de la Selección)", () => {
+  const elegibles: JugadorParaMostrar[] = [
+    { id: "s", nombre: "Luis Suárez", numero: null },
+    { id: "c", nombre: "Edinson Cavani", numero: null },
+  ];
+
+  it("sin destacado, nada", () => {
+    expect(vistaDelDestacado(null, elegibles)).toBeNull();
+  });
+
+  it("resuelve el nombre completo y deja apariciones y porcentaje; los empatados, por nombre", () => {
+    expect(
+      vistaDelDestacado(
+        {
+          tipo: "mas_pedido",
+          jugadores: [
+            { jugadorId: "s", apariciones: 2, porcentaje: 50 },
+            { jugadorId: "c", apariciones: 2, porcentaje: 50 },
+          ],
+        },
+        elegibles,
+      ),
+    ).toEqual({
+      tipo: "mas_pedido",
+      titulo: "Más Pedido",
+      jugadores: [
+        { jugador: { nombre: "Edinson Cavani", numero: null }, apariciones: 2, porcentaje: 50 },
+        { jugador: { nombre: "Luis Suárez", numero: null }, apariciones: 2, porcentaje: 50 },
+      ],
+    });
+  });
+
+  it("el Gran Ausente lleva su título; un Jugador que no está en la lista se muestra como desconocido", () => {
+    const v = vistaDelDestacado({ tipo: "gran_ausente", jugadores: [{ jugadorId: "x", apariciones: 1, porcentaje: 100 }] }, elegibles);
+    expect(v?.titulo).toBe("Gran Ausente");
+    expect(v?.jugadores[0]?.jugador).toEqual({ nombre: "Jugador desconocido", numero: null });
   });
 });
 

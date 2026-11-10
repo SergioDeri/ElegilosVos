@@ -5,14 +5,14 @@
 // Hinchas los lean lo prueba seleccion-05-votar).
 //
 // Además: un Partido de la Selección no rompe los procesos de los Clubes
-// (cierre, conteo, herencia). El cierre todavía no procesa la Selección
-// (ticket 10): sus Partidos vencidos quedan sin resultado.
+// (cierre, herencia). El cierre todavía no procesa la Selección
+// (ticket 10): sus Partidos vencidos quedan sin resultado. El conteo de la
+// Selección lo prueba seleccion-08-parcial.
 //
 // El escenario de los procesos vive en 2002, antes de todo Partido del seed.
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { cerrarVotacion, cerrarVotacionesVencidas } from "@/lib/cierre/proceso";
 import { materializarHerencias } from "@/lib/herencia/materializar";
-import { contarPartido, leerAlineacionesDelPartido } from "@/lib/votacion/conteo";
 import { borrarUsuario, clienteComo, clienteServicio, crearAdminConDosFactores, type Cliente } from "./helpers";
 
 vi.mock("server-only", () => ({}));
@@ -243,11 +243,6 @@ describe("los procesos de los Clubes con Partidos de la Selección", () => {
     expect(await cerrarVotacion(servicio, vencido, ahora)).toEqual({ partidoId: vencido, estado: null, creado: false });
     const { data } = await servicio.from("resultado_votacion").select("partido_id").in("partido_id", [vencido, canceladoVencido]);
     expect(data).toEqual([]);
-  });
-
-  it("el conteo no cuenta todavía la Votación de la Selección", async () => {
-    expect(await contarPartido(servicio, vencido)).toBeNull();
-    expect(await leerAlineacionesDelPartido(servicio, vencido)).toEqual([]);
   });
 
   it("la herencia no procesa la Selección", async () => {

@@ -4,14 +4,16 @@
 // una tabla). Server Component: solo recibe datos agregados.
 import type { ResultadoConteo } from "@/domain/conteo";
 import { esquema } from "@/domain/esquemas";
+import type { Destacado } from "@/domain/destacados";
 import {
   formatearPorcentaje,
+  vistaDelDestacado,
   vistaDelParcial,
   type JugadorEnVista,
   type JugadorParaMostrar,
   type VistaParcial as VistaDeDatos,
 } from "@/domain/parcial";
-import type { ClubId } from "@/domain/comun/tipos";
+import type { ClubOSeleccion } from "@/domain/comun/tipos";
 import { CanchaDeLectura } from "@/app/_cancha/cancha-de-lectura";
 
 function textoJugador(j: JugadorEnVista): string {
@@ -23,8 +25,8 @@ export function VistaParcial(props: {
   jugadores: readonly JugadorParaMostrar[];
   /** Texto si todavía no hay Alineaciones que cuenten. */
   textoVacio: string;
-  /** Club de las Camisetas. Sin Club (backoffice), el 11 va en una tabla, sin sprites. */
-  club?: ClubId;
+  /** Club (o Selección) de las Camisetas. Sin él (backoffice), el 11 va en una tabla, sin sprites. */
+  club?: ClubOSeleccion;
   /** Solo el resumen y el 11 (el inicio): sin las tablas de Esquemas y candidatos. */
   soloElOnce?: boolean;
 }) {
@@ -127,5 +129,28 @@ function DetalleDelParcial({ vista }: { vista: Extract<VistaDeDatos, { vacio: fa
         </section>
       ))}
     </>
+  );
+}
+
+/**
+ * El destacado del Parcial de la Selección (Selección, ticket 08): el Más
+ * Pedido (o el Gran Ausente), con cuántas Alineaciones lo incluyen y su
+ * porcentaje. Con empate, todos. Sin destacado, no muestra nada.
+ */
+export function VistaDestacado(props: { destacado: Destacado | null; jugadores: readonly JugadorParaMostrar[] }) {
+  const vista = vistaDelDestacado(props.destacado, props.jugadores);
+  if (!vista) return null;
+  return (
+    <section aria-label={vista.titulo}>
+      <h3>{vista.jugadores.length === 1 ? vista.titulo : `${vista.titulo} (empate)`}</h3>
+      <ul>
+        {vista.jugadores.map((d, i) => (
+          <li key={i}>
+            <strong>{textoJugador(d.jugador)}</strong>: en {d.apariciones}{" "}
+            {d.apariciones === 1 ? "Alineación" : "Alineaciones"} ({formatearPorcentaje(d.porcentaje)})
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

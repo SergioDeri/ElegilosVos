@@ -8,6 +8,7 @@
 import { alineacionDesdeFila, COLUMNAS_ALINEACION, type FilaAlineacion } from "@/domain/armado";
 import type { Disponibilidad, PosicionNatural } from "@/domain/comun/tipos";
 import { contar, type JugadorParaConteo, type ResultadoConteo } from "@/domain/conteo";
+import { contarApariciones, type Apariciones } from "@/domain/destacados";
 
 export type { FilaAlineacion } from "@/domain/armado";
 
@@ -51,6 +52,16 @@ export function contarVotacion(
       jugadores: jugadores.map(jugadorParaConteoDesdeFila),
     }),
   );
+}
+
+/**
+ * Apariciones de cada Jugador en las Alineaciones de una Votación (filas de
+ * `alineacion`), para el Más Pedido y el Gran Ausente de la Selección
+ * (`@/domain/destacados`). Las mismas filas que `contarVotacion`. Solo
+ * agregados: ids de Jugadores y cantidades.
+ */
+export function aparicionesDeVotacion(filas: readonly FilaAlineacion[]): Apariciones {
+  return contarApariciones(filas.map(alineacionDesdeFila));
 }
 
 /**
