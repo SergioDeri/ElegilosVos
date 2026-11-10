@@ -232,6 +232,27 @@ describe("validarPartido", () => {
   });
 });
 
+describe("Partidos de la Selección", () => {
+  const inicio = "2026-11-13T20:00";
+
+  it("la Selección juega contra los Rivales activos que no representan a un Club", () => {
+    expect(rivalesParaPartido(rivales, "seleccion").map((r) => r.id)).toEqual(["r-def"]);
+    expect(rivalesParaPartido(rivales, "seleccion", "r-baja").map((r) => r.id)).toEqual(["r-def", "r-baja"]);
+  });
+
+  it("acepta un Partido de la Selección contra otra selección", () => {
+    expect(validarPartido({ clubId: "seleccion", rivalId: "r-def", inicio }, rivales)).toEqual({
+      ok: true,
+      partido: { clubId: "seleccion", rivalId: "r-def", inicio: new Date("2026-11-13T23:00:00Z") },
+    });
+  });
+
+  it.each(["r-pen", "r-nac"])("rechaza a un Club (%s) como Rival de la Selección", (rivalId) => {
+    const r = validarPartido({ clubId: "seleccion", rivalId, inicio }, rivales);
+    expect(r).toEqual({ ok: false, errores: { rivalId: "La Selección no juega contra un Club." } });
+  });
+});
+
 describe("validarRival", () => {
   it("acepta un nombre y normaliza espacios; sin Club es un Rival común", () => {
     expect(validarRival({ nombre: "  Defensor   Sporting ", clubId: "" })).toEqual({

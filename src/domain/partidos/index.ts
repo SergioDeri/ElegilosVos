@@ -3,7 +3,7 @@
 // El escudo de un Rival se valida con `validarEscudo` de @/domain/planteles
 // (PNG pixel art de exactamente 48x48, por contenido real).
 import { aHoraUyLocal, desdeHoraUy } from "@/domain/comun/horario";
-import { CLUBES, type ClubId, type EstadoPartido } from "@/domain/comun/tipos";
+import { CLUBES, esClubOSeleccion, SELECCION, type ClubId, type ClubOSeleccion, type EstadoPartido } from "@/domain/comun/tipos";
 import { calcularVotaciones, cierreDeVotacion, type PartidoCalendario, type Votacion } from "@/domain/calendario";
 
 export const LARGO_MAXIMO_NOMBRE_RIVAL = 60;
@@ -45,20 +45,30 @@ export function validarRival(entrada: { nombre: unknown; clubId: unknown }): Res
 export type RivalParaPartido = { id: string; activo: boolean; clubId: ClubId | null };
 
 /**
- * Rivales que se pueden elegir para un Partido del Club: los activos, salvo
- * el propio Club. Al editar, `rivalActualId` se sigue ofreciendo aunque se
- * haya dado de baja (el Partido ya lo tenía).
+ * Rivales que se pueden elegir para un Partido del Club o de la Selección:
+ * los activos, salvo el propio Club (la Selección no juega contra ningún
+ * Club: sus Rivales son otras selecciones). Al editar, `rivalActualId` se
+ * sigue ofreciendo aunque se haya dado de baja (el Partido ya lo tenía).
  */
-export function rivalesParaPartido<R extends RivalParaPartido>(rivales: readonly R[], clubId: ClubId, rivalActualId?: string): R[] {
-  return rivales.filter((r) => r.clubId !== clubId && (r.activo || r.id === rivalActualId));
+export function rivalesParaPartido<R extends RivalParaPartido>(
+  rivales: readonly R[],
+  clubId: ClubOSeleccion,
+  rivalActualId?: string,
+): R[] {
+  return rivales.filter((r) => puedeEnfrentar(clubId, r) && (r.activo || r.id === rivalActualId));
 }
 
-export type DatosPartido = { clubId: ClubId; rivalId: string; inicio: Date };
+function puedeEnfrentar(clubId: ClubOSeleccion, rival: RivalParaPartido): boolean {
+  return clubId === SELECCION ? rival.clubId === null : rival.clubId !== clubId;
+}
+
+/** Un Partido es de un Club o de la Selección. */
+export type DatosPartido = { clubId: ClubOSeleccion; rivalId: string; inicio: Date };
 export type ErroresPartido = Partial<Record<"clubId" | "rivalId" | "inicio", string>>;
 export type ResultadoPartido = { ok: true; partido: DatosPartido } | { ok: false; errores: ErroresPartido };
 
 /**
- * Club, Rival e inicio tal como llegan del formulario. El inicio es la fecha y
+ * Club (o la Selección), Rival e inicio tal como llegan del formulario. El inicio es la fecha y
  * hora de Montevideo de un `<input type="datetime-local">` ("2026-11-10T20:00")
  * y se devuelve como instante UTC.
  */
@@ -69,18 +79,20 @@ export function validarPartido(
 ): ResultadoPartido {
   const errores: ErroresPartido = {};
 
-  const clubId = CLUBES.find((c) => c === entrada.clubId);
+  const clubId = esClubOSeleccion(entrada.clubId) ? entrada.clubId : undefined;
   if (!clubId) errores.clubId = "Club inválido.";
 
   const rival = clubId ? rivalesParaPartido(rivales, clubId, rivalActualId).find((r) => r.id === entrada.rivalId) : undefined;
   if (clubId && !rival) {
     const existente = rivales.find((r) => r.id === entrada.rivalId);
     errores.rivalId =
-      existente?.clubId === clubId
-        ? "Un Club no puede jugar contra sí mismo."
-        : existente && !existente.activo
-          ? "Ese Rival está dado de baja."
-          : "Elegí un Rival.";
+      clubId === SELECCION && existente && existente.clubId !== null
+        ? "La Selección no juega contra un Club."
+        : existente?.clubId === clubId
+          ? "Un Club no puede jugar contra sí mismo."
+          : existente && !existente.activo
+            ? "Ese Rival está dado de baja."
+            : "Elegí un Rival.";
   }
 
   const inicio = validarInicio(entrada.inicio);

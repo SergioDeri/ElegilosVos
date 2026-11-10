@@ -5,7 +5,7 @@
 // cliente de esa sesión (RLS con es_admin()), nunca la service role.
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
-import { clubOSeleccionDeLaBase, esClubId, type ClubId } from "@/domain/comun/tipos";
+import { clubOSeleccionDeLaBase, esClubId, esClubOSeleccion, type ClubOSeleccion } from "@/domain/comun/tipos";
 import { validarDatosJugador, validarDisponibilidad, validarJugador, type Errores } from "@/domain/planteles";
 import { requerirAdminEnAccion } from "@/lib/auth/admin";
 
@@ -19,9 +19,10 @@ export type EstadoFormulario = {
 // Jugadores
 // -----------------------------------------------------------------------------
 
-export async function crearJugador(club: ClubId, _previo: EstadoFormulario, formData: FormData): Promise<EstadoFormulario> {
+/** Alta en el Plantel de un Club o en el de la Selección (sin número). */
+export async function crearJugador(club: ClubOSeleccion, _previo: EstadoFormulario, formData: FormData): Promise<EstadoFormulario> {
   const supabase = await requerirAdminEnAccion();
-  if (!esClubId(club)) return { mensaje: "Club inválido." };
+  if (!esClubOSeleccion(club)) return { mensaje: "Club inválido." };
 
   const validacion = validarJugador({
     nombre: formData.get("nombre"),

@@ -11,7 +11,7 @@ import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import type { PartidoCalendario } from "@/domain/calendario";
 import { formatearHoraUy } from "@/domain/comun/horario";
-import { esClubId, type ClubId } from "@/domain/comun/tipos";
+import { esClubOSeleccion, type ClubOSeleccion } from "@/domain/comun/tipos";
 import {
   analizarCambio,
   validarAccion,
@@ -190,8 +190,8 @@ function pedirConfirmacion(
 
 async function situacion(supabase: Supabase, id: string) {
   const { data: partido } = await supabase.from("partido").select("id, club_id, rival_id, estado, inicio").eq("id", id).maybeSingle();
-  if (!partido || !esClubId(partido.club_id)) return null;
-  const club: ClubId = partido.club_id;
+  if (!partido || !esClubOSeleccion(partido.club_id)) return null;
+  const club: ClubOSeleccion = partido.club_id;
   const [partidos, conOnceElegido] = await Promise.all([
     cargarPartidosDelClub(supabase, club),
     cargarConOnceElegido(supabase, club),
@@ -220,9 +220,10 @@ function textosValores(formData: FormData) {
   return { rivalId: texto("rivalId"), inicio: texto("inicio") };
 }
 
-export async function crearPartido(club: ClubId, _previo: EstadoPartido, formData: FormData): Promise<EstadoPartido> {
+/** Alta de un Partido de un Club o de la Selección. */
+export async function crearPartido(club: ClubOSeleccion, _previo: EstadoPartido, formData: FormData): Promise<EstadoPartido> {
   const supabase = await requerirAdminEnAccion();
-  if (!esClubId(club)) return { mensaje: "Club inválido." };
+  if (!esClubOSeleccion(club)) return { mensaje: "Club inválido." };
   const valores = textosValores(formData);
 
   const rivales = await cargarRivales(supabase);

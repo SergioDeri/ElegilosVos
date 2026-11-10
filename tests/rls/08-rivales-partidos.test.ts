@@ -127,7 +127,8 @@ describe.skipIf(!conDosFactores)("el Admin con 2FA", () => {
     const { data: rivales } = await admin().from("rival").select("id, activo");
     expect(rivales!.some((r) => !r.activo)).toBe(true);
     const { data: partidos } = await admin().from("partido").select("club_id");
-    expect(new Set(partidos!.map((p) => p.club_id))).toEqual(new Set(["penarol", "nacional"]));
+    // El seed también carga Partidos de la Selección (Selección, ticket 04).
+    expect(new Set(partidos!.map((p) => p.club_id))).toEqual(new Set(["penarol", "nacional", "seleccion"]));
   });
 
   it("da de alta, edita, da de baja y borra un Rival sin Partidos", async () => {

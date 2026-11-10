@@ -12,10 +12,16 @@ export default function InicioBackoffice() {
           <Link href="/admin/planteles/nacional">Plantel de Nacional</Link>
         </li>
         <li>
+          <Link href="/admin/planteles/seleccion">Plantel de la Selección</Link>
+        </li>
+        <li>
           <Link href="/admin/partidos/penarol">Partidos de Peñarol</Link>
         </li>
         <li>
           <Link href="/admin/partidos/nacional">Partidos de Nacional</Link>
+        </li>
+        <li>
+          <Link href="/admin/partidos/seleccion">Partidos de la Selección</Link>
         </li>
         <li>
           <Link href="/admin/clubes">Clubes: escudos</Link>

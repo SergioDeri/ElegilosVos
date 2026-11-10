@@ -7,8 +7,8 @@ import { aHoraUyLocal, formatearHoraUy } from "@/domain/comun/horario";
 import { rivalesParaPartido, validarAccion, ventanaVacia, type SituacionPartido } from "@/domain/partidos";
 import { requerirAdmin } from "@/lib/auth/admin";
 import { crearClienteServidor } from "@/lib/supabase/server";
-import { NOMBRE_CLUB } from "@/domain/comun/textos";
-import { esClubId } from "@/domain/comun/tipos";
+import { nombreDeClubOSeleccion } from "@/domain/comun/textos";
+import { esClubOSeleccion, SELECCION } from "@/domain/comun/tipos";
 import { cargarPartidosDelClub, cargarRivales } from "../../../_partidos/datos";
 import {
   FormularioBorrarPartido,
@@ -16,7 +16,7 @@ import {
   FormularioReactivar,
   FormularioReprogramar,
 } from "../../../_partidos/formularios";
-import { ETIQUETA_VOTACION, NUNCA_ABRE, ONCE_CONGELADO, TEXTO_RECHAZO } from "../../../_partidos/textos";
+import { AVISO_SELECCION, ETIQUETA_VOTACION, NUNCA_ABRE, ONCE_CONGELADO, TEXTO_RECHAZO } from "../../../_partidos/textos";
 
 function horaActual(): Date {
   return new Date();
@@ -25,7 +25,7 @@ function horaActual(): Date {
 export default async function PaginaPartido({ params }: PageProps<"/admin/partidos/[club]/[id]">) {
   await requerirAdmin();
   const { club, id } = await params;
-  if (!esClubId(club)) notFound();
+  if (!esClubOSeleccion(club)) notFound();
 
   const supabase = await crearClienteServidor();
   const partidos = await cargarPartidosDelClub(supabase, club);
@@ -57,7 +57,7 @@ export default async function PaginaPartido({ params }: PageProps<"/admin/partid
   return (
     <main>
       <h1>
-        {NOMBRE_CLUB[club]} vs {partido.rivalNombre}
+        {nombreDeClubOSeleccion(club)} vs {partido.rivalNombre}
       </h1>
       <p>
         Inicio: {formatearHoraUy(partido.inicio)} (hora de Uruguay) · {partido.estado === "cancelado" ? "Cancelado" : "Programado"}
@@ -116,10 +116,17 @@ export default async function PaginaPartido({ params }: PageProps<"/admin/partid
         </>
       )}
 
-      <h2>11 Real</h2>
-      <p>
-        <Link href={`/admin/partidos/${club}/${id}/once-real`}>Cargar o corregir el 11 Real</Link>
-      </p>
+      {club === SELECCION ? (
+        <p>{AVISO_SELECCION}</p>
+      ) : (
+        // El 11 Real de la Selección llega con el ticket 11 del feature Selección.
+        <>
+          <h2>11 Real</h2>
+          <p>
+            <Link href={`/admin/partidos/${club}/${id}/once-real`}>Cargar o corregir el 11 Real</Link>
+          </p>
+        </>
+      )}
 
       <h2>Borrar</h2>
       {borrar.ok ? (

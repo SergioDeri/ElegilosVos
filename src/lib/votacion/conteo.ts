@@ -15,8 +15,12 @@
 // del Club anterior deja de contar (además `cambiar_club_favorito` la borra si
 // la Votación está abierta). El filtro se hace en la base con un join a
 // `perfil` y no se expone en la salida.
+//
+// La Selección todavía no se cuenta (tickets 05 y 10 del feature Selección):
+// para un Partido de la Selección, `leerAlineacionesDelPartido` devuelve
+// vacío y `contarPartido` null, como si el Partido no existiera.
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { clubIdDeLaBase, type ClubId } from "@/domain/comun/tipos";
+import { esClubId, type ClubId } from "@/domain/comun/tipos";
 import type { ResultadoConteo } from "@/domain/conteo";
 import {
   COLUMNAS_ALINEACION_PARA_CONTEO,
@@ -46,10 +50,11 @@ export async function leerAlineacionesDelPartido(
   return club === null ? [] : leerAlineaciones(cliente, partidoId, club, tamanoDePagina);
 }
 
+/** El Club del Partido; null si no existe o es de la Selección (todavía no se cuenta). */
 async function clubDelPartido(cliente: Cliente, partidoId: string): Promise<ClubId | null> {
   const { data, error } = await cliente.from("partido").select("club_id").eq("id", partidoId).maybeSingle();
   if (error) throw error;
-  return data ? clubIdDeLaBase(data.club_id) : null;
+  return data && esClubId(data.club_id) ? data.club_id : null;
 }
 
 async function leerAlineaciones(

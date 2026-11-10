@@ -23,6 +23,10 @@
 //     posición natural se toman AL MOMENTO DE CORRER el cierre (no tienen
 //     historial). Con el cron cada minuto la diferencia con la hora de cierre
 //     es despreciable, así que no se reconstruyen.
+//   * La Selección todavía no se cierra (lo hace el ticket 10 del feature
+//     Selección): sus Partidos se saltean y quedan sin resultado, también los
+//     cancelados. `cerrarVotacion` de un Partido de la Selección devuelve
+//     `estado: null`, como si todavía no correspondiera cerrar.
 import {
   decidirCierre,
   disponibilidadAlCierre,
@@ -30,7 +34,7 @@ import {
   resultadoDelConteo,
   type EstadoResultado,
 } from "@/domain/cierre";
-import { clubIdDeLaBase, type ClubId } from "@/domain/comun/tipos";
+import { clubIdDeLaBase, esClubId, type ClubId } from "@/domain/comun/tipos";
 import { materializarHerencias } from "@/lib/herencia/materializar";
 import { contarVotacion } from "@/domain/votacion";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -161,7 +165,7 @@ export async function cerrarVotacion(cliente: ClienteSupabase, partidoId: string
   ]);
   if (errorPartido) throw errorPartido;
   if (errorVotacion) throw errorVotacion;
-  if (!partido || !votacion) return { partidoId, estado: null, creado: false };
+  if (!partido || !votacion || !esClubId(partido.club_id)) return { partidoId, estado: null, creado: false };
   return congelar(cliente, { ...votacion, club_id: partido.club_id }, ahora);
 }
 
@@ -179,7 +183,8 @@ export async function cerrarVotacionesVencidas(cliente: ClienteSupabase, ahora: 
   const { data, error } = await cliente.rpc("votaciones_por_cerrar", { ahora: ahora.toISOString() });
   if (error) throw error;
   const resumen: ResumenCierre = { cerrados: [], errores: [] };
-  for (const votacion of data ?? []) {
+  // Solo los Clubes: la Selección todavía no se cierra (ticket 10).
+  for (const votacion of (data ?? []).filter((v) => esClubId(v.club_id))) {
     try {
       resumen.cerrados.push(await congelar(cliente, votacion, ahora));
     } catch (e) {

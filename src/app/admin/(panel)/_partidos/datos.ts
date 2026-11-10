@@ -2,7 +2,7 @@
 // sesión del Admin: RLS con es_admin()).
 import "server-only";
 import type { PartidoCalendario } from "@/domain/calendario";
-import { esClubId, type ClubId } from "@/domain/comun/tipos";
+import { esClubId, type ClubOSeleccion } from "@/domain/comun/tipos";
 import type { RivalParaPartido } from "@/domain/partidos";
 import type { crearClienteServidor } from "@/lib/supabase/server";
 
@@ -14,7 +14,8 @@ export interface RivalVista extends RivalParaPartido {
 }
 
 export interface PartidoAdmin extends PartidoCalendario {
-  clubId: ClubId;
+  /** Un Club o la Selección. */
+  clubId: ClubOSeleccion;
   rivalId: string;
   rivalNombre: string;
 }
@@ -31,8 +32,8 @@ export async function cargarRivales(supabase: Cliente): Promise<RivalVista[]> {
   }));
 }
 
-/** Todos los Partidos del Club (el Calendario de Votación los necesita todos). */
-export async function cargarPartidosDelClub(supabase: Cliente, club: ClubId): Promise<PartidoAdmin[]> {
+/** Todos los Partidos del Club o de la Selección (el Calendario de Votación los necesita todos). */
+export async function cargarPartidosDelClub(supabase: Cliente, club: ClubOSeleccion): Promise<PartidoAdmin[]> {
   const { data, error } = await supabase
     .from("partido")
     .select("id, club_id, rival_id, inicio, estado, creado_en, rival(nombre)")
@@ -54,7 +55,7 @@ export async function cargarPartidosDelClub(supabase: Cliente, club: ClubId): Pr
  * (ticket 12): esa Votación es definitiva aunque el Partido se postergue o
  * se cancele, y el Partido ya no se puede borrar.
  */
-export async function cargarConOnceElegido(supabase: Cliente, club: ClubId): Promise<Set<string>> {
+export async function cargarConOnceElegido(supabase: Cliente, club: ClubOSeleccion): Promise<Set<string>> {
   const { data, error } = await supabase.from("resultado_votacion").select("partido_id, partido!inner(club_id)").eq("partido.club_id", club);
   if (error) throw error;
   return new Set(data.map((r) => r.partido_id));

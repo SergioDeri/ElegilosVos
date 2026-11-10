@@ -4,13 +4,13 @@
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] El Plantel de la Selección aparece en el backoffice de Planteles y se edita como los demás, sin número
-- [ ] Los cambios de Disponibilidad de la Selección quedan registrados como en los Clubes
-- [ ] El Admin carga, posterga y cancela Partidos de la Selección
-- [ ] Tests de RLS: solo un Admin con 2FA escribe el Plantel y los Partidos de la Selección
-- [ ] Antes de terminar: `npm run typecheck && npm run lint && npm test && npm run test:rls` && npm run test:e2e
+- [x] El Plantel de la Selección aparece en el backoffice de Planteles y se edita como los demás, sin número
+- [x] Los cambios de Disponibilidad de la Selección quedan registrados como en los Clubes
+- [x] El Admin carga, posterga y cancela Partidos de la Selección
+- [x] Tests de RLS: solo un Admin con 2FA escribe el Plantel y los Partidos de la Selección
+- [ ] Antes de terminar: `npm run typecheck && npm run lint && npm test && npm run test:rls` && npm run test:e2e (los cuatro primeros pasan; los E2E todavía no existen en esta rama: ticket 02)
 
 ## Comments
 

@@ -1,6 +1,6 @@
-// Partidos de un Club con el estado de su Votación y sus horas, según el
-// Calendario de Votación (@/domain/calendario, la misma regla que
-// `votacion_de_partido` en SQL).
+// Partidos de un Club (o de la Selección) con el estado de su Votación y sus
+// horas, según el Calendario de Votación (@/domain/calendario, la misma regla
+// que `votacion_de_partido` en SQL).
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { calcularVotaciones } from "@/domain/calendario";
@@ -8,10 +8,10 @@ import { formatearHoraUy } from "@/domain/comun/horario";
 import { ventanaVacia } from "@/domain/partidos";
 import { requerirAdmin } from "@/lib/auth/admin";
 import { crearClienteServidor } from "@/lib/supabase/server";
-import { NOMBRE_CLUB } from "@/domain/comun/textos";
-import { esClubId } from "@/domain/comun/tipos";
+import { esClubOSeleccion, SELECCION } from "@/domain/comun/tipos";
+import { deClubOSeleccion } from "../../../_comun/etiquetas";
 import { cargarConOnceElegido, cargarPartidosDelClub } from "../../_partidos/datos";
-import { ETIQUETA_VOTACION } from "../../_partidos/textos";
+import { AVISO_SELECCION, ETIQUETA_VOTACION } from "../../_partidos/textos";
 
 function horaActual(): Date {
   return new Date();
@@ -20,7 +20,7 @@ function horaActual(): Date {
 export default async function PaginaPartidos({ params }: PageProps<"/admin/partidos/[club]">) {
   await requerirAdmin();
   const { club } = await params;
-  if (!esClubId(club)) notFound();
+  if (!esClubOSeleccion(club)) notFound();
 
   const supabase = await crearClienteServidor();
   const [partidos, conOnceElegido] = await Promise.all([cargarPartidosDelClub(supabase, club), cargarConOnceElegido(supabase, club)]);
@@ -30,11 +30,12 @@ export default async function PaginaPartidos({ params }: PageProps<"/admin/parti
 
   return (
     <main>
-      <h1>Partidos de {NOMBRE_CLUB[club]}</h1>
+      <h1>Partidos {deClubOSeleccion(club)}</h1>
       <p>
         <Link href={`/admin/partidos/${club}/nuevo`}>Cargar un Partido</Link> · Horas de Uruguay. La Votación abre cuando
         termina el Partido anterior (o al cargarlo) y cierra 1 hora antes del inicio.
       </p>
+      {club === SELECCION && <p>{AVISO_SELECCION}</p>}
       {votaciones.length === 0 ? (
         <p>No hay Partidos cargados.</p>
       ) : (
