@@ -1,0 +1,48 @@
+# Aplica las migraciones nuevas de Supabase en producción cuando llegan a main.
+#
+# El deploy de Vercel NO aplica migraciones: sin esto, el código nuevo puede
+# llegar a producción antes que la base (pasó con el Esquema 4-3-1-2).
+#
+# Secreto necesario (Settings → Secrets and variables → Actions):
+#   SUPABASE_ACCESS_TOKEN  token personal de https://supabase.com/dashboard/account/tokens
+# No hace falta la contraseña de la base: el CLI v3 entra con un rol temporal.
+#
+# Solo corre en push a main (nunca en pull requests, que en un repo público
+# podrían venir de forks) y una corrida por vez.
+name: Migraciones de Supabase
+
+on:
+  push:
+    branches: [main]
+    paths: ["supabase/migrations/**"]
+  workflow_dispatch:
+
+concurrency:
+  group: supabase-migraciones-produccion
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  aplicar:
+    if: github.repository == 'SergioDeri/ElegilosVos'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      # Ref del proyecto de producción (también en supabase/config.toml, [remotes.produccion]).
+      PROYECTO: zfzwhyvufzpboavbwcdn
+    steps:
+      - uses: actions/checkout@v4
+
+      # Misma versión del CLI que el package-lock (devDependency `supabase`).
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 3.0.0
+
+      - name: Migraciones pendientes
+        run: supabase db push --remote="$PROYECTO" --dry-run
+
+      - name: Aplicar en producción
+        run: supabase db push --remote="$PROYECTO" --yes
