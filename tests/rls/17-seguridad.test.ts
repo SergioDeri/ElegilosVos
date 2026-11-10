@@ -81,6 +81,10 @@ describe("tablas y vistas de public", () => {
       { rol: "anon", tabla: "rival", privilegios: "SELECT" },
       { rol: "authenticated", tabla: "alineacion", privilegios: "SELECT" },
       { rol: "authenticated", tabla: "club", privilegios: "SELECT" },
+      // Convocatoria de la Selección (ticket 09): la escribe solo es_admin(), por RLS.
+      { rol: "authenticated", tabla: "convocatoria", privilegios: "DELETE,INSERT,SELECT" },
+      { rol: "authenticated", tabla: "convocatoria_jugador", privilegios: "DELETE,INSERT,SELECT" },
+      { rol: "authenticated", tabla: "convocatoria_partido", privilegios: "DELETE,INSERT,SELECT" },
       { rol: "authenticated", tabla: "jugador", privilegios: "INSERT,SELECT,UPDATE" },
       { rol: "authenticated", tabla: "once_real", privilegios: "DELETE,INSERT,SELECT" },
       { rol: "authenticated", tabla: "partido", privilegios: "DELETE,SELECT" },
@@ -121,6 +125,8 @@ describe("tablas y vistas de public", () => {
       },
       // El Admin cambia el escudo del Club (diseño pixel art, ticket 07).
       { rol: "authenticated", tabla: "club", privilegio: "UPDATE", columnas: "escudo_path" },
+      // guardar_convocatoria marca la corrección (Selección, ticket 09).
+      { rol: "authenticated", tabla: "convocatoria", privilegio: "UPDATE", columnas: "actualizado_en" },
       { rol: "authenticated", tabla: "once_real", privilegio: "UPDATE", columnas: "jugadores" },
       { rol: "authenticated", tabla: "partido", privilegio: "INSERT", columnas: "club_id,estado,inicio,rival_id" },
       { rol: "authenticated", tabla: "partido", privilegio: "UPDATE", columnas: "estado,inicio,rival_id" },
