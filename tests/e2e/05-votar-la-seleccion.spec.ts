@@ -65,10 +65,10 @@ test("fecha doble: el Hincha elige el Partido, la segunda arranca con la copia d
   await expect(page.getByRole("heading", { name: `Selección vs ${VENEZUELA}` })).toBeVisible();
   await expect(page.getByRole("button", { name: "Arquero: Sergio Rochet" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Lateral izquierdo: José María Giménez" })).toBeVisible();
-  await colocar(page, "Ronald Araújo", "DEF", "Lateral derecho");
+  await colocar(page, "Mathías Olivera", "DEF", "Lateral derecho");
   await expect
     .poll(() => guardada(hincha.id, venezuela))
-    .toEqual({ ARQ: "Sergio Rochet", LI: "José María Giménez", LD: "Ronald Araújo" });
+    .toEqual({ ARQ: "Sergio Rochet", LI: "José María Giménez", LD: "Mathías Olivera" });
 
   // Cada una siguió por su lado.
   await partidos.getByRole("link", { name: `vs ${PERU}` }).click();
