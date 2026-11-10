@@ -3,7 +3,7 @@
 // cliente: con el de la sesión, RLS decide qué se ve; con la service role, todo.
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { PartidoCalendario } from "@/domain/calendario";
-import type { ClubId } from "@/domain/comun/tipos";
+import { numeroDeClubDeLaBase, type ClubId } from "@/domain/comun/tipos";
 import type { JugadorDelPlantel } from "@/domain/editor";
 import type { Database } from "@/lib/supabase/database.types";
 
@@ -27,7 +27,7 @@ export async function leerPlantel(cliente: Cliente, club: ClubId): Promise<Jugad
   return data.map((j) => ({
     id: j.id,
     nombre: j.nombre,
-    numero: j.numero,
+    numero: numeroDeClubDeLaBase(j.numero),
     posicionNatural: j.posicion_natural,
     disponibilidad: j.disponibilidad,
     enPlantel: j.en_plantel,

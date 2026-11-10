@@ -1,7 +1,14 @@
-// Textos para mostrar los valores del dominio compartidos (Club, Disponibilidad).
-import type { ClubId, Disponibilidad } from "./tipos";
+// Textos para mostrar los valores del dominio compartidos (Club, Selección, Disponibilidad).
+import type { ClubId, ClubOSeleccion, Disponibilidad } from "./tipos";
 
 export const NOMBRE_CLUB: Record<ClubId, string> = { penarol: "Peñarol", nacional: "Nacional" };
+
+export const NOMBRE_SELECCION = "Selección";
+
+/** Nombre para mostrar de un Club o de la Selección. */
+export function nombreDeClubOSeleccion(clubOSeleccion: ClubOSeleccion): string {
+  return clubOSeleccion === "seleccion" ? NOMBRE_SELECCION : NOMBRE_CLUB[clubOSeleccion];
+}
 
 export const NOMBRE_DISPONIBILIDAD: Record<Disponibilidad, string> = {
   disponible: "Disponible",

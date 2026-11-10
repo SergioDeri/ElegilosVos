@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { requerirAdmin } from "@/lib/auth/admin";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { NOMBRE_CLUB } from "@/domain/comun/textos";
-import { esClubId } from "@/domain/comun/tipos";
+import { esClubId, numeroDeClubDeLaBase } from "@/domain/comun/tipos";
 import { cambiarEnPlantel } from "../../acciones";
 import { FormularioDatos, FormularioDisponibilidad } from "../../_componentes/formularios";
 import { esUuid } from "@/domain/comun/ids";
@@ -30,7 +30,7 @@ export default async function PaginaJugador({ params }: PageProps<"/admin/jugado
       </p>
 
       <h2>Datos</h2>
-      <FormularioDatos id={jugador.id} nombre={jugador.nombre} numero={jugador.numero} posicionNatural={jugador.posicion_natural} />
+      <FormularioDatos id={jugador.id} nombre={jugador.nombre} numero={numeroDeClubDeLaBase(jugador.numero)} posicionNatural={jugador.posicion_natural} />
 
       <h2>Disponibilidad</h2>
       <p>Cada cambio de Disponibilidad queda registrado para avisar a los Hinchas.</p>

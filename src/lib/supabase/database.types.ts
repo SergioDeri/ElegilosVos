@@ -51,14 +51,14 @@ isOneToOne: false
                   ]
                 },"club": {
                   Row: {
-                    "escudo_path": string | null,"id": string,"nombre": string
+                    "es_seleccion": boolean,"escudo_path": string | null,"id": string,"nombre": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "escudo_path"?: string | null,"id": string,"nombre": string
+                    "es_seleccion"?: boolean,"escudo_path"?: string | null,"id": string,"nombre": string
                   }
                   Update: {
-                    "escudo_path"?: string | null,"id"?: string,"nombre"?: string
+                    "es_seleccion"?: boolean,"escudo_path"?: string | null,"id"?: string,"nombre"?: string
                   }
                   Relationships: [
                     
@@ -91,14 +91,14 @@ isOneToOne: false
                   ]
                 },"jugador": {
                   Row: {
-                    "actualizado_en": string,"club_id": string,"creado_en": string,"disponibilidad": Database["public"]['Enums']["disponibilidad"],"en_plantel": boolean,"id": string,"motivo_disponibilidad": string | null,"nombre": string,"numero": number,"posicion_natural": Database["public"]['Enums']["posicion_natural"]
+                    "actualizado_en": string,"club_id": string,"creado_en": string,"disponibilidad": Database["public"]['Enums']["disponibilidad"],"en_plantel": boolean,"id": string,"motivo_disponibilidad": string | null,"nombre": string,"numero": number | null,"posicion_natural": Database["public"]['Enums']["posicion_natural"]
                   }
                   ComputedFields: never
                   Insert: {
-                    "actualizado_en"?: string,"club_id": string,"creado_en"?: string,"disponibilidad"?: Database["public"]['Enums']["disponibilidad"],"en_plantel"?: boolean,"id"?: string,"motivo_disponibilidad"?: string | null,"nombre": string,"numero": number,"posicion_natural": Database["public"]['Enums']["posicion_natural"]
+                    "actualizado_en"?: string,"club_id": string,"creado_en"?: string,"disponibilidad"?: Database["public"]['Enums']["disponibilidad"],"en_plantel"?: boolean,"id"?: string,"motivo_disponibilidad"?: string | null,"nombre": string,"numero"?: number | null,"posicion_natural": Database["public"]['Enums']["posicion_natural"]
                   }
                   Update: {
-                    "actualizado_en"?: string,"club_id"?: string,"creado_en"?: string,"disponibilidad"?: Database["public"]['Enums']["disponibilidad"],"en_plantel"?: boolean,"id"?: string,"motivo_disponibilidad"?: string | null,"nombre"?: string,"numero"?: number,"posicion_natural"?: Database["public"]['Enums']["posicion_natural"]
+                    "actualizado_en"?: string,"club_id"?: string,"creado_en"?: string,"disponibilidad"?: Database["public"]['Enums']["disponibilidad"],"en_plantel"?: boolean,"id"?: string,"motivo_disponibilidad"?: string | null,"nombre"?: string,"numero"?: number | null,"posicion_natural"?: Database["public"]['Enums']["posicion_natural"]
                   }
                   Relationships: [
                     {

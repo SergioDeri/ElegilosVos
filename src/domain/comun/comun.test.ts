@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { esUuid } from "./ids";
-import { clubIdDeLaBase, esClubId } from "./tipos";
+import { nombreDeClubOSeleccion } from "./textos";
+import { clubIdDeLaBase, clubOSeleccionDeLaBase, esClubId, esClubOSeleccion, numeroDeClubDeLaBase } from "./tipos";
 
 describe("esUuid", () => {
   it("acepta un uuid, en minúsculas o mayúsculas", () => {
@@ -30,5 +31,45 @@ describe("clubIdDeLaBase", () => {
   it("devuelve el Club y lanza con un valor que no es un Club", () => {
     expect(clubIdDeLaBase("nacional")).toBe("nacional");
     expect(() => clubIdDeLaBase("otro")).toThrow();
+  });
+});
+
+describe("esClubId con la Selección", () => {
+  it("la Selección no es un Club", () => {
+    expect(esClubId("seleccion")).toBe(false);
+    expect(() => clubIdDeLaBase("seleccion")).toThrow();
+  });
+});
+
+describe("esClubOSeleccion", () => {
+  it("acepta los dos Clubes y la Selección", () => {
+    expect(esClubOSeleccion("penarol")).toBe(true);
+    expect(esClubOSeleccion("nacional")).toBe(true);
+    expect(esClubOSeleccion("seleccion")).toBe(true);
+    expect(esClubOSeleccion("uruguay")).toBe(false);
+    expect(esClubOSeleccion(undefined)).toBe(false);
+  });
+});
+
+describe("clubOSeleccionDeLaBase", () => {
+  it("devuelve el Club o la Selección y lanza con otro valor", () => {
+    expect(clubOSeleccionDeLaBase("seleccion")).toBe("seleccion");
+    expect(clubOSeleccionDeLaBase("penarol")).toBe("penarol");
+    expect(() => clubOSeleccionDeLaBase("otro")).toThrow();
+  });
+});
+
+describe("nombreDeClubOSeleccion", () => {
+  it("nombra a los Clubes y a la Selección", () => {
+    expect(nombreDeClubOSeleccion("penarol")).toBe("Peñarol");
+    expect(nombreDeClubOSeleccion("nacional")).toBe("Nacional");
+    expect(nombreDeClubOSeleccion("seleccion")).toBe("Selección");
+  });
+});
+
+describe("numeroDeClubDeLaBase", () => {
+  it("devuelve el número de un Jugador de un Club y lanza si falta (solo la Selección no lleva)", () => {
+    expect(numeroDeClubDeLaBase(10)).toBe(10);
+    expect(() => numeroDeClubDeLaBase(null)).toThrow();
   });
 });

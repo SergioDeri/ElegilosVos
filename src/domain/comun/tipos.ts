@@ -19,6 +19,27 @@ export function clubIdDeLaBase(valor: string): ClubId {
   return valor;
 }
 
+/**
+ * La Selección (ver CONTEXT.md): no es un Club, pero en la base comparte la
+ * tabla `club` para que Partido, Plantel, Alineación y resultados la reusen.
+ */
+export const SELECCION = "seleccion";
+export type Seleccion = typeof SELECCION;
+
+/** Dueño de un Partido o de un Plantel: uno de los dos Clubes o la Selección. */
+export type ClubOSeleccion = ClubId | Seleccion;
+
+/** Si el valor es un Club o la Selección. */
+export function esClubOSeleccion(valor: unknown): valor is ClubOSeleccion {
+  return valor === SELECCION || esClubId(valor);
+}
+
+/** El Club o la Selección leído de una columna FK a `club`: otro valor se lanza. */
+export function clubOSeleccionDeLaBase(valor: string): ClubOSeleccion {
+  if (!esClubOSeleccion(valor)) throw new Error(`Club o Selección desconocido: ${valor}`);
+  return valor;
+}
+
 export const POSICIONES_NATURALES = ["ARQ", "DEF", "MED", "DEL"] as const;
 export type PosicionNatural = (typeof POSICIONES_NATURALES)[number];
 
@@ -30,3 +51,13 @@ export type EstadoPartido = (typeof ESTADOS_PARTIDO)[number];
 
 export const ROLES = ["hincha", "admin"] as const;
 export type Rol = (typeof ROLES)[number];
+
+/**
+ * El número de un Jugador de un Club leído de la base (`jugador.numero`). Solo
+ * los Jugadores de la Selección no llevan número: un nulo en el Plantel de un
+ * Club es un error de la base y se lanza.
+ */
+export function numeroDeClubDeLaBase(valor: number | null): number {
+  if (valor === null) throw new Error("Jugador de un Club sin número");
+  return valor;
+}

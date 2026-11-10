@@ -8,6 +8,7 @@
 // Escenario en 2002 (Votaciones cerradas para la base). Los Partidos se borran
 // al final con la service role (Alineaciones y resultados en cascada).
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { numeroDeClubDeLaBase } from "@/domain/comun/tipos";
 import { modeloMiAlineacion, modeloOnceElegido } from "@/lib/compartir/datos";
 import { creadorDePartidos, once433, puestos433 } from "./datos";
 import { borrarUsuario, clienteAnonimo, clienteComo, clienteServicio, crearUsuario, usuario } from "./helpers";
@@ -33,7 +34,7 @@ beforeAll(async () => {
     .eq("en_plantel", true)
     .order("numero");
   if (error) throw error;
-  jugadores = data;
+  jugadores = data.map((j) => ({ ...j, numero: numeroDeClubDeLaBase(j.numero) }));
 
   conOnce = await crearPartido("penarol", "2002-03-10T22:00:00Z");
   sinAlineaciones = await crearPartido("penarol", "2002-03-17T22:00:00Z");

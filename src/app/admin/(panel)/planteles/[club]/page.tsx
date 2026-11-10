@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { requerirAdmin } from "@/lib/auth/admin";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { NOMBRE_CLUB, NOMBRE_DISPONIBILIDAD } from "@/domain/comun/textos";
-import { esClubId } from "@/domain/comun/tipos";
+import { esClubId, numeroDeClubDeLaBase } from "@/domain/comun/tipos";
 import { ETIQUETA_POSICION } from "../../../_comun/etiquetas";
 
 const ORDEN_POSICION = { ARQ: 0, DEF: 1, MED: 2, DEL: 3 } as const;
@@ -22,7 +22,7 @@ export default async function PaginaPlantel({ params }: PageProps<"/admin/plante
     .order("numero");
   if (error) throw error;
 
-  const ordenados = [...jugadores].sort(
+  const ordenados = jugadores.map((j) => ({ ...j, numero: numeroDeClubDeLaBase(j.numero) })).sort(
     (a, b) => ORDEN_POSICION[a.posicion_natural] - ORDEN_POSICION[b.posicion_natural] || a.numero - b.numero,
   );
   const enPlantel = ordenados.filter((j) => j.en_plantel);

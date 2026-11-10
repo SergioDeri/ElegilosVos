@@ -14,7 +14,8 @@ export default async function PaginaElegirClub() {
   if (hincha.clubFavorito) redirect(RUTA_INICIO);
 
   const supabase = await crearClienteServidor();
-  const { data } = await supabase.from("club").select("id, nombre, escudo_path").order("nombre");
+  // La Selección vive en la misma tabla pero no es un Club: nunca es Club Favorito.
+  const { data } = await supabase.from("club").select("id, nombre, escudo_path").eq("es_seleccion", false).order("nombre");
   // Sin escudo cargado (desde el backoffice, sección Clubes), se ve el hueco de "falta escudo".
   const clubes = (data ?? []).map((c) => ({ id: c.id, nombre: c.nombre, escudo: urlEscudo(supabase, c.escudo_path) }));
 

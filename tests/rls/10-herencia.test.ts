@@ -6,6 +6,7 @@
 // Votación está abierta hoy; los Jugadores no Disponibles y de baja son
 // propios del test. Todo se borra al final.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { numeroDeClubDeLaBase } from "@/domain/comun/tipos";
 import { alineacionDesdeFila } from "@/domain/armado";
 import { contar } from "@/domain/conteo";
 import { materializarHerencias } from "@/lib/herencia/materializar";
@@ -177,7 +178,7 @@ describe("una Alineación heredada que el Hincha nunca tocó", () => {
       alineaciones: [alineacion],
       jugadores: jugadores!.map((x) => ({
         id: x.id,
-        numero: x.numero,
+        numero: numeroDeClubDeLaBase(x.numero),
         posicionNatural: x.posicion_natural,
         disponibilidad: x.disponibilidad,
         enPlantel: x.en_plantel,

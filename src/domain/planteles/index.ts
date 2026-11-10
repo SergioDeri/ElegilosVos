@@ -4,6 +4,8 @@
 import {
   DISPONIBILIDADES,
   POSICIONES_NATURALES,
+  SELECCION,
+  type ClubOSeleccion,
   type Disponibilidad,
   type PosicionNatural,
 } from "@/domain/comun/tipos";
@@ -13,7 +15,8 @@ export const LARGO_MAXIMO_MOTIVO = 200;
 
 export type DatosJugador = {
   nombre: string;
-  numero: number;
+  /** En el Plantel de un Club, de 1 a 99. En el de la Selección no hay: null. */
+  numero: number | null;
   posicionNatural: PosicionNatural;
 };
 
@@ -34,11 +37,16 @@ export type ResultadoDisponibilidad =
   | { ok: false; errores: Errores };
 export type ResultadoJugador = { ok: true; jugador: Jugador } | { ok: false; errores: Errores };
 
-/** Nombre, número (1-99) y posición natural, tal como llegan de un formulario. */
+/**
+ * Nombre, número y posición natural, tal como llegan de un formulario. En el
+ * Plantel de un Club el número es obligatorio (1-99); en el de la Selección no
+ * se lleva (vacío).
+ */
 export function validarDatosJugador(entrada: {
   nombre: unknown;
   numero: unknown;
   posicionNatural: unknown;
+  plantel: ClubOSeleccion;
 }): ResultadoDatos {
   const errores: Errores = {};
 
@@ -46,13 +54,18 @@ export function validarDatosJugador(entrada: {
   if (!nombre) errores.nombre = "Falta el nombre.";
   else if (nombre.length > LARGO_MAXIMO_NOMBRE) errores.nombre = `Máximo ${LARGO_MAXIMO_NOMBRE} caracteres.`;
 
-  const numero = aEntero(entrada.numero);
-  if (numero === null || numero < 1 || numero > 99) errores.numero = "El número va de 1 a 99.";
+  let numero: number | null = null;
+  if (entrada.plantel === SELECCION) {
+    if (!estaVacio(entrada.numero)) errores.numero = "En la Selección los Jugadores no llevan número.";
+  } else {
+    numero = aEntero(entrada.numero);
+    if (numero === null || numero < 1 || numero > 99) errores.numero = "El número va de 1 a 99.";
+  }
 
   const posicionNatural = POSICIONES_NATURALES.find((p) => p === entrada.posicionNatural);
   if (!posicionNatural) errores.posicionNatural = "Posición natural inválida.";
 
-  if (Object.keys(errores).length > 0 || !posicionNatural || numero === null) return { ok: false, errores };
+  if (Object.keys(errores).length > 0 || !posicionNatural) return { ok: false, errores };
   return { ok: true, datos: { nombre, numero, posicionNatural } };
 }
 
@@ -83,6 +96,7 @@ export function validarJugador(entrada: {
   posicionNatural: unknown;
   disponibilidad: unknown;
   motivo?: unknown;
+  plantel: ClubOSeleccion;
 }): ResultadoJugador {
   const datos = validarDatosJugador(entrada);
   const disponibilidad = validarDisponibilidad(entrada);
@@ -93,6 +107,10 @@ export function validarJugador(entrada: {
     };
   }
   return { ok: true, jugador: { ...datos.datos, ...disponibilidad.disponibilidad } };
+}
+
+function estaVacio(valor: unknown): boolean {
+  return valor === null || valor === undefined || (typeof valor === "string" && valor.trim() === "");
 }
 
 function aEntero(valor: unknown): number | null {

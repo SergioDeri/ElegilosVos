@@ -6,7 +6,7 @@
 import Link from "next/link";
 import { calcularVotaciones, type EstadoVotacion, type Votacion } from "@/domain/calendario";
 import { formatearHoraUy } from "@/domain/comun/horario";
-import { CLUBES, type ClubId } from "@/domain/comun/tipos";
+import { CLUBES, numeroDeClubDeLaBase, type ClubId } from "@/domain/comun/tipos";
 import type { JugadorParaMostrar } from "@/domain/parcial";
 import { requerirAdmin } from "@/lib/auth/admin";
 import { calcularParcialCacheado } from "@/lib/parcial";
@@ -56,6 +56,7 @@ async function VotacionesDelClub({ club, ahora }: { club: ClubId; ahora: Date })
   ]);
   if (error) throw error;
   if (errorJugadores) throw errorJugadores;
+  const delClub = jugadores.map((j) => ({ ...j, numero: numeroDeClubDeLaBase(j.numero) }));
 
   const votaciones = calcularVotaciones(
     partidos.map((p) => ({
@@ -85,7 +86,7 @@ async function VotacionesDelClub({ club, ahora }: { club: ClubId; ahora: Date })
               key={v.partidoId}
               titulo={`${NOMBRE_CLUB[club]} vs ${partido.rival?.nombre ?? "Rival a confirmar"} — ${formatearHoraUy(new Date(partido.inicio))}`}
               votacion={v}
-              jugadores={jugadores}
+              jugadores={delClub}
             />
           );
         })

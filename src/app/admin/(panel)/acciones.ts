@@ -5,7 +5,7 @@
 // cliente de esa sesión (RLS con es_admin()), nunca la service role.
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
-import { esClubId, type ClubId } from "@/domain/comun/tipos";
+import { clubOSeleccionDeLaBase, esClubId, type ClubId } from "@/domain/comun/tipos";
 import { validarDatosJugador, validarDisponibilidad, validarJugador, type Errores } from "@/domain/planteles";
 import { requerirAdminEnAccion } from "@/lib/auth/admin";
 
@@ -29,6 +29,7 @@ export async function crearJugador(club: ClubId, _previo: EstadoFormulario, form
     posicionNatural: formData.get("posicionNatural"),
     disponibilidad: formData.get("disponibilidad"),
     motivo: formData.get("motivo"),
+    plantel: club,
   });
   if (!validacion.ok) return { errores: validacion.errores };
 
@@ -49,10 +50,15 @@ export async function crearJugador(club: ClubId, _previo: EstadoFormulario, form
 
 export async function editarDatosJugador(id: string, _previo: EstadoFormulario, formData: FormData): Promise<EstadoFormulario> {
   const supabase = await requerirAdminEnAccion();
+  // El número depende del Plantel (Club o Selección) al que pertenece el Jugador.
+  const { data: actual, error: errorLectura } = await supabase.from("jugador").select("club_id").eq("id", id).maybeSingle();
+  if (errorLectura || !actual) return { mensaje: "No se encontró al Jugador." };
+
   const validacion = validarDatosJugador({
     nombre: formData.get("nombre"),
     numero: formData.get("numero"),
     posicionNatural: formData.get("posicionNatural"),
+    plantel: clubOSeleccionDeLaBase(actual.club_id),
   });
   if (!validacion.ok) return { errores: validacion.errores };
 

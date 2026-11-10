@@ -12,7 +12,7 @@ import { alineacionDesdeFila, COLUMNAS_ALINEACION } from "@/domain/armado";
 import { onceDesdeJson } from "@/domain/cierre";
 import { esUuid } from "@/domain/comun/ids";
 import { NOMBRE_RIVAL_DESCONOCIDO } from "@/domain/comun/textos";
-import { esClubId, type ClubId } from "@/domain/comun/tipos";
+import { esClubId, numeroDeClubDeLaBase, type ClubId } from "@/domain/comun/tipos";
 import { modeloDeImagen, type ModeloImagen } from "@/domain/compartir";
 import { esEsquemaId, type EsquemaId } from "@/domain/esquemas";
 import { fechaDeImagen } from "@/lib/compartir/fecha";
@@ -87,5 +87,5 @@ async function leerJugadores(cliente: Cliente, club: ClubId, ids: string[]) {
   if (ids.length === 0) return [];
   const { data, error } = await cliente.from("jugador").select("id, nombre, numero").eq("club_id", club).in("id", ids);
   if (error) throw error;
-  return data;
+  return data.map((j) => ({ ...j, numero: numeroDeClubDeLaBase(j.numero) }));
 }

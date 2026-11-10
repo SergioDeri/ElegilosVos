@@ -8,7 +8,7 @@ import { formatearHoraUy } from "@/domain/comun/horario";
 import { requerirAdmin } from "@/lib/auth/admin";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { NOMBRE_CLUB } from "@/domain/comun/textos";
-import { esClubId } from "@/domain/comun/tipos";
+import { esClubId, numeroDeClubDeLaBase } from "@/domain/comun/tipos";
 import { ETIQUETA_POSICION } from "../../../../../_comun/etiquetas";
 import { FormularioBorrarOnceReal, FormularioOnceReal } from "./formularios";
 
@@ -72,7 +72,7 @@ export default async function PaginaOnceReal({ params }: PageProps<"/admin/parti
             jugadores={jugadores.map((j) => ({
               id: j.id,
               nombre: j.nombre,
-              numero: j.numero,
+              numero: numeroDeClubDeLaBase(j.numero),
               posicion: ETIQUETA_POSICION[j.posicion_natural],
               enPlantel: j.en_plantel,
             }))}

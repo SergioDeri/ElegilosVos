@@ -53,7 +53,8 @@ describe("deny-by-default en las tablas del dominio", () => {
 describe("club", () => {
   it("es de lectura pública", async () => {
     const { data } = await clienteAnonimo().from("club").select("id").order("id");
-    expect(data).toEqual([{ id: "nacional" }, { id: "penarol" }]);
+    // La Selección comparte la tabla (feature Selección, ticket 01).
+    expect(data).toEqual([{ id: "nacional" }, { id: "penarol" }, { id: "seleccion" }]);
   });
 
   it("nadie lo puede modificar vía la API", async () => {

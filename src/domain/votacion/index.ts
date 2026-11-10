@@ -6,7 +6,7 @@
  * El resultado es el de `contar` pasado por `soloAgregados`: sin datos de Hinchas.
  */
 import { alineacionDesdeFila, COLUMNAS_ALINEACION, type FilaAlineacion } from "@/domain/armado";
-import type { Disponibilidad, PosicionNatural } from "@/domain/comun/tipos";
+import { numeroDeClubDeLaBase, type Disponibilidad, type PosicionNatural } from "@/domain/comun/tipos";
 import { contar, type JugadorParaConteo, type ResultadoConteo } from "@/domain/conteo";
 
 export type { FilaAlineacion } from "@/domain/armado";
@@ -14,7 +14,7 @@ export type { FilaAlineacion } from "@/domain/armado";
 /** Columnas de la tabla `jugador` que necesita el conteo. */
 export interface FilaJugadorParaConteo {
   id: string;
-  numero: number;
+  numero: number | null;
   posicion_natural: PosicionNatural;
   disponibilidad: Disponibilidad;
   en_plantel: boolean;
@@ -29,7 +29,7 @@ export const COLUMNAS_ALINEACION_PARA_CONTEO = COLUMNAS_ALINEACION;
 export function jugadorParaConteoDesdeFila(fila: FilaJugadorParaConteo): JugadorParaConteo {
   return {
     id: fila.id,
-    numero: fila.numero,
+    numero: numeroDeClubDeLaBase(fila.numero),
     posicionNatural: fila.posicion_natural,
     disponibilidad: fila.disponibilidad,
     enPlantel: fila.en_plantel,

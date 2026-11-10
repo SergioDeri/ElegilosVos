@@ -16,7 +16,8 @@ const valido = {
   posicionNatural: "ARQ",
   disponibilidad: "disponible",
   motivo: "",
-};
+  plantel: "penarol",
+} as const;
 
 describe("validarJugador", () => {
   it("acepta datos válidos y normaliza el nombre", () => {
@@ -84,11 +85,11 @@ describe("validarJugador", () => {
 
 describe("validarDatosJugador y validarDisponibilidad por separado", () => {
   it("valida solo nombre, número y posición natural", () => {
-    expect(validarDatosJugador({ nombre: "Ana", numero: "9", posicionNatural: "DEL" })).toEqual({
+    expect(validarDatosJugador({ nombre: "Ana", numero: "9", posicionNatural: "DEL", plantel: "nacional" })).toEqual({
       ok: true,
       datos: { nombre: "Ana", numero: 9, posicionNatural: "DEL" },
     });
-    expect(validarDatosJugador({ nombre: "", numero: "9", posicionNatural: "DEL" }).ok).toBe(false);
+    expect(validarDatosJugador({ nombre: "", numero: "9", posicionNatural: "DEL", plantel: "nacional" }).ok).toBe(false);
   });
 
   it("valida solo la Disponibilidad y su motivo", () => {
@@ -172,5 +173,35 @@ describe("nombreCorto", () => {
     expect(nombreCorto("Leonardo Fernández", 14)).toBe("Fernández");
     expect(nombreCorto("Juan Pablo Pérez Gómez", 14)).toBe("Pablo Pérez G…");
     expect(nombreCorto("Maximiliano Olivera Hernández", 14)).toBe("Olivera Herná…");
+  });
+});
+
+describe("el número según el Plantel", () => {
+  const sinNumero = { ...valido, nombre: "Federico Valverde", numero: "", posicionNatural: "MED" };
+
+  it("en el Plantel de la Selección el Jugador no lleva número", () => {
+    const r = validarJugador({ ...sinNumero, plantel: "seleccion" });
+    expect(r).toEqual({
+      ok: true,
+      jugador: {
+        nombre: "Federico Valverde",
+        numero: null,
+        posicionNatural: "MED",
+        disponibilidad: "disponible",
+        motivoDisponibilidad: null,
+      },
+    });
+  });
+
+  it("en el Plantel de la Selección rechaza un número", () => {
+    const r = validarDatosJugador({ nombre: "Federico Valverde", numero: "15", posicionNatural: "MED", plantel: "seleccion" });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(Object.keys(r.errores)).toEqual(["numero"]);
+  });
+
+  it("en el Plantel de un Club el número sigue siendo obligatorio", () => {
+    const r = validarJugador({ ...sinNumero, plantel: "penarol" });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(Object.keys(r.errores)).toEqual(["numero"]);
   });
 });

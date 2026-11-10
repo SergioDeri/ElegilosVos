@@ -6,7 +6,7 @@ import "server-only";
 import { alineacionDesdeFila, COLUMNAS_ALINEACION } from "@/domain/armado";
 import { CIERRE_ANTES_DEL_INICIO_MS, cierreDeVotacion } from "@/domain/calendario";
 import { coincidencia, estadoResultadoDeLaBase, onceDesdeJson, type EstadoResultado } from "@/domain/cierre";
-import type { ClubId } from "@/domain/comun/tipos";
+import { numeroDeClubDeLaBase, type ClubId } from "@/domain/comun/tipos";
 import type { Asignacion } from "@/domain/conteo";
 import { esEsquemaId, type EsquemaId } from "@/domain/esquemas";
 import { cerrarVotacion } from "@/lib/cierre/proceso";
@@ -165,7 +165,7 @@ export async function cargarOnceReal(supabase: Cliente, partidoId: string): Prom
 export async function cargarJugadores(supabase: Cliente, club: ClubId): Promise<Map<string, JugadorResultado>> {
   const { data, error } = await supabase.from("jugador").select("id, nombre, numero").eq("club_id", club);
   if (error) throw error;
-  return new Map(data.map((j) => [j.id, { nombre: j.nombre, numero: j.numero }]));
+  return new Map(data.map((j) => [j.id, { nombre: j.nombre, numero: numeroDeClubDeLaBase(j.numero) }]));
 }
 
 /** Ids de los Jugadores de la Alineación del Hincha para el Partido, o null si no tiene. */

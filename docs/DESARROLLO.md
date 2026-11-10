@@ -77,10 +77,10 @@ tests/rls/                Tests de RLS + helpers (usuarios de prueba, clientes a
 
 Migración `supabase/migrations/20261106120000_esquema_base.sql`:
 
-- `club` (`id` = `'penarol' | 'nacional'`, fijos, cargados en la migración). **Lectura pública** (anon y authenticated): son datos fijos no sensibles que hacen falta antes del login para elegir el Club Favorito. Nadie los escribe por la API.
+- `club` (`id` = `'penarol' | 'nacional' | 'seleccion'`, fijos, cargados en las migraciones). La Selección **no es un Club** (ver `CONTEXT.md`): comparte la tabla para reutilizar Partido, Plantel y Alineación, marcada con `es_seleccion`. Nunca es Club Favorito (check en `perfil` y validación en `elegir_club_favorito` / `cambiar_club_favorito`). En el dominio, `ClubId` sigue siendo Peñarol o Nacional; `ClubOSeleccion` (`@/domain/comun/tipos`) es para lo que sirve a los dos. **Lectura pública** (anon y authenticated): son datos fijos no sensibles que hacen falta antes del login para elegir el Club Favorito. Nadie los escribe por la API.
 - `rival`: nombre único, `escudo_path`, `activo` (baja lógica). El Clásico usa al otro Club como Rival (hay filas "Peñarol" y "Nacional").
 - `partido`: `club_id`, `rival_id`, `inicio` (timestamptz, UTC), `estado` (`programado | cancelado`), `creado_en`. El estado de la Votación **no se guarda**: lo calcula el Calendario.
-- `jugador`: `club_id`, `nombre`, `numero` (1-99), `posicion_natural` (`ARQ | DEF | MED | DEL`), `en_plantel` (baja lógica), `disponibilidad` (`disponible | lesionado | suspendido | no_disponible`), `motivo_disponibilidad`.
+- `jugador`: `club_id`, `nombre`, `numero` (1-99 en un Club; nulo en la Selección, por check. Al leer Jugadores de un Club usá `numeroDeClubDeLaBase`), `posicion_natural` (`ARQ | DEF | MED | DEL`), `en_plantel` (baja lógica), `disponibilidad` (`disponible | lesionado | suspendido | no_disponible`), `motivo_disponibilidad`.
 - `perfil` (Hincha): `id` = `auth.users.id` (cascade al borrar el usuario), `club_favorito_id` (nulo hasta elegirlo), `rol` (`hincha | admin`). Lo crea el trigger `al_crear_usuario_crear_perfil`.
 - Todas las tablas tienen `actualizado_en` mantenido por trigger (salvo `club`).
 - Función `public.es_admin()`: `true` solo si el usuario tiene rol `admin` **y** la sesión es AAL2 (2FA). Pensada para las políticas de escritura del backoffice. Todavía no la usa ninguna política.
