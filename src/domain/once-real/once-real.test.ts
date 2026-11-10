@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { JUGADORES_DEL_ONCE_REAL, validarOnceReal } from ".";
+import { coincidencias, JUGADORES_DEL_ONCE_REAL, validarOnceReal } from ".";
 
 const plantel = Array.from({ length: 14 }, (_, i) => ({ id: `j${i + 1}` }));
 const once = plantel.slice(0, 11).map((j) => j.id);
@@ -47,5 +47,52 @@ describe("validarOnceReal", () => {
 
   it("un Partido cancelado no tiene 11 Real", () => {
     expect(validar(once, { cancelado: true })).toEqual({ ok: false, motivo: "cancelado" });
+  });
+});
+
+describe("coincidencias", () => {
+  const ids = (desde: number, hasta: number) => Array.from({ length: hasta - desde }, (_, i) => `j${desde + i}`);
+  const elegido = ids(1, 12); // j1..j11
+  const real = ids(4, 15); // j4..j14
+
+  it("con Alineación, 11 Elegido y 11 Real, las tres Coincidencias", () => {
+    const alineacion = [...ids(1, 6), ...ids(12, 15)]; // j1..j5 y j12..j14
+    expect(coincidencias({ alineacion, onceElegido: elegido, onceReal: real })).toEqual({
+      alineacionConElegido: 5,
+      alineacionConReal: 5,
+      elegidoConReal: 8,
+    });
+  });
+
+  it("sin Alineación del Hincha, solo la del 11 Elegido con el 11 Real", () => {
+    expect(coincidencias({ alineacion: null, onceElegido: elegido, onceReal: real })).toEqual({
+      alineacionConElegido: null,
+      alineacionConReal: null,
+      elegidoConReal: 8,
+    });
+  });
+
+  it("sin 11 Real cargado, solo la de la Alineación con el 11 Elegido", () => {
+    expect(coincidencias({ alineacion: ids(1, 3), onceElegido: elegido, onceReal: null })).toEqual({
+      alineacionConElegido: 2,
+      alineacionConReal: null,
+      elegidoConReal: null,
+    });
+  });
+
+  it("sin 11 Elegido (Votación sin Alineaciones o anulada), solo la de la Alineación con el 11 Real", () => {
+    expect(coincidencias({ alineacion: ids(4, 6), onceElegido: null, onceReal: real })).toEqual({
+      alineacionConElegido: null,
+      alineacionConReal: 2,
+      elegidoConReal: null,
+    });
+  });
+
+  it("no cuenta los Puestos vacantes del 11 Elegido", () => {
+    expect(coincidencias({ alineacion: [null, "j1"], onceElegido: [null, "j1"], onceReal: [null, ...ids(1, 11)] })).toEqual({
+      alineacionConElegido: 1,
+      alineacionConReal: 1,
+      elegidoConReal: 1,
+    });
   });
 });

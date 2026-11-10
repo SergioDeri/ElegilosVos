@@ -4,9 +4,9 @@
 
 **Blocked by:** 10
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] El Admin carga el 11 Real de la Selección con la misma validación que en los Clubes
-- [ ] El Hincha ve 11 Real, 11 Elegido y sus Coincidencias en la Selección
-- [ ] Tests de RLS siguiendo los del 11 Real existentes
-- [ ] Antes de terminar: `npm run typecheck && npm run lint && npm test && npm run test:rls` && npm run test:e2e
+- [x] El Admin carga el 11 Real de la Selección con la misma validación que en los Clubes
+- [x] El Hincha ve 11 Real, 11 Elegido y sus Coincidencias en la Selección
+- [x] Tests de RLS siguiendo los del 11 Real existentes
+- [x] Antes de terminar: `npm run typecheck && npm run lint && npm test && npm run test:rls` && npm run test:e2e
