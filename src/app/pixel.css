@@ -99,10 +99,21 @@ a {
 /* -------------------------------------------------------------------------
    Paneles: el contenido de cada pantalla
    ------------------------------------------------------------------------- */
+/* Ancho máximo del panel. Las pantallas de acceso son una caja angosta; las
+   de la app del Hincha comparten un marco más ancho para que la cancha
+   horizontal del armado entre en desktop sin deformarse. */
+:root {
+  --ancho-max-main: calc(200 * var(--u));
+}
+
+.app-hincha {
+  --ancho-max-main: calc(320 * var(--u));
+}
+
 main {
   --borde: var(--color-grisOscuro);
   /* Ancho y centrado redondeados a píxeles de arte enteros. */
-  --ancho-main: min(calc(200 * var(--u)), round(down, calc(100% - 4 * var(--u)), var(--u)));
+  --ancho-main: min(var(--ancho-max-main), round(down, calc(100% - 4 * var(--u)), var(--u)));
   display: block;
   width: var(--ancho-main);
   margin: calc(4 * var(--u)) 0;

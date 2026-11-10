@@ -21,7 +21,7 @@ export async function generateViewport(): Promise<Viewport> {
 export default async function LayoutApp({ children }: LayoutProps<"/">) {
   const hincha = await requerirHincha();
   return (
-    <div data-club={temaDe(hincha.clubFavorito)}>
+    <div data-club={temaDe(hincha.clubFavorito)} className="app-hincha">
       <header className="barra-app">
         <Link href="/" className={barra.marca} aria-label="Elegilos Vos: ir al inicio">
           Elegilos<span className={barra.vos}>Vos</span>

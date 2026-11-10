@@ -4,11 +4,8 @@
    ubica @/app/_cancha/cancha-pixel; acá va su aspecto. */
 
 /* El armado ocupa el alto visible: barra, renglón de avisos y la cancha con
-   el banco en todo lo que sobra, sin scroll. La pantalla usa todo el ancho. */
-main:has(.editor) {
-  --ancho-main: round(down, calc(100% - 4 * var(--u)), var(--u));
-}
-
+   el banco en todo lo que sobra, sin scroll. El ancho es el del marco común
+   de la app (.app-hincha en pixel.css), como el resto de las pantallas. */
 .editor {
   display: flex;
   flex-direction: column;
