@@ -19,9 +19,15 @@
  *   Votación abierta dejó de estar Disponible desde que abrió la Votación y
  *   sigue sin estarlo (referencia: el evento de cambio de Disponibilidad; si un
  *   Jugador cambió varias veces, cuenta el último).
+ *
+ * Destinatarios: los avisos de un Club van a sus Hinchas con el interruptor
+ * "mi club" prendido; los de la Selección, a todos los Hinchas (con Club o
+ * sin Club) con "Selección" prendido. De la Selección solo se avisan
+ * `votacion_abierta` y `cierra_pronto`, uno por Partido (en una fecha doble
+ * hay dos Votaciones abiertas), nombrando al Rival.
  */
-import { votacionAbierta, type PartidoCalendario, type Votacion } from "@/domain/calendario";
-import type { ClubId, Disponibilidad } from "@/domain/comun/tipos";
+import { votacionAbierta, votacionesAbiertas, type PartidoCalendario, type Votacion } from "@/domain/calendario";
+import { SELECCION, type ClubId, type Disponibilidad } from "@/domain/comun/tipos";
 import type { Alineacion, JugadorDelPlantel } from "@/domain/editor";
 import { jugadoresNoDisponibles, type MotivoNoDisponible } from "@/domain/herencia";
 
@@ -87,10 +93,46 @@ export interface DatosDelClub {
   partidosConResultado?: readonly string[];
 }
 
+/**
+ * Los dos interruptores de notificaciones del Hincha (tabla
+ * `preferencia_notificacion`): avisos de su Club y avisos de la Selección.
+ */
+export interface PreferenciasDeNotificacion {
+  miClub: boolean;
+  seleccion: boolean;
+}
+
+/** Sin preferencias guardadas, los dos interruptores están prendidos. */
+export const PREFERENCIAS_POR_DEFECTO: PreferenciasDeNotificacion = { miClub: true, seleccion: true };
+
+export type Interruptor = keyof PreferenciasDeNotificacion;
+
+/** Los interruptores que ve el Hincha: sin Club, solo el de la Selección. */
+export function interruptoresVisibles(club: ClubId | null): Interruptor[] {
+  return club ? ["miClub", "seleccion"] : ["seleccion"];
+}
+
+/** Las preferencias leídas de `preferencia_notificacion` (sin fila: las de por defecto). */
+export function preferenciasDesdeFila(fila: { mi_club: boolean; seleccion: boolean } | null): PreferenciasDeNotificacion {
+  return fila ? { miClub: fila.mi_club, seleccion: fila.seleccion } : { ...PREFERENCIAS_POR_DEFECTO };
+}
+
 export interface HinchaConSuscripcion {
   id: string;
-  /** Club Favorito de hoy. */
-  club: ClubId;
+  /** Club Favorito de hoy (`null`: Hincha sin Club, solo recibe avisos de la Selección). */
+  club: ClubId | null;
+  /** Sin preferencias, `PREFERENCIAS_POR_DEFECTO`. */
+  preferencias?: PreferenciasDeNotificacion;
+}
+
+/**
+ * Partidos de la Selección. Solo Votación abierta y Cierra pronto (uno por
+ * Partido: en una fecha doble puede haber dos Votaciones abiertas).
+ */
+export interface DatosDeLaSeleccion {
+  partidos: readonly PartidoParaAvisos[];
+  /** Partidos de la Selección con resultado congelado: no se avisa nada de su Votación. */
+  partidosConResultado?: readonly string[];
 }
 
 export interface NotificacionEnviada {
@@ -104,6 +146,8 @@ export interface EntradaAvisos {
   /** Hinchas con al menos una suscripción push (los demás no reciben nada). */
   hinchas: readonly HinchaConSuscripcion[];
   clubes: readonly DatosDelClub[];
+  /** Sin datos de la Selección, no se avisa nada de la Selección. */
+  seleccion?: DatosDeLaSeleccion;
   /** Registro de enviados (puede traer de más: solo se usa para filtrar). */
   yaEnviadas: readonly NotificacionEnviada[];
 }
@@ -148,8 +192,36 @@ export function avisosPendientes(entrada: EntradaAvisos): Aviso[] {
   };
 
   for (const datos of entrada.clubes) {
-    const hinchas = entrada.hinchas.filter((h) => h.club === datos.club);
+    const hinchas = entrada.hinchas.filter((h) => h.club === datos.club && preferencias(h).miClub);
     for (const aviso of avisosDelClub(datos, hinchas, entrada.ahora)) agregar(aviso);
+  }
+  if (entrada.seleccion) {
+    const hinchas = entrada.hinchas.filter((h) => preferencias(h).seleccion);
+    for (const aviso of avisosDeLaSeleccion(entrada.seleccion, hinchas, entrada.ahora)) agregar(aviso);
+  }
+  return avisos;
+}
+
+const preferencias = (h: HinchaConSuscripcion) => h.preferencias ?? PREFERENCIAS_POR_DEFECTO;
+
+/**
+ * Las Votaciones abiertas de la Selección según el Calendario (puede haber dos
+ * en una fecha doble), salvo las que ya tienen resultado congelado. El proceso
+ * la usa también para saber qué datos cargar.
+ */
+export function votacionesAbiertasDeLaSeleccion(datos: DatosDeLaSeleccion, ahora: Date): Votacion[] {
+  return votacionesAbiertas(datos.partidos, ahora, SELECCION).filter(
+    (v) => !datos.partidosConResultado?.includes(v.partidoId),
+  );
+}
+
+function avisosDeLaSeleccion(datos: DatosDeLaSeleccion, hinchas: readonly HinchaConSuscripcion[], ahora: Date): Aviso[] {
+  const avisos: Aviso[] = [];
+  for (const abierta of votacionesAbiertasDeLaSeleccion(datos, ahora)) {
+    const partido = datos.partidos.find((p) => p.id === abierta.partidoId)!;
+    const cierraPronto = abierta.cierra.getTime() - ahora.getTime() <= AVISO_DE_CIERRE_MS;
+    const mensaje = cierraPronto ? mensajeCierraProntoSeleccion(partido) : mensajeVotacionAbiertaSeleccion(partido);
+    for (const h of hinchas) avisos.push({ hinchaId: h.id, ...mensaje });
   }
   return avisos;
 }
@@ -273,6 +345,35 @@ function mensajeCierraPronto(partido: PartidoParaAvisos): AvisoSinHincha {
       titulo: "Cierra pronto la Votación",
       cuerpo: `Faltan menos de 3 horas para elegir tu 11 contra ${partido.rival}.`,
       url: "/mi-alineacion",
+      etiqueta: `votacion:${partido.id}`,
+    },
+  };
+}
+
+/** Pantalla de la Selección con el Partido elegido (en una fecha doble hay dos). */
+const urlDeLaSeleccion = (partido: PartidoParaAvisos) => `/seleccion?partido=${partido.id}`;
+
+function mensajeVotacionAbiertaSeleccion(partido: PartidoParaAvisos): AvisoSinHincha {
+  return {
+    tipo: "votacion_abierta",
+    referencia: partido.id,
+    mensaje: {
+      titulo: "Abrió la Votación de la Selección",
+      cuerpo: `Ya podés armar tu 11 de la Selección contra ${partido.rival}.`,
+      url: urlDeLaSeleccion(partido),
+      etiqueta: `votacion:${partido.id}`,
+    },
+  };
+}
+
+function mensajeCierraProntoSeleccion(partido: PartidoParaAvisos): AvisoSinHincha {
+  return {
+    tipo: "cierra_pronto",
+    referencia: partido.id,
+    mensaje: {
+      titulo: "Cierra pronto la Votación de la Selección",
+      cuerpo: `Faltan menos de 3 horas para elegir tu 11 de la Selección contra ${partido.rival}.`,
+      url: urlDeLaSeleccion(partido),
       etiqueta: `votacion:${partido.id}`,
     },
   };

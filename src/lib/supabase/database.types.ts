@@ -195,6 +195,26 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"preferencia_notificacion": {
+                  Row: {
+                    "actualizado_en": string,"hincha_id": string,"mi_club": boolean,"seleccion": boolean
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "actualizado_en"?: string,"hincha_id"?: string,"mi_club"?: boolean,"seleccion"?: boolean
+                  }
+                  Update: {
+                    "actualizado_en"?: string,"hincha_id"?: string,"mi_club"?: boolean,"seleccion"?: boolean
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "preferencia_notificacion_hincha_id_fkey"
+      columns: ["hincha_id"]
+isOneToOne: true
+      referencedRelation: "perfil"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"resultado_votacion": {
                   Row: {
                     "alineaciones_que_cuentan": number,"calculado_en": string,"cierre": string,"detalle": Json | null,"esquema": string | null,"estado": string,"once": Json | null,"partido_id": string
