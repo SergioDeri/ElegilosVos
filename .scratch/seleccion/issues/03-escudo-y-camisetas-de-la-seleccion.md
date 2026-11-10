@@ -4,9 +4,9 @@
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] El escudo de la AUF está disponible en 48 px y pasa la validación de escudos
-- [ ] El módulo de Camisetas devuelve celeste para campo y negra para arquero en la Selección
-- [ ] Snapshots de las Camisetas de la Selección, como los de las Camisetas actuales; los de los Clubes no cambian
-- [ ] Antes de terminar: `npm run typecheck && npm run lint && npm test && npm run test:rls` && npm run test:e2e
+- [x] El escudo de la AUF está disponible en 48 px y pasa la validación de escudos
+- [x] El módulo de Camisetas devuelve celeste para campo y negra para arquero en la Selección
+- [x] Snapshots de las Camisetas de la Selección, como los de las Camisetas actuales; los de los Clubes no cambian
+- [x] Antes de terminar: `npm run typecheck && npm run lint && npm test && npm run test:rls` && npm run test:e2e (`test:e2e` todavía no existe: llega con el ticket 02)

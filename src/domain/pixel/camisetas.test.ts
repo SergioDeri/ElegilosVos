@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CLUBES, POSICIONES_NATURALES, type ClubId, type PosicionNatural } from "@/domain/comun/tipos";
+import { CLUBES, POSICIONES_NATURALES, SELECCION, type ClubId, type PosicionNatural } from "@/domain/comun/tipos";
 import { LADO_CAMISETA, PALETA, camiseta, type ColorPaleta, type Matriz } from "./index";
 
 const nombreDe = new Map<string, ColorPaleta>(Object.entries(PALETA).map(([n, hex]) => [hex, n as ColorPaleta]));
@@ -154,6 +154,60 @@ describe("camiseta", () => {
     const todas = CLUBES.flatMap((club) =>
       (["DEF", "ARQ"] as const).map((pos) => `${club} ${pos === "ARQ" ? "arquero" : "campo"} (10)\n${dibujo(camiseta(club, pos, { numero: 10 }))}`),
     ).join("\n\n");
+    expect(todas).toMatchSnapshot();
+  });
+});
+
+describe("camiseta de la Selección", () => {
+  const torso = (m: Matriz) => m[18].slice(6, 18).map(familia);
+
+  it("de campo: celeste", () => {
+    const m = camiseta(SELECCION, "DEF");
+    expect(new Set(torso(m))).toEqual(new Set(["celeste"]));
+    expect(familia(m[6][2])).toBe("celeste"); // manga
+  });
+
+  it("de arquero: negra, la lleva solo el ARQ", () => {
+    const arquero = camiseta(SELECCION, "ARQ");
+    expect(new Set(torso(arquero))).toEqual(new Set(["negro"]));
+    expect(familia(arquero[6][2])).toBe("negro"); // manga
+    for (const pos of ["DEF", "MED", "DEL"] as const) {
+      expect(camiseta(SELECCION, pos)).toEqual(camiseta(SELECCION, "DEF"));
+      expect(camiseta(SELECCION, pos)).not.toEqual(arquero);
+    }
+  });
+
+  it("no se confunde con las de los Clubes", () => {
+    for (const club of CLUBES)
+      for (const pos of ["DEF", "ARQ"] as const) expect(camiseta(SELECCION, pos)).not.toEqual(camiseta(club, pos));
+  });
+
+  it.each(POSICIONES_NATURALES)("%s: no estampa número aunque se lo pidan", (pos) => {
+    expect(camiseta(SELECCION, pos, { numero: 10 })).toEqual(camiseta(SELECCION, pos));
+  });
+
+  it.each(POSICIONES_NATURALES)("%s mide 24x24, usa solo la paleta y es simétrica en color, salvo el tono", (pos) => {
+    const m = camiseta(SELECCION, pos);
+    expect(m).toHaveLength(LADO_CAMISETA);
+    for (const fila of m) expect(fila).toHaveLength(LADO_CAMISETA);
+    for (const [x, y, c] of celdas(m)) {
+      if (c !== null) expect(nombreDe.has(c)).toBe(true);
+      expect(familia(m[y][23 - x]), `(${x},${y})`).toBe(familia(c));
+    }
+  });
+
+  it("las 2 Camisetas de la Selección (si cambian, revisarlas con el dueño del producto)", () => {
+    const letra = new Map<ColorPaleta, string>([
+      ["contorno", "o"],
+      ["negroSombra", "1"], ["negro", "2"], ["negroLuz", "3"],
+      ["blancoSombra", "7"], ["blanco", "8"], ["blancoLuz", "9"],
+      ["celesteSombra", "g"], ["celeste", "h"], ["celesteLuz", "i"],
+    ]);
+    const dibujo = (m: Matriz) => m.map((f) => f.map((c) => (c === null ? "." : (letra.get(nombreDe.get(c)!) ?? "?"))).join("")).join("\n");
+    const todas = (["DEF", "ARQ"] as const)
+      .map((pos) => `seleccion ${pos === "ARQ" ? "arquero" : "campo"}\n${dibujo(camiseta(SELECCION, pos))}`)
+      .join("\n\n");
+    expect(todas).not.toContain("?");
     expect(todas).toMatchSnapshot();
   });
 });

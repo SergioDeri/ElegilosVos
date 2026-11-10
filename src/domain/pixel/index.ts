@@ -2,7 +2,7 @@
 // paleta única, los temas por Club, la unidad --px, el texto bitmap, las
 // Camisetas y los íconos. Los sprites son matrices de colores de la paleta; quien los
 // dibuja (React, CSS) vive en la app.
-import { CLUBES, type ClubId, type PosicionNatural } from "@/domain/comun/tipos";
+import { CLUBES, type ClubId, type ClubOSeleccion, type PosicionNatural } from "@/domain/comun/tipos";
 
 // -----------------------------------------------------------------------------
 // Paleta: única fuente de colores del arte (16 bits, vivos)
@@ -22,6 +22,9 @@ export const PALETA = {
   azulLuz: "#4b8ff0",
   azul: "#1f5fc8",
   azulSombra: "#143f8a",
+  celesteLuz: "#9bd6fa",
+  celeste: "#5cb3ea",
+  celesteSombra: "#3279b8",
   rojoLuz: "#ff5b5b",
   rojo: "#d8282f",
   rojoSombra: "#8f1a22",
@@ -240,12 +243,12 @@ export function textoBitmap(texto: string, color: ColorPaleta, opciones: { conto
 }
 
 // -----------------------------------------------------------------------------
-// Camisetas: 24x24, fijas por Club (sin escudo); la de arquero va con ARQ
+// Camisetas: 24x24, fijas por Club o Selección (sin escudo); la de arquero va con ARQ
 // -----------------------------------------------------------------------------
 
 export const LADO_CAMISETA = 24;
 
-type Tela = "amarillo" | "negro" | "blanco" | "azul" | "rojo";
+type Tela = "amarillo" | "negro" | "blanco" | "azul" | "rojo" | "celeste";
 type Tono = "Luz" | "" | "Sombra";
 
 function tono(tela: Tela, t: Tono): string {
@@ -258,10 +261,11 @@ interface DisenoCamiseta {
   manga: Tela;
   puno: Tela;
   cuello: Tela;
-  numero: Tela;
+  /** Color del número estampado; sin él, la Camiseta no lleva número (la Selección). */
+  numero?: Tela;
 }
 
-const CAMISETAS: Record<ClubId, { campo: DisenoCamiseta; arquero: DisenoCamiseta }> = {
+const CAMISETAS: Record<ClubOSeleccion, { campo: DisenoCamiseta; arquero: DisenoCamiseta }> = {
   penarol: {
     // Bastones de 3 columnas en todo el frente, desde amarillo en la columna 6.
     campo: {
@@ -276,6 +280,11 @@ const CAMISETAS: Record<ClubId, { campo: DisenoCamiseta; arquero: DisenoCamiseta
   nacional: {
     campo: { cuerpo: () => "blanco", manga: "blanco", puno: "azul", cuello: "azul", numero: "rojo" },
     arquero: { cuerpo: () => "azul", manga: "azul", puno: "azul", cuello: "azul", numero: "blanco" },
+  },
+  // Los Jugadores de la Selección no tienen número: sus Camisetas no lo estampan.
+  seleccion: {
+    campo: { cuerpo: () => "celeste", manga: "celeste", puno: "blanco", cuello: "blanco" },
+    arquero: { cuerpo: () => "negro", manga: "negro", puno: "celeste", cuello: "celeste" },
   },
 };
 
@@ -314,12 +323,13 @@ const FILA_LUZ_CUERPO = 10;
 const FILA_NUMERO = 9;
 
 /**
- * Matriz 24x24 de la Camiseta del Club: la de arquero si la posición natural
- * es ARQ. Con `numero`, lo estampa en el pecho (dígitos 3x5 centrados en las
- * filas 9 a 13) con contorno de 1 px. Luz arriba a la izquierda; sombra a la
+ * Matriz 24x24 de la Camiseta del Club o de la Selección: la de arquero si la
+ * posición natural es ARQ. Con `numero`, lo estampa en el pecho (dígitos 3x5
+ * centrados en las filas 9 a 13) con contorno de 1 px; la de la Selección
+ * nunca lleva número (se ignora). Luz arriba a la izquierda; sombra a la
  * derecha y en la última fila.
  */
-export function camiseta(club: ClubId, posicion: PosicionNatural, opciones: { numero?: number } = {}): Matriz {
+export function camiseta(club: ClubOSeleccion, posicion: PosicionNatural, opciones: { numero?: number } = {}): Matriz {
   const diseno = CAMISETAS[club][posicion === "ARQ" ? "arquero" : "campo"];
   const m: Matriz = PLANTILLA_CAMISETA.map((fila, y) =>
     [...fila].map((ch, x) => {
@@ -342,7 +352,7 @@ export function camiseta(club: ClubId, posicion: PosicionNatural, opciones: { nu
     }),
   );
 
-  if (opciones.numero !== undefined) {
+  if (opciones.numero !== undefined && diseno.numero !== undefined) {
     const texto = String(opciones.numero);
     const numero = textoBitmap(texto, `${diseno.numero}Luz`, { contorno: true });
     // textoBitmap: contorno (1) + fila de diacríticos (1) arriba de los dígitos.
