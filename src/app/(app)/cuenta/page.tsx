@@ -30,7 +30,7 @@ export default async function PaginaCuenta() {
         <p>Tu Club Favorito no se puede cambiar desde la app.</p>
       </section>
 
-      <SeccionNotificaciones className={estilos.seccion} />
+      <SeccionNotificaciones className={estilos.seccion} club={hincha.clubFavorito} />
 
       <section aria-labelledby="seccion-borrar" className={estilos.seccion}>
         <h2 id="seccion-borrar">Borrar cuenta</h2>

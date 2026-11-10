@@ -4,10 +4,10 @@
 
 **Blocked by:** 05
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Interruptores "mi club" y "Selección" en la cuenta, prendidos por defecto
-- [ ] Avisos de Votación abierta y Cierra pronto para la Selección, uno por Partido en fecha doble, con el Rival
-- [ ] Destinatarios según preferencias, incluidos Hinchas sin Club, con tests de dominio
-- [ ] Tests de RLS: cada Hincha lee y cambia solo sus preferencias
-- [ ] Antes de terminar: `npm run typecheck && npm run lint && npm test && npm run test:rls` && npm run test:e2e
+- [x] Interruptores "mi club" y "Selección" en la cuenta, prendidos por defecto
+- [x] Avisos de Votación abierta y Cierra pronto para la Selección, uno por Partido en fecha doble, con el Rival
+- [x] Destinatarios según preferencias, incluidos Hinchas sin Club, con tests de dominio
+- [x] Tests de RLS: cada Hincha lee y cambia solo sus preferencias
+- [x] Antes de terminar: `npm run typecheck && npm run lint && npm test && npm run test:rls` && npm run test:e2e

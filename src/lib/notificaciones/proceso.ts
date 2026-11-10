@@ -6,7 +6,10 @@
 // `./web-push`, en los tests un doble). Por eso no importa `server-only` ni
 // `crearClienteAdmin`: lo hacen sus llamadores (la ruta de cron).
 //
-// Qué avisar a quién lo decide `avisosPendientes` de `@/domain/notificaciones`.
+// Qué avisar a quién lo decide `avisosPendientes` de `@/domain/notificaciones`,
+// según el Club Favorito y las preferencias de cada Hincha
+// (`preferencia_notificacion`). La Selección solo avisa Votación abierta y
+// Cierra pronto (feature Selección, ticket 13).
 // Cada aviso se registra en `notificacion_enviada` con ON CONFLICT DO NOTHING
 // ANTES de enviarlo, y solo se envía si esta corrida lo insertó: aunque dos
 // corridas se pisen, nadie recibe dos veces la misma notificación (a lo sumo
@@ -16,11 +19,12 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { alineacionDesdeFila, COLUMNAS_ALINEACION } from "@/domain/armado";
 import { votacionAbierta } from "@/domain/calendario";
 import { estadoResultadoDeLaBase } from "@/domain/cierre";
-import { CLUBES, esClubId, type ClubId } from "@/domain/comun/tipos";
+import { CLUBES, esClubId, SELECCION, type ClubId } from "@/domain/comun/tipos";
 import {
   ANTIGUEDAD_MAXIMA_DEL_RESULTADO_MS,
   avisosPendientes,
   type Aviso,
+  type DatosDeLaSeleccion,
   type DatosDelClub,
   type HinchaConSuscripcion,
   type MensajePush,
@@ -28,7 +32,9 @@ import {
   type ResultadoParaAvisos,
   type SuscripcionPush,
   type TipoNotificacion,
+  preferenciasDesdeFila,
   votacionAbiertaDelClub,
+  votacionesAbiertasDeLaSeleccion,
 } from "@/domain/notificaciones";
 import { leerPartidos, leerPlantel } from "@/lib/club/lecturas";
 import type { Database } from "@/lib/supabase/database.types";
@@ -69,10 +75,14 @@ export async function enviarNotificaciones(
 
   const clubes: DatosDelClub[] = [];
   for (const club of CLUBES) {
-    const ids = hinchas.filter((h) => h.club === club).map((h) => h.id);
+    const ids = hinchas.filter((h) => h.club === club && h.preferencias?.miClub !== false).map((h) => h.id);
     if (ids.length) clubes.push(await cargarClub(supabase, club, ahora, ids));
   }
+  const seleccion = hinchas.some((h) => h.preferencias?.seleccion !== false)
+    ? await cargarSeleccion(supabase, ahora)
+    : undefined;
   const referencias = new Set<string>();
+  if (seleccion) for (const v of votacionesAbiertasDeLaSeleccion(seleccion, ahora)) referencias.add(v.partidoId);
   for (const c of clubes) {
     const abierta = votacionAbiertaDelClub(c, ahora);
     if (abierta) referencias.add(abierta.partidoId);
@@ -81,7 +91,7 @@ export async function enviarNotificaciones(
   }
   const yaEnviadas = await cargarEnviadas(supabase, [...referencias]);
 
-  const avisos = avisosPendientes({ ahora, hinchas, clubes, yaEnviadas });
+  const avisos = avisosPendientes({ ahora, hinchas, clubes, seleccion, yaEnviadas });
   const propios = await registrar(supabase, avisos);
   resumen.avisos = propios.length;
 
@@ -108,14 +118,19 @@ async function cargarSuscripciones(supabase: ClienteServicio) {
   for (let desde = 0; ; desde += PAGINA) {
     const { data, error } = await supabase
       .from("suscripcion_push")
-      .select("id, hincha_id, endpoint, p256dh, auth, perfil(club_favorito_id)")
+      .select("id, hincha_id, endpoint, p256dh, auth, perfil(club_favorito_id, preferencia_notificacion(mi_club, seleccion))")
       .order("id")
       .range(desde, desde + PAGINA - 1);
     if (error) throw error;
     for (const fila of data) {
-      const club = fila.perfil?.club_favorito_id;
-      if (!esClubId(club)) continue;
-      hinchas.set(fila.hincha_id, { id: fila.hincha_id, club });
+      if (!fila.perfil) continue;
+      const club = fila.perfil.club_favorito_id;
+      hinchas.set(fila.hincha_id, {
+        id: fila.hincha_id,
+        // Sin Club Favorito: solo avisos de la Selección.
+        club: esClubId(club) ? club : null,
+        preferencias: preferenciasDesdeFila(fila.perfil.preferencia_notificacion),
+      });
       const lista = suscripciones.get(fila.hincha_id) ?? [];
       lista.push({ id: fila.id, endpoint: fila.endpoint, p256dh: fila.p256dh, auth: fila.auth });
       suscripciones.set(fila.hincha_id, lista);
@@ -171,6 +186,16 @@ async function cargarClub(
     plantel: await leerPlantel(supabase, club),
     alineaciones: await cargarAlineaciones(supabase, abierta.partidoId, hinchaIds),
   };
+}
+
+/** Partidos de la Selección y, de sus Votaciones abiertas, las que ya tienen resultado congelado. */
+async function cargarSeleccion(supabase: ClienteServicio, ahora: Date): Promise<DatosDeLaSeleccion> {
+  const partidos = (await leerPartidos(supabase, SELECCION)).map((p) => ({ ...p, rival: p.rival?.nombre ?? "el Rival" }));
+  const abiertas = votacionesAbiertasDeLaSeleccion({ partidos }, ahora).map((v) => v.partidoId);
+  if (abiertas.length === 0) return { partidos };
+  const { data, error } = await supabase.from("resultado_votacion").select("partido_id").in("partido_id", abiertas);
+  if (error) throw error;
+  return { partidos, partidosConResultado: data.map((r) => r.partido_id) };
 }
 
 async function cargarResultados(supabase: ClienteServicio, club: ClubId, ahora: Date): Promise<ResultadoParaAvisos[]> {
