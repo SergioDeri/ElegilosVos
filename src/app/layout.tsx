@@ -38,6 +38,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body>
         {children}
+        <footer className="credito">
+          Developed by{" "}
+          <a href="https://sergioderi.dev" target="_blank" rel="noopener noreferrer">
+            Sergio Deri
+          </a>
+        </footer>
         <RegistrarServiceWorker />
       </body>
     </html>
