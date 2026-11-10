@@ -1,15 +1,15 @@
-// Vista de un resultado de Votación: 11 Elegido en la cancha, votos y la
-// Coincidencia del Hincha, o el motivo por el que no hay 11 Elegido. La usan
-// también los resultados de la Selección (Selección, ticket 10), con nombre
-// completo y sin número, y por ahora sin Coincidencia ni 11 Real (ticket 11).
-// El botón de compartir va en los dos (Selección, ticket 12).
+// Vista de un resultado de Votación: 11 Elegido en la cancha, votos, el 11
+// Real, las Coincidencias del Hincha y el botón de compartir, o el motivo por
+// el que no hay 11 Elegido. La usan también los resultados de la Selección
+// (Selección, tickets 10, 11 y 12), con nombre completo y sin número.
 import Link from "next/link";
 import { BotonCompartir } from "@/app/_compartir/boton-compartir";
-import { coincidencia, type EstadoResultado } from "@/domain/cierre";
+import type { EstadoResultado } from "@/domain/cierre";
 import { formatearHoraUy } from "@/domain/comun/horario";
 import { esquema } from "@/domain/esquemas";
 import type { ItemHistorial, JugadorResultado, PartidoResultado, ResultadoVista } from "./datos";
-import { SELECCION, type ClubOSeleccion } from "@/domain/comun/tipos";
+import type { ClubOSeleccion } from "@/domain/comun/tipos";
+import { coincidencias } from "@/domain/once-real";
 import { CanchaDeLectura } from "@/app/_cancha/cancha-de-lectura";
 import estilos from "./resultados.module.css";
 import { Papelitos } from "@/app/_pixel/papelitos";
@@ -50,11 +50,8 @@ export function VistaResultado(props: {
   /** 11 Real (ticket 14): ids, o null/ausente si no está cargado. */
   onceReal?: string[] | null;
 }) {
-  const { resultado, jugadores } = props;
-  // Coincidencia y 11 Real de la Selección: ticket 11.
-  const seleccion = props.club === SELECCION;
-  const misJugadores = seleccion ? null : props.misJugadores;
-  const onceReal = seleccion ? null : props.onceReal;
+  const { resultado, jugadores, misJugadores } = props;
+  const onceReal = props.onceReal ?? null;
 
   if (!resultado) {
     return (
@@ -75,7 +72,8 @@ export function VistaResultado(props: {
     if (!j) return "Vacante";
     return j.numero === null ? j.nombre : `${j.numero}. ${j.nombre}`;
   };
-  const enComun = misJugadores ? coincidencia(misJugadores, resultado.once.map((a) => a.jugadorId)) : null;
+  const elegidos = resultado.once.map((a) => a.jugadorId);
+  const enComun = coincidencias({ alineacion: misJugadores, onceElegido: elegidos, onceReal });
 
   return (
     <>
@@ -85,17 +83,22 @@ export function VistaResultado(props: {
         {resultado.alineacionesQueCuentan === 1 ? "Alineación" : "Alineaciones"}. Calculado el{" "}
         {formatearHoraUy(resultado.calculadoEn)}.
       </p>
-      {!seleccion && (
-        <p role="status">
-          {enComun === null ? (
-            "No armaste una Alineación para este Partido."
-          ) : (
-            <>
-              Coincidiste en <span className={estilos.numero}>{enComun}</span> de 11 con el 11 Elegido.
-            </>
-          )}
-        </p>
-      )}
+      <p role="status">
+        {enComun.alineacionConElegido === null ? (
+          "No armaste una Alineación para este Partido."
+        ) : (
+          <>
+            Coincidiste en <span className={estilos.numero}>{enComun.alineacionConElegido}</span> de 11 con el 11 Elegido
+            {enComun.alineacionConReal !== null && (
+              <>
+                {" "}
+                y en <span className={estilos.numero}>{enComun.alineacionConReal}</span> de 11 con el 11 Real
+              </>
+            )}
+            .
+          </>
+        )}
+      </p>
       <CanchaDeLectura
         club={props.club}
         esquema={definicion.id}
@@ -145,7 +148,9 @@ export function VistaResultado(props: {
           })}
         </tbody>
       </table>
-      {onceReal && <OnceReal onceReal={onceReal} once={resultado.once} nombre={nombre} />}
+      {onceReal && enComun.elegidoConReal !== null && (
+        <OnceReal onceReal={onceReal} elegidos={elegidos} acierto={enComun.elegidoConReal} nombre={nombre} />
+      )}
     </>
   );
 }
@@ -153,15 +158,16 @@ export function VistaResultado(props: {
 /** Coincidencia entre el 11 Elegido y el 11 Real, y los 11 titulares (ticket 14). */
 function OnceReal(props: {
   onceReal: string[];
-  once: ResultadoVista["once"];
+  elegidos: (string | null)[];
+  acierto: number;
   nombre: (id: string | null) => string;
 }) {
-  const elegidos = props.once.map((a) => a.jugadorId);
+  const { elegidos } = props;
   return (
     <section aria-label="11 Real">
       <h3>11 Real</h3>
       <p role="status">
-        La hinchada acertó <span className={estilos.numero}>{coincidencia(elegidos, props.onceReal)}</span> de 11.
+        La hinchada acertó <span className={estilos.numero}>{props.acierto}</span> de 11.
       </p>
       <ul>
         {props.onceReal.map((id) => (

@@ -1,5 +1,6 @@
 // Resultados de la Selección (Selección, ticket 10): el 11 Elegido y el Gran
-// Ausente final del último Partido de la Selección cuya Votación cerró, y el
+// Ausente final del último Partido de la Selección cuya Votación cerró (con
+// el 11 Real y las Coincidencias del Hincha: ticket 11), y el
 // historial (en una fecha doble, un resultado por Partido, cada uno con su
 // detalle en /seleccion/resultados/<partidoId>). Un solo resultado con los
 // votos de todos los Hinchas: lo ve cualquier Hincha, con Club o sin Club.
@@ -13,6 +14,8 @@ import { crearClienteServidor } from "@/lib/supabase/server";
 import {
   cargarHistorial,
   cargarJugadores,
+  cargarMisJugadores,
+  cargarOnceReal,
   cargarResultado,
   cargarUltimoPartidoCerrado,
 } from "../../resultados/_resultados/datos";
@@ -27,10 +30,12 @@ export default async function PaginaResultadosDeLaSeleccion() {
   const partido = await cargarUltimoPartidoCerrado(supabase, SELECCION, ahora);
   // El cierre a pedido (si hace falta) va antes del historial, para que lo incluya.
   const resultado = partido ? await cargarResultado(supabase, partido, ahora) : null;
-  const [historial, jugadores, final] = await Promise.all([
+  const [historial, jugadores, final, misJugadores, onceReal] = await Promise.all([
     cargarHistorial(supabase, SELECCION),
     cargarJugadores(supabase, SELECCION),
     partido && resultado ? leerGranAusenteFinal(supabase, partido.id) : Promise.resolve(null),
+    partido ? cargarMisJugadores(supabase, partido.id) : Promise.resolve(null),
+    partido ? cargarOnceReal(supabase, partido.id) : Promise.resolve(null),
   ]);
 
   return (
@@ -47,6 +52,8 @@ export default async function PaginaResultadosDeLaSeleccion() {
             resultado={resultado}
             jugadores={jugadores}
             granAusente={final?.granAusente ?? null}
+            misJugadores={misJugadores}
+            onceReal={onceReal}
           />
         </section>
       ) : (
