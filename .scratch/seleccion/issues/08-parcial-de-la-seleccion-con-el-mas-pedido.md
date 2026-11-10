@@ -4,10 +4,10 @@
 
 **Blocked by:** 05
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Módulo de destacados con tests: Más Pedido, empates, sin Alineaciones, Alineaciones vacías
-- [ ] El Parcial de la Selección muestra el 11 que va ganando y el Más Pedido con su porcentaje
-- [ ] El Parcial respeta la privacidad como el de los Clubes (solo totales)
-- [ ] Tests de RLS siguiendo los del Parcial existentes
-- [ ] Antes de terminar: `npm run typecheck && npm run lint && npm test && npm run test:rls` && npm run test:e2e
+- [x] Módulo de destacados con tests: Más Pedido, empates, sin Alineaciones, Alineaciones vacías
+- [x] El Parcial de la Selección muestra el 11 que va ganando y el Más Pedido con su porcentaje
+- [x] El Parcial respeta la privacidad como el de los Clubes (solo totales)
+- [x] Tests de RLS siguiendo los del Parcial existentes
+- [x] Antes de terminar: `npm run typecheck && npm run lint && npm test && npm run test:rls` && npm run test:e2e

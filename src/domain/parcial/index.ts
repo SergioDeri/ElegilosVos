@@ -4,6 +4,7 @@
  * 11 sobre la cancha con los Puestos del Esquema ganador.
  */
 import type { OrigenAsignacion, ResultadoConteo } from "@/domain/conteo";
+import type { Destacado, TipoDestacado } from "@/domain/destacados";
 import { esquema, type EsquemaId, type PuestoId } from "@/domain/esquemas";
 
 export interface JugadorParaMostrar {
@@ -107,6 +108,49 @@ export function vistaDelParcial(resultado: ResultadoConteo, jugadores: readonly 
       totalVotos: p.totalVotos,
       candidatos: p.candidatos.map((c) => ({ jugador: mostrar(c.jugadorId), votos: c.votos, porcentaje: c.porcentaje })),
     })),
+  };
+}
+
+export interface DestacadoEnVista {
+  readonly tipo: TipoDestacado;
+  /** "Más Pedido" o "Gran Ausente". */
+  readonly titulo: string;
+  /** Los empatados, por nombre. Nunca vacío. */
+  readonly jugadores: readonly {
+    readonly jugador: JugadorEnVista;
+    readonly apariciones: number;
+    readonly porcentaje: number;
+  }[];
+}
+
+const TITULO_DESTACADO: Record<TipoDestacado, string> = {
+  mas_pedido: "Más Pedido",
+  gran_ausente: "Gran Ausente",
+};
+
+/**
+ * El destacado del Parcial de la Selección (Más Pedido o Gran Ausente, de
+ * `@/domain/destacados`) con el nombre de cada Jugador. `null` si no hay.
+ */
+export function vistaDelDestacado(
+  destacado: Destacado | null,
+  jugadores: readonly JugadorParaMostrar[],
+): DestacadoEnVista | null {
+  if (!destacado) return null;
+  const porId = new Map(jugadores.map((j) => [j.id, j]));
+  return {
+    tipo: destacado.tipo,
+    titulo: TITULO_DESTACADO[destacado.tipo],
+    jugadores: destacado.jugadores
+      .map((d) => {
+        const j = porId.get(d.jugadorId);
+        return {
+          jugador: j ? { nombre: j.nombre, numero: j.numero } : DESCONOCIDO,
+          apariciones: d.apariciones,
+          porcentaje: d.porcentaje,
+        };
+      })
+      .sort((a, b) => a.jugador.nombre.localeCompare(b.jugador.nombre, "es")),
   };
 }
 
