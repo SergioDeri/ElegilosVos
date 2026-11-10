@@ -75,10 +75,9 @@ test("los resultados de la Selección muestran el 11 Elegido y el Gran Ausente f
     const ultimo = page.getByRole("region", { name: "Último Partido" });
     await expect(ultimo.getByRole("region", { name: "Gran Ausente final" })).toContainText("Guillermo Varela");
     await expect(ultimo.getByRole("region", { name: "Gran Ausente final" })).not.toContainText("Sergio Rochet");
-    // En la cancha, el nombre completo y sin número.
-    await expect(ultimo.getByRole("listitem", { name: /: Sergio Rochet$/ })).toBeVisible();
-    // Todavía sin Coincidencia ni compartir en la Selección (tickets 11 y 12).
-    await expect(ultimo.getByText(/Coincidiste en/)).toHaveCount(0);
+    // En la cancha, el nombre completo y sin número (marcado: está en su Alineación, ticket 11).
+    await expect(ultimo.getByRole("listitem", { name: /: Sergio Rochet \(en tu Alineación\)$/ })).toBeVisible();
+    // Todavía sin compartir en la Selección (ticket 12).
     await expect(ultimo.getByRole("button", { name: /Compartir/ })).toHaveCount(0);
 
     await page.goto(`/seleccion/resultados/${partido.id}`);

@@ -8,7 +8,7 @@ import { rivalesParaPartido, validarAccion, ventanaVacia, type SituacionPartido 
 import { requerirAdmin } from "@/lib/auth/admin";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { nombreDeClubOSeleccion } from "@/domain/comun/textos";
-import { esClubOSeleccion, SELECCION } from "@/domain/comun/tipos";
+import { esClubOSeleccion } from "@/domain/comun/tipos";
 import { cargarPartidosDelClub, cargarRivales } from "../../../_partidos/datos";
 import {
   FormularioBorrarPartido,
@@ -116,15 +116,10 @@ export default async function PaginaPartido({ params }: PageProps<"/admin/partid
         </>
       )}
 
-      {/* El 11 Real de la Selección llega con el ticket 11 del feature Selección. */}
-      {club !== SELECCION && (
-        <>
-          <h2>11 Real</h2>
-          <p>
-            <Link href={`/admin/partidos/${club}/${id}/once-real`}>Cargar o corregir el 11 Real</Link>
-          </p>
-        </>
-      )}
+      <h2>11 Real</h2>
+      <p>
+        <Link href={`/admin/partidos/${club}/${id}/once-real`}>Cargar o corregir el 11 Real</Link>
+      </p>
 
       <h2>Borrar</h2>
       {borrar.ok ? (
