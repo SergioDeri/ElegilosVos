@@ -17,6 +17,7 @@ Los hinchas de Peñarol y Nacional arman la alineación titular de su Club para 
 
 - Node.js 24 y npm.
 - Docker (Docker Desktop) corriendo, para Supabase local.
+- Para los tests E2E, el Chromium de Playwright (una vez por máquina): `npx playwright install chromium`.
 
 ## Levantar el proyecto en local
 
@@ -41,6 +42,7 @@ Para frenar Supabase: `npx supabase stop`.
 | `npm test` | Alias de `test:unit`. |
 | `npm run test:unit` | Tests de lógica pura (`src/**/*.test.ts`). Sin red ni Docker. |
 | `npm run test:rls` | Tests de políticas de acceso (`tests/rls/**/*.test.ts`) contra Supabase local. Requiere `npx supabase start`. |
+| `npm run test:e2e` | Tests E2E con Playwright (`tests/e2e/**/*.spec.ts`) contra la app en local y Supabase local. No entran en `npm test`. Ver [Tests E2E](#tests-e2e). |
 | `npm run test:watch` | Tests de lógica pura en modo watch. |
 | `npm run typecheck` | `next typegen` + `tsc --noEmit`. |
 | `npm run lint` | ESLint (incluye la regla de pureza de `src/domain`). |
@@ -71,6 +73,7 @@ supabase/
   seed.sql                Datos de ejemplo base (Rivales, Planteles, Partidos).
   seeds/                  Seeds adicionales por ticket (se cargan después de seed.sql, en orden alfabético).
 tests/rls/                Tests de RLS + helpers (usuarios de prueba, clientes autenticados).
+tests/e2e/                Tests E2E con Playwright + helpers (Hinchas de prueba, login). Config en playwright.config.ts.
 ```
 
 ## Modelo de datos (base)
@@ -101,7 +104,8 @@ Varios agentes trabajan a la vez en worktrees separados (rama `wip/<NN>-<slug>` 
 8. **`database.types.ts`** es generado: si al mergear hay conflicto, no lo resuelvas a mano; aplicá las migraciones (`npm run db:reset`) y corré `npm run db:types`.
 9. **`package.json` / `package-lock.json`**: si chocan al mergear, quedate con la unión de dependencias y regenerá el lock con `npm install`.
 10. **Secretos**: nunca en el repo. La service role key y la VAPID privada solo en código de servidor (`import "server-only"`). Las variables con `NEXT_PUBLIC_` llegan al navegador: nunca le pongas ese prefijo a un secreto.
-11. Antes de terminar un ticket: `npm run typecheck && npm run lint && npm test && npm run test:rls` (este último con Supabase local corriendo).
+11. Antes de terminar un ticket: `npm run typecheck && npm run lint && npm test && npm run test:rls` (este último con Supabase local corriendo). Los tickets del feature Selección (`.scratch/seleccion/`) suman `npm run test:e2e`.
+12. **Tests E2E**: un archivo por ticket, `tests/e2e/<NN>-<slug>.spec.ts` (con prefijo de feature si el número se repite, como en RLS), usando `tests/e2e/fixtures.ts`. Sus datos de ejemplo van en un seed propio, `supabase/seeds/e2e-<NN>-<slug>.sql`.
 
 ## Tests de RLS
 
@@ -132,6 +136,42 @@ Detalles:
 - Auth limita los logins por IP (`auth.rate_limit.sign_in_sign_ups`), por eso los usuarios estándar inician sesión una sola vez. `crearUsuario()` hace un login real: usalo con moderación.
 - El Admin estándar no tiene 2FA. Para probar escrituras de Admin hace falta una sesión AAL2 (enrolar y verificar un factor TOTP): lo resuelve el ticket 07 agregando un helper.
 - No cambies el perfil de un usuario estándar sin restaurarlo; los archivos corren en serie pero comparten la base.
+
+## Tests E2E
+
+Playwright maneja un Chromium contra la app levantada con `next dev` y el Supabase local. Son pocos flujos críticos (los del feature Selección); la lógica se sigue probando con tests unitarios y de RLS.
+
+**Requisitos:** Supabase local corriendo (`npx supabase start`) con las migraciones y seeds al día (`npm run db:reset`), y el Chromium de Playwright instalado (`npx playwright install chromium`, una vez por máquina).
+
+```bash
+npm run test:e2e                              # levanta la app en http://localhost:3100 y corre todo
+E2E_PORT=3200 npm run test:e2e                # otro puerto (por ejemplo, otro worktree a la vez)
+npm run test:e2e -- tests/e2e/smoke.spec.ts   # un archivo
+npm run test:e2e -- --headed                  # mirando el navegador
+npm run test:e2e -- --ui                      # modo interactivo de Playwright
+```
+
+- **Puerto:** `E2E_PORT` (por defecto `3100`, para no chocar con el `3000` de `npm run dev`). Playwright levanta su propio `next dev` en ese puerto y lo apaga al terminar. Si el puerto está ocupado, falla en vez de correr contra un servidor ajeno. Next no deja dos `next dev` en la misma carpeta: frená el tuyo o usá otro worktree.
+- **Siempre Supabase local:** `playwright.config.ts` toma URL y claves de `supabase status` (o de `SUPABASE_TEST_URL`, `SUPABASE_TEST_ANON_KEY` y `SUPABASE_TEST_SERVICE_ROLE_KEY`) y se las pasa a la app por encima de `.env.local` (las variables del proceso le ganan a los `.env` en Next). Las demás variables (VAPID, `CRON_SECRET`) salen de `.env.local`, como en `npm run dev`.
+- Corren **de a un test** (`workers: 1`): comparten la base.
+- Si un test falla queda una traza en `test-results/` (`npx playwright show-trace test-results/<carpeta>/trace.zip`). `test-results/` y `playwright-report/` están en `.gitignore`.
+
+Helpers (`tests/e2e/fixtures.ts`):
+
+```ts
+import { expect, iniciarSesion, test } from "./fixtures";
+
+test("...", async ({ page, crearHincha }) => {
+  const hincha = await crearHincha({ club: "penarol" }); // { club: null } = sin Club Favorito
+  await iniciarSesion(page, hincha);                      // login con email desde /login
+  await expect(page).toHaveURL("/");
+});
+```
+
+- `crearHincha({ club, rol? })` crea un usuario con email confirmado usando la service role (sin login ni email) y **lo borra solo al terminar el test**. Para preparar otros datos: `clienteServicio()` de `tests/e2e/usuarios.ts`.
+- `iniciarSesion(page, hincha)` completa el formulario de `/login` y espera a salir de ahí (a `/`, o a `/elegir-club` si no tiene Club).
+- **Rate limit de Auth:** cada `iniciarSesion` es un login real y cuenta para `auth.rate_limit.sign_in_sign_ups` (30 cada 5 minutos por IP, compartido con los tests de RLS, que hacen unos 15 por corrida). Un login por test; si aparece "demasiados intentos", esperá 5 minutos.
+- **Datos de ejemplo:** no dependas de los Partidos de `seed.sql` (sus fechas se mueven con `now()` y desarrollo los usa). Cada ticket carga los suyos en `supabase/seeds/e2e-<NN>-<slug>.sql` (se cargan con `npm run db:reset`), con nombres que no choquen con los de desarrollo.
 
 ## Variables de entorno
 
