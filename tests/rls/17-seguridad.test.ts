@@ -193,6 +193,7 @@ describe("funciones de public", () => {
         "buscar_hinchas(text)", // es_admin()
         "cambiar_club_favorito(uuid,text)", // es_admin()
         "elegir_club_favorito(text)", // auth.uid(), solo el propio perfil
+        "elegir_solo_seleccion()", // auth.uid(), solo el propio perfil (Selección, ticket 06)
         "es_admin()", // bool del propio usuario
         "mi_club_favorito()", // Club del propio usuario
         "partido_tiene_alineaciones(uuid)", // es_admin()

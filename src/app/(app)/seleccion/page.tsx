@@ -75,7 +75,7 @@ export default async function Seleccion({ searchParams }: PageProps<"/seleccion"
           inicial={alineacion ? aJson(alineacion) : null}
           jugadores={jugadores}
           editable={votacion.estado === "abierta"}
-          conAlineacionGuardada={hincha.clubFavorito === null && <InvitacionElegirClub />}
+          conAlineacionGuardada={hincha.clubFavorito === null && <InvitacionElegirClub key="invitacion" />}
         />
       )}
     </main>
