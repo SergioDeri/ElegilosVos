@@ -189,17 +189,20 @@ Todas están documentadas en [`.env.example`](../.env.example). Los `.env` reale
 
 ## Autenticación y Club Favorito (ticket 04)
 
-**Rutas.** Públicas para invitados: `/login`, `/registro`, `/verificar` (con sesión mandan a `/`). Libres con o sin sesión: `/recuperar`, `/auth/*` (`/auth/callback` de Google, `/auth/salir` para cerrar sesión con POST) y `/api/*` (cada Route Handler se autentica solo). Todo lo demás exige sesión. Las páginas de la app van dentro de `src/app/(app)/`, cuyo layout exige sesión **y** Club Favorito (si no lo eligió, a `/elegir-club`, que avisa que no se puede cambiar). `src/app/(app)/page.tsx` es un placeholder: lo reemplaza el ticket 09.
+**Rutas.** Públicas para invitados: `/login`, `/registro`, `/verificar` (con sesión mandan a `/`). Libres con o sin sesión: `/recuperar`, `/auth/*` (`/auth/callback` de Google, `/auth/salir` para cerrar sesión con POST) y `/api/*` (cada Route Handler se autentica solo). Todo lo demás exige sesión. Las páginas de la app van dentro de `src/app/(app)/`, cuyo layout exige sesión **y** que el Hincha haya elegido su hinchada: un Club Favorito o "Quiero votar solo por la Selección" (Selección, ticket 06). Si no eligió nada, a `/elegir-club`, que avisa que el Club no se puede cambiar y ofrece "solo Selección". Las pantallas de un Club (`/`, `/mi-alineacion`, `/parcial`, `/resultados`, `/mis-formaciones`) además llaman a `requerirHincha()`, que manda al Hincha sin Club a `/seleccion`.
+
+**Hincha sin Club** (Selección, ticket 06). `perfil.eligio_solo_seleccion` distingue "todavía no eligió" (false, va a `/elegir-club`) de "eligió solo Selección" (true con `club_favorito_id` nulo, va a `/seleccion`). `inicioDelHincha({ clubFavorito, eligioSoloSeleccion })` de `src/lib/auth/rutas.ts` (con tests) da el inicio de cada uno: `/`, `/seleccion` o `/elegir-club`. El Hincha sin Club solo ve la Selección y Mi cuenta: la barra no tiene selector "mi club / Selección" ni "Mis formaciones", y la marca lleva a la Selección. Puede elegir Club más tarde desde Mi cuenta o desde la invitación que aparece en `/seleccion` cuando ya tiene una Alineación guardada (las dos llevan a `/elegir-club`, que entonces solo ofrece los Clubes); `elegir_club_favorito` lo fija una sola vez, como a cualquiera. La marca queda en true: quien manda es el Club Favorito.
 
 **En el servidor**, usá `src/lib/auth/sesion.ts`:
 
 ```ts
-const hincha = await requerirHincha();  // { id, email, clubFavorito: "penarol" | "nacional", rol }
-const h = await requerirSesion();       // igual, pero clubFavorito puede ser null
-const o = await obtenerHincha();        // o null si no hay sesión (no redirige)
+const hincha = await requerirHincha();    // { id, email, clubFavorito: "penarol" | "nacional", eligioSoloSeleccion, rol }
+const t = await requerirHinchada();       // eligió Club o "solo Selección": clubFavorito puede ser null
+const h = await requerirSesion();         // solo sesión: puede no haber elegido nada
+const o = await obtenerHincha();          // o null si no hay sesión (no redirige)
 ```
 
-Los layouts no protegen las Server Actions: cada acción tiene que llamar a `requerirHincha()` (y RLS hace el resto).
+`requerirHincha()` es para lo que es de un Club (sin Club redirige a `inicioDelHincha`); `requerirHinchada()` para lo que sirve a cualquier Hincha (la Selección, `guardarAlineacion`, Mi cuenta y sus acciones, el layout). Los layouts no protegen las Server Actions: cada acción tiene que llamar a una de las dos (y RLS hace el resto).
 
 **Proxy** (`src/proxy.ts` + `src/lib/supabase/proxy.ts`): refresca la sesión de Supabase en cada pedido (todo menos `_next/static`, `_next/image` y archivos con extensión) y hace la redirección optimista con `decidirAcceso()` de `src/lib/auth/rutas.ts`. Para sumar rutas públicas, editá las listas de ese archivo (tiene tests).
 
@@ -210,7 +213,8 @@ Los layouts no protegen las Server Actions: cada acción tiene que llamar a `req
 - Política `"perfil: el Hincha lee el suyo"` (SELECT, `id = auth.uid()`).
 - Sin INSERT/UPDATE/DELETE en `perfil` para `anon`/`authenticated` (revocados).
 - `elegir_club_favorito(club text) returns text`: fija el Club Favorito del usuario de la sesión solo si era nulo. Errores: `42501` sin sesión, `22023` club inválido, `EV001` ya tenía Club.
-- Trigger `perfil_proteger_cambios`: en pedidos de la API (anon/authenticated) impide cambiar `rol`, `id`, `creado_en` y un Club Favorito ya elegido, salvo `es_admin()` (Admin con 2FA). La service role y las conexiones directas no se restringen. Si el ticket 07 quiere que el Admin edite perfiles por la API: `grant update (club_favorito_id, rol) on public.perfil to authenticated` + política de UPDATE con `es_admin()`.
+- `elegir_solo_seleccion() returns void` (`*_seleccion06_solo_seleccion.sql`): marca `perfil.eligio_solo_seleccion` solo si no tiene Club (repetirla no cambia nada). Errores: `42501` sin sesión, `EV001` ya tenía Club.
+- Trigger `perfil_proteger_cambios`: en pedidos de la API (anon/authenticated) impide cambiar `rol`, `id`, `creado_en`, un Club Favorito ya elegido y desmarcar `eligio_solo_seleccion`, salvo `es_admin()` (Admin con 2FA). La service role y las conexiones directas no se restringen. Si el ticket 07 quiere que el Admin edite perfiles por la API: `grant update (club_favorito_id, rol) on public.perfil to authenticated` + política de UPDATE con `es_admin()`.
 
 **Cambios en `supabase/config.toml`** (todos marcados con `# Ticket 04`):
 
@@ -641,7 +645,17 @@ Para pausarlos: `select public.desprogramar_crons();`. Si cambia el dominio o el
 ## Selección: notificaciones, preferencias, apertura y cierre (Selección, ticket 13)
 
 - **Preferencias** (`*_seleccion13_preferencias_de_notificacion.sql`): tabla `preferencia_notificacion` (`hincha_id` PK → `perfil` cascade, default `auth.uid()`; `mi_club` y `seleccion`, booleanos `default true`; `actualizado_en`). **Sin fila, los dos interruptores están prendidos**: `preferenciasDesdeFila(fila | null)` de `@/domain/notificaciones`. RLS: el Hincha lee, crea y cambia (solo `mi_club` y `seleccion`) **la suya**; no la borra; anon nada. El proceso la lee con la service role.
-- **Pantalla** (sección "Notificaciones" de `/cuenta`): `SeccionNotificaciones` recibe `club` (`ClubId | null`) y muestra los interruptores de `interruptoresVisibles(club)`: con Club, "Avisos de mi club" y "Avisos de la Selección"; sin Club, solo el de la Selección (`_notificaciones/interruptores.tsx`). Valen para todos los dispositivos del Hincha. Server Action `cambiarPreferencia(interruptor, prendido)` (upsert de una sola columna). Las Server Actions de notificaciones usan `requerirSesion()`: un Hincha sin Club también puede activar las notificaciones.
+- **Pantalla** (sección "Notificaciones" de `/cuenta`): `SeccionNotificaciones` recibe `club` (`ClubId | null`) y muestra los interruptores de `interruptoresVisibles(club)`: con Club, "Avisos de mi club" y "Avisos de la Selección"; sin Club, solo el de la Selección (`_notificaciones/interruptores.tsx`). Valen para todos los dispositivos del Hincha. Server Action `cambiarPreferencia(interruptor, prendido)` (upsert de una sola columna). Las Server Actions de notificaciones usan `requerirHinchada()` (ticket 06): un Hincha "solo Selección" también puede activar las notificaciones.
 - **Qué se avisa**: `avisosPendientes` recibe además `seleccion?: { partidos, partidosConResultado? }` y cada `HinchaConSuscripcion` trae `club: ClubId | null` y `preferencias?` (sin ellas, las de por defecto). Los avisos de un Club (los cuatro tipos) van a los Hinchas de ese Club con "mi club" prendido; los de la Selección, a **todos** los Hinchas con "Selección" prendido, con Club o sin Club. De la Selección solo se avisan `votacion_abierta` y `cierra_pronto`, **uno por Partido** de `votacionesAbiertasDeLaSeleccion` (fecha doble: dos avisos, con referencia y etiqueta `votacion:<partido>` distintas). Título "Abrió la Votación de la Selección" / "Cierra pronto la Votación de la Selección", cuerpo con el **Rival** y `url` `/seleccion?partido=<id>`. Todavía no hay 11 Elegido, Jugador no disponible, Convocatoria ni Gran Ausente de la Selección (ticket 14).
 - **Proceso**: `cargarSuscripciones` ya no descarta a los Hinchas sin Club y trae `perfil(club_favorito_id, preferencia_notificacion(mi_club, seleccion))`. Si algún Hincha tiene "Selección" prendido, `cargarSeleccion` lee los Partidos de la Selección y, de sus Votaciones abiertas, las que tienen `resultado_votacion`. Los Clubes solo se cargan para Hinchas con "mi club" prendido.
 - **Tests**: `src/domain/notificaciones/seleccion.test.ts` (interruptores, fecha doble con Rival, cierra pronto, resultado congelado, destinatarios según preferencias, Hincha sin Club); `tests/rls/seleccion-13-notificaciones.test.ts` (RLS de `preferencia_notificacion`, cascada, y el proceso en un escenario en 2003 con fecha doble); `tests/e2e/13-notificaciones.spec.ts` (interruptores prendidos por defecto y el cambio queda guardado).
+
+## Selección: registro "solo Selección" y aviso (Selección, ticket 06)
+
+- **Registro**: `/elegir-club` ofrece "Quiero votar solo por la Selección" (`elegirSoloSeleccion`, acción de `src/app/elegir-club/acciones.ts`, llama a `elegir_solo_seleccion` y va a `/seleccion`) y explica que el Club se puede elegir después. Con la marca puesta, la misma pantalla solo muestra los Clubes y un link para seguir en la Selección. Reglas de acceso y base: ver "Autenticación y Club Favorito".
+- **Invitación a elegir Club** (`(app)/_seleccion/invitacion-elegir-club.tsx`): `/seleccion` se la pasa al editor en `conAlineacionGuardada` solo al Hincha sin Club; `EditorAlineacion` la muestra cuando hay una Alineación guardada (la de la base o una guardada en esta visita: `guardoAlgunaVez` de `useGuardadoAutomatico`). "Ahora no" la descarta en el dispositivo.
+- **Aviso de la Selección** (`(app)/_seleccion/aviso-seleccion.tsx`): el layout lo muestra a los Hinchas con Club, una vez por dispositivo (se marca como visto apenas aparece, no se guarda en la base), con un link a `/seleccion`.
+- **Marcas del dispositivo**: `crearMarcaDelDispositivo(clave)` (`src/app/_dispositivo/marca-del-dispositivo.ts`) envuelve localStorage con `useSyncExternalStore`; en el servidor cuenta como marcada, así no aparece nada que después desaparezca. Claves: `elegilosvos:aviso-seleccion-visto`, `elegilosvos:invitacion-elegir-club-descartada`.
+- **Parcial de la Selección**: `/seleccion/parcial` y `obtenerParcialDeLaSeleccion` usan `requerirHinchada()` (lo ve también el Hincha sin Club).
+- **Notificaciones**: las acciones de `cuenta/_notificaciones` usan `requerirHinchada()`; qué recibe el Hincha sin Club lo decide el ticket 13.
+- **Tests**: `src/lib/auth/rutas.test.ts` (`inicioDelHincha`), `tests/rls/seleccion-06-registro.test.ts`, `tests/e2e/06-registro-solo-seleccion.spec.ts`.

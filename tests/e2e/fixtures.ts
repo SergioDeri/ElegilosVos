@@ -32,8 +32,8 @@ export const test = base.extend<{ crearHincha: (opciones: OpcionesHincha) => Pro
 
 /**
  * Inicia sesión con email y contraseña desde el formulario de /login, como lo
- * haría el Hincha, y espera a salir del login (a `/`, o a `/elegir-club` si
- * no tiene Club Favorito).
+ * haría el Hincha, y espera a salir del login (a `/`, a `/elegir-club` si
+ * no eligió nada, o a `/seleccion` si eligió "solo Selección").
  */
 export async function iniciarSesion(page: Page, hincha: Pick<HinchaDePrueba, "email" | "contrasena">) {
   await page.goto("/login");

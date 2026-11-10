@@ -4,14 +4,14 @@
 
 **Blocked by:** 05
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] El selector de Club del registro ofrece "Quiero votar solo por la Selección" y explica que el Club se puede elegir después
-- [ ] Un Hincha sin Club entra directo a la Selección y no ve pantallas de Clubes
-- [ ] Invitación a elegir Club después de la primera Alineación de la Selección guardada, descartable
-- [ ] Elegir Club desde la cuenta funciona una sola vez y queda fijo
-- [ ] Aviso único de la Selección para Hinchas con Club
-- [ ] Tests de RLS: un Hincha sin Club guarda Alineaciones de la Selección y no de un Club; "solo Selección" y después un Club funciona una sola vez
-- [ ] E2E: registro con "solo Selección" → arma y guarda → aparece la invitación a elegir Club
-- [ ] E2E: Hincha con Club ve el aviso una sola vez y cambia con el selector
-- [ ] Antes de terminar: `npm run typecheck && npm run lint && npm test && npm run test:rls` && npm run test:e2e
+- [x] El selector de Club del registro ofrece "Quiero votar solo por la Selección" y explica que el Club se puede elegir después
+- [x] Un Hincha sin Club entra directo a la Selección y no ve pantallas de Clubes
+- [x] Invitación a elegir Club después de la primera Alineación de la Selección guardada, descartable
+- [x] Elegir Club desde la cuenta funciona una sola vez y queda fijo
+- [x] Aviso único de la Selección para Hinchas con Club
+- [x] Tests de RLS: un Hincha sin Club guarda Alineaciones de la Selección y no de un Club; "solo Selección" y después un Club funciona una sola vez
+- [x] E2E: registro con "solo Selección" → arma y guarda → aparece la invitación a elegir Club
+- [x] E2E: Hincha con Club ve el aviso una sola vez y cambia con el selector
+- [x] Antes de terminar: `npm run typecheck && npm run lint && npm test && npm run test:rls` && npm run test:e2e

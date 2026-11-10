@@ -10,10 +10,15 @@ export type { EstadoGuardado };
 
 export function useGuardadoAutomatico(partidoId: string) {
   const [estado, setEstado] = useState<EstadoGuardado>({ tipo: "guardado" });
+  // Si en esta visita se guardó al menos una vez (el estado inicial "guardado" no cuenta).
+  const [guardoAlgunaVez, setGuardoAlgunaVez] = useState(false);
   const [guardador] = useState(() =>
     crearGuardador<Alineacion>({
       guardar: (alineacion) => guardarAlineacion(partidoId, aJson(alineacion)),
-      alCambiarEstado: setEstado,
+      alCambiarEstado: (nuevo) => {
+        setEstado(nuevo);
+        if (nuevo.tipo === "guardado") setGuardoAlgunaVez(true);
+      },
     }),
   );
 
@@ -28,5 +33,5 @@ export function useGuardadoAutomatico(partidoId: string) {
     return () => window.removeEventListener("beforeunload", avisar);
   }, [sinGuardar]);
 
-  return { estado, programar: guardador.programar, reintentar: guardador.reintentar };
+  return { estado, guardoAlgunaVez, programar: guardador.programar, reintentar: guardador.reintentar };
 }

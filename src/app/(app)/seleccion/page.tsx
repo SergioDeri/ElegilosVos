@@ -4,11 +4,15 @@
 // fecha doble hay dos abiertas a la vez: el Hincha elige el Partido
 // (`?partido=<id>`) y arma cada Alineación por separado. Sin Votación
 // abierta, la cancha queda en solo lectura con el motivo.
+//
+// Es la pantalla de cualquier Hincha, también del que no tiene Club Favorito
+// (eligió "solo Selección", ticket 06): a ese, después de guardar su
+// Alineación, se le invita a elegir Club.
 import Link from "next/link";
 import { aJson } from "@/domain/editor";
 import { formatearHoraUy } from "@/domain/comun/horario";
 import { SELECCION } from "@/domain/comun/tipos";
-import { requerirHincha } from "@/lib/auth/sesion";
+import { requerirHinchada } from "@/lib/auth/sesion";
 import { RUTA_SELECCION } from "@/lib/auth/rutas";
 import { asegurarHerencia } from "@/lib/herencia/asegurar";
 import { cargarAlineacion } from "../_alineacion/datos";
@@ -17,9 +21,10 @@ import { AvisoNoDisponibles } from "../_herencia/aviso-no-disponibles";
 import { EnlaceParcial } from "../parcial/enlace-parcial";
 import { cargarPantallaDeLaSeleccion } from "../_partido/pantalla";
 import { TarjetaPartido } from "../_partido/tarjeta-partido";
+import { InvitacionElegirClub } from "../_seleccion/invitacion-elegir-club";
 
 export default async function Seleccion({ searchParams }: PageProps<"/seleccion">) {
-  const hincha = await requerirHincha();
+  const hincha = await requerirHinchada();
   const { partido: elegido } = await searchParams;
   const pantalla = await cargarPantallaDeLaSeleccion(typeof elegido === "string" ? elegido : undefined);
   const { votacion, partido, jugadores, opciones } = pantalla;
@@ -73,6 +78,7 @@ export default async function Seleccion({ searchParams }: PageProps<"/seleccion"
           inicial={alineacion ? aJson(alineacion) : null}
           jugadores={jugadores}
           editable={votacion.estado === "abierta"}
+          conAlineacionGuardada={hincha.clubFavorito === null && <InvitacionElegirClub key="invitacion" />}
         />
       )}
     </main>

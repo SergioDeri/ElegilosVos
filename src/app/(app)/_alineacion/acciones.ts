@@ -2,7 +2,7 @@
 
 import { filaDesdeAlineacion, validarAlineacion } from "@/domain/armado";
 import { desdeJson, type MotivoRechazo } from "@/domain/editor";
-import { requerirHincha } from "@/lib/auth/sesion";
+import { requerirHinchada } from "@/lib/auth/sesion";
 import { crearClienteServidor } from "@/lib/supabase/server";
 import { leerPlantel } from "@/lib/club/lecturas";
 import { cargarAlineacion } from "./datos";
@@ -26,7 +26,8 @@ export type ResultadoGuardado =
  * abierta. Las horas de modificación las sella la base.
  */
 export async function guardarAlineacion(partidoId: unknown, alineacion: unknown): Promise<ResultadoGuardado> {
-  const hincha = await requerirHincha();
+  // Cualquier Hincha que eligió su hinchada: el que no tiene Club solo puede la Selección (abajo y en RLS).
+  const hincha = await requerirHinchada();
   if (!esUuid(partidoId)) return { ok: false, error: "votacion_cerrada" };
 
   const leida = desdeJson(alineacion);

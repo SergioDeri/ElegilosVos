@@ -8,14 +8,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { formatearHoraUy } from "@/domain/comun/horario";
 import { SELECCION } from "@/domain/comun/tipos";
-import { requerirHincha } from "@/lib/auth/sesion";
+import { requerirHinchada } from "@/lib/auth/sesion";
 import { RUTA_SELECCION } from "@/lib/auth/rutas";
 import { obtenerParcialDeLaSeleccion, SEGUNDOS_DE_CACHE_DEL_PARCIAL } from "@/lib/parcial";
 import { VistaDestacado, VistaParcial } from "../../../_parcial/vista-parcial";
 import { cargarPantallaDeLaSeleccion } from "../../_partido/pantalla";
 
 export default async function PaginaParcialDeLaSeleccion({ searchParams }: PageProps<"/seleccion/parcial">) {
-  await requerirHincha();
+  await requerirHinchada();
   const { partido: elegido } = await searchParams;
   const pantalla = await cargarPantallaDeLaSeleccion();
   const abiertas = pantalla.opciones.filter((o) => o.votacion.estado === "abierta");
