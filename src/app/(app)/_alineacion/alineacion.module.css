@@ -1,6 +1,6 @@
 /* Pantalla de armado. Colores de la paleta (--color-*, acentos del tema) y
    medidas en píxeles de arte (--u), como pide pixel.css. La tarjeta del
-   Partido está en ../inicio.module.css. La cancha, los Puestos y el banco los
+   Partido está en ../_partido/partido.module.css. La cancha, los Puestos y el banco los
    ubica @/app/_cancha/cancha-pixel; acá va su aspecto. */
 
 /* El armado ocupa el alto visible: barra, renglón de avisos y la cancha con

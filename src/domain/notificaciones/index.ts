@@ -221,7 +221,7 @@ function avisosDeNoDisponibles(
         mensaje: {
           titulo: `${nombre} ${TEXTO_MOTIVO[motivo]}`,
           cuerpo: "Está en tu Alineación: cambialo antes de que cierre la Votación.",
-          url: "/",
+          url: "/mi-alineacion",
           etiqueta: `no_disponible:${jugadorId}`,
         },
       });
@@ -259,7 +259,7 @@ function mensajeVotacionAbierta(partido: PartidoParaAvisos): AvisoSinHincha {
     mensaje: {
       titulo: "Abrió la Votación",
       cuerpo: `Ya podés armar tu 11 para el partido contra ${partido.rival}.`,
-      url: "/",
+      url: "/mi-alineacion",
       etiqueta: `votacion:${partido.id}`,
     },
   };
@@ -272,7 +272,7 @@ function mensajeCierraPronto(partido: PartidoParaAvisos): AvisoSinHincha {
     mensaje: {
       titulo: "Cierra pronto la Votación",
       cuerpo: `Faltan menos de 3 horas para elegir tu 11 contra ${partido.rival}.`,
-      url: "/",
+      url: "/mi-alineacion",
       etiqueta: `votacion:${partido.id}`,
     },
   };

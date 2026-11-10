@@ -70,7 +70,7 @@ describe("abrió la Votación", () => {
   it("avisa a los Hinchas del Club cuya Votación está abierta, y a nadie más", () => {
     const avisos = avisosPendientes(entrada(en(3 * HORA)));
     expect(claves(avisos)).toEqual(["h1 votacion_abierta b", "h2 votacion_abierta b"]);
-    expect(avisos[0]!.mensaje).toMatchObject({ url: "/" });
+    expect(avisos[0]!.mensaje).toMatchObject({ url: "/mi-alineacion" });
     expect(avisos[0]!.mensaje.cuerpo).toContain("Rival de b");
   });
 
@@ -113,7 +113,7 @@ describe("cierra pronto", () => {
     const avisos = avisosPendientes(entrada(en(cierreB - 3 * HORA), { yaEnviadas: enviadas }));
     // h2 nunca recibió "abrió": como ya cierra pronto, recibe solo este aviso.
     expect(claves(avisos)).toEqual(["h1 cierra_pronto b", "h2 cierra_pronto b"]);
-    expect(avisos[0]!.mensaje.url).toBe("/");
+    expect(avisos[0]!.mensaje.url).toBe("/mi-alineacion");
   });
 
   it("después del cierre ya no avisa", () => {
@@ -183,7 +183,7 @@ describe("jugador tuyo no disponible", () => {
     const avisos = avisosPendientes(conEventos([evento("e1", "x", en(5 * HORA))]));
     expect(claves(avisos)).toEqual(["h1 jugador_no_disponible e1"]);
     expect(avisos[0]!.mensaje.titulo).toBe("Jugador x está lesionado");
-    expect(avisos[0]!.mensaje.url).toBe("/");
+    expect(avisos[0]!.mensaje.url).toBe("/mi-alineacion");
   });
 
   it("no avisa si el Jugador volvió a estar Disponible", () => {

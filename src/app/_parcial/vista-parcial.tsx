@@ -4,7 +4,13 @@
 // una tabla). Server Component: solo recibe datos agregados.
 import type { ResultadoConteo } from "@/domain/conteo";
 import { esquema } from "@/domain/esquemas";
-import { formatearPorcentaje, vistaDelParcial, type JugadorEnVista, type JugadorParaMostrar } from "@/domain/parcial";
+import {
+  formatearPorcentaje,
+  vistaDelParcial,
+  type JugadorEnVista,
+  type JugadorParaMostrar,
+  type VistaParcial as VistaDeDatos,
+} from "@/domain/parcial";
 import type { ClubId } from "@/domain/comun/tipos";
 import { CanchaDeLectura } from "@/app/_cancha/cancha-de-lectura";
 
@@ -19,6 +25,8 @@ export function VistaParcial(props: {
   textoVacio: string;
   /** Club de las Camisetas. Sin Club (backoffice), el 11 va en una tabla, sin sprites. */
   club?: ClubId;
+  /** Solo el resumen y el 11 (el inicio): sin las tablas de Esquemas y candidatos. */
+  soloElOnce?: boolean;
 }) {
   const vista = vistaDelParcial(props.resultado, props.jugadores);
   if (vista.vacio) return <p role="status">{props.textoVacio}</p>;
@@ -71,6 +79,14 @@ export function VistaParcial(props: {
         </table>
       )}
 
+      {!props.soloElOnce && <DetalleDelParcial vista={vista} />}
+    </div>
+  );
+}
+
+function DetalleDelParcial({ vista }: { vista: Extract<VistaDeDatos, { vacio: false }> }) {
+  return (
+    <>
       <h3>Esquemas</h3>
       <table>
         <thead>
@@ -110,6 +126,6 @@ export function VistaParcial(props: {
           )}
         </section>
       ))}
-    </div>
+    </>
   );
 }

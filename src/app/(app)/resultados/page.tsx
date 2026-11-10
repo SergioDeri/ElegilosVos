@@ -33,7 +33,7 @@ export default async function PaginaResultados() {
   return (
     <main>
       <p>
-        <Link href="/">Volver a mi Alineación</Link>
+        <Link href="/">Volver al inicio</Link>
       </p>
       <h1>11 Elegido de {club}</h1>
       {partido ? (

@@ -31,7 +31,7 @@ export default async function PaginaParcial() {
   return (
     <main>
       <p>
-        <Link href="/">Volver a mi Alineación</Link>
+        <Link href="/">Volver al inicio</Link>
       </p>
       <h1>Parcial de {club}</h1>
       {!partido || !parcial || parcial.tipo === "no_abierta" ? (
