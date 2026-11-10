@@ -26,3 +26,9 @@ coverage/
 
 # Worktrees de agentes
 .claude/worktrees/
+
+# Playwright (generados)
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
