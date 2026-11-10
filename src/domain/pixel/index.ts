@@ -408,6 +408,17 @@ const DIBUJOS_ICONOS = {
     "########",
     "........",
   ],
+  // Cabeza y hombros: el menú del usuario.
+  usuario: [
+    "...##...",
+    "..####..",
+    "..####..",
+    "...##...",
+    "........",
+    ".######.",
+    "########",
+    "........",
+  ],
 } satisfies Record<string, string[]>;
 
 export type NombreIcono = keyof typeof DIBUJOS_ICONOS;

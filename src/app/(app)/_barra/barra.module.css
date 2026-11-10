@@ -1,0 +1,80 @@
+/* Barra de la app: la marca a la izquierda y el menú del usuario a la derecha.
+   Colores de la paleta y medidas en píxeles de arte (--u), como pide pixel.css. */
+
+.menu {
+  position: relative;
+}
+
+/* Botón cuadrado, solo con el ícono (el nombre accesible va en aria-label). */
+.botonUsuario {
+  margin: var(--u) 0 calc(2 * var(--u));
+  padding: calc(2 * var(--u)) calc(3 * var(--u)) calc(3 * var(--u));
+}
+
+.botonUsuario svg {
+  margin-right: 0;
+}
+
+/* Panel desplegable, debajo del botón y alineado a su borde derecho. */
+.panel {
+  --borde: var(--color-contorno);
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 20;
+  min-width: calc(90 * var(--u));
+  margin-top: calc(2 * var(--u));
+  padding: calc(2 * var(--u)) calc(4 * var(--u));
+  background: var(--color-negroSombra);
+  color: var(--color-cal);
+  box-shadow: var(--marco);
+}
+
+.panel[hidden] {
+  display: none;
+}
+
+.panel ul {
+  margin: 0 0 calc(2 * var(--u));
+  padding: 0;
+  list-style: none;
+}
+
+.panel li {
+  margin: 0;
+  padding: var(--u) 0;
+}
+
+/* Más específicos que `.barra-app a` y `.barra-app button` de pixel.css. */
+.panel li a {
+  display: block;
+  color: var(--enlace);
+}
+
+/* Cerrar sesión con el acento del Club, no con el negro de los botones de la barra. */
+.panel form button {
+  --acento: inherit;
+  --acento-tinta: inherit;
+  --acento-sombra: inherit;
+  margin: var(--u) 0;
+}
+
+/* "ElegilosVos" como en el login (Press Start 2P, 8u), con contorno de 1
+   píxel de arte para que se lea sobre el acento del Club. */
+a.marca:any-link {
+  font-family: var(--fuente-titulos), monospace;
+  font-size: calc(8 * var(--u));
+  line-height: calc(8 * var(--u));
+  color: var(--color-cal);
+  white-space: nowrap;
+  text-decoration: none;
+  text-shadow:
+    calc(-1 * var(--u)) 0 0 var(--color-contorno),
+    var(--u) 0 0 var(--color-contorno),
+    0 calc(-1 * var(--u)) 0 var(--color-contorno),
+    0 calc(2 * var(--u)) 0 var(--color-contorno);
+}
+
+.vos {
+  color: var(--color-amarillo);
+}

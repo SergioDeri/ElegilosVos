@@ -5,7 +5,7 @@ const coloresDeLaPaleta = new Set<string>(Object.values(PALETA));
 
 describe("íconos", () => {
   it("están los de guardado, cierre de la Votación, compartir y menú", () => {
-    expect([...ICONOS].sort()).toEqual(["cierre", "compartir", "guardado", "menu"]);
+    expect([...ICONOS].sort()).toEqual(["cierre", "compartir", "guardado", "menu", "usuario"]);
   });
 
   it.each([...ICONOS])("%s mide 8x8 y usa solo colores de la paleta", (nombre) => {
