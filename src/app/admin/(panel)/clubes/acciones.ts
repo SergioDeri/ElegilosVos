@@ -1,19 +1,19 @@
 "use server";
 
-// Escudo de cada Club (diseño pixel art, ticket 07). Como toda acción del
+// Escudo de cada Club y de la Selección (diseño pixel art, ticket 07). Como toda acción del
 // backoffice, empieza con requerirAdminEnAccion(): Postgres verifica que sea
 // Admin con 2FA y la escritura va con el cliente de esa sesión (RLS).
 import { refresh } from "next/cache";
-import { esClubId, type ClubId } from "@/domain/comun/tipos";
+import { esClubOSeleccion, type ClubOSeleccion } from "@/domain/comun/tipos";
 import { requerirAdminEnAccion } from "@/lib/auth/admin";
 import { MENSAJE_ESCUDO, archivoElegido, leerEscudo, subirEscudo } from "@/lib/imagenes/subida";
 
 export type EstadoEscudoClub = { error?: string; mensaje?: string; ok?: boolean };
 
-/** Sube el escudo del Club (o lo reemplaza: el anterior se borra del bucket). */
-export async function cambiarEscudoDelClub(club: ClubId, _previo: EstadoEscudoClub, formData: FormData): Promise<EstadoEscudoClub> {
+/** Sube el escudo del Club o de la Selección (o lo reemplaza: el anterior se borra del bucket). */
+export async function cambiarEscudoDelClub(club: ClubOSeleccion, _previo: EstadoEscudoClub, formData: FormData): Promise<EstadoEscudoClub> {
   const supabase = await requerirAdminEnAccion();
-  if (!esClubId(club)) return { mensaje: "Club inválido." };
+  if (!esClubOSeleccion(club)) return { mensaje: "Club inválido." };
 
   const archivo = archivoElegido(formData, "escudo");
   if (!archivo) return { error: "Elegí un escudo." };
