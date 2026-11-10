@@ -4,10 +4,10 @@
 
 **Blocked by:** 05
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Herencia: copia desde una Votación abierta y herencia desde una cerrada, sin no disponibles, con tests de dominio
-- [ ] El cron de herencia procesa la Selección sin duplicar Alineaciones si corre dos veces
-- [ ] Cambiar la Alineación copiada no toca la del Partido anterior
-- [ ] Tests de RLS / integración siguiendo los de herencia existentes
-- [ ] Antes de terminar: `npm run typecheck && npm run lint && npm test && npm run test:rls` && npm run test:e2e
+- [x] Herencia: copia desde una Votación abierta y herencia desde una cerrada, sin no disponibles, con tests de dominio
+- [x] El cron de herencia procesa la Selección sin duplicar Alineaciones si corre dos veces
+- [x] Cambiar la Alineación copiada no toca la del Partido anterior
+- [x] Tests de RLS / integración siguiendo los de herencia existentes
+- [x] Antes de terminar: `npm run typecheck && npm run lint && npm test && npm run test:rls` && npm run test:e2e

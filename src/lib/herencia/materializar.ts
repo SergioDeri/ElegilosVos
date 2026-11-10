@@ -14,14 +14,26 @@
 // los Hinchas del Club que todavía no tienen la del Partido abierto
 // ("pendientes"), en tandas y paginando.
 //
+// La Selección (ticket 07 de la Selección) también se procesa: no tiene
+// Hinchas propios, así que los "pendientes" son todos los Hinchas con perfil,
+// y puede tener dos Votaciones abiertas (fecha doble, ADR-0005). Se procesan
+// en orden cronológico: la segunda copia lo que el Hincha tiene en la primera
+// en ese momento (incluida la que la primera acaba de heredar).
+//
 // Qué heredar lo decide la lógica pura de `@/domain/herencia`. La escritura es
 // `insert ... on conflict (hincha_id, partido_id) do nothing`: aunque dos
 // corridas se pisen, nunca se duplica ni se pisa una Alineación existente.
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { alineacionDesdeFila, COLUMNAS_ALINEACION, filaDesdeAlineacion } from "@/domain/armado";
-import { CLUBES, esClubId, type ClubId } from "@/domain/comun/tipos";
+import { CLUBES, esClubId, SELECCION, type ClubOSeleccion } from "@/domain/comun/tipos";
 import type { JugadorDelPlantel } from "@/domain/editor";
-import { alineacionesAHeredar, votacionAHeredar, type AlineacionAnterior, type Herencia } from "@/domain/herencia";
+import {
+  alineacionesAHeredar,
+  votacionesAHeredar,
+  type AlineacionAnterior,
+  type Herencia,
+  type VotacionAHeredar,
+} from "@/domain/herencia";
 import { leerPartidos, leerPlantel } from "@/lib/club/lecturas";
 import type { Database } from "@/lib/supabase/database.types";
 import { leerPorId } from "@/lib/supabase/paginar";
@@ -33,14 +45,15 @@ const LOTE_INSERT = 500;
 const LOTE_HINCHAS = 100;
 
 export interface OpcionesMaterializar {
-  /** Solo este Club (por defecto, todos). */
-  club?: ClubId;
+  /** Solo este Club o la Selección (por defecto, los Clubes y la Selección). */
+  club?: ClubOSeleccion;
   /** Solo este Hincha (al entrar a la pantalla de armado). */
   hinchaId?: string;
 }
 
+/** Una por Votación abierta (en la Selección pueden ser dos), o una con `partidoId: null` si no hay qué heredar. */
 export interface ResultadoClub {
-  club: ClubId;
+  club: ClubOSeleccion;
   /** Partido con la Votación abierta, o null si no hay nada que heredar. */
   partidoId: string | null;
   /** Partido inmediatamente anterior (no cancelado); se hereda también de los previos. */
@@ -50,36 +63,40 @@ export interface ResultadoClub {
 }
 
 /**
- * Para cada Club con Votación abierta en `ahora`, crea la Alineación heredada
- * para cada Hincha del Club que todavía no tiene la del Partido abierto, a
- * partir de su Alineación más reciente en los Partidos anteriores no
- * cancelados. Idempotente.
+ * Para cada Votación abierta en `ahora` (de los Clubes y de la Selección),
+ * crea la Alineación heredada para cada Hincha (del Club; en la Selección,
+ * cualquiera) que todavía no tiene la del Partido abierto, a partir de su
+ * Alineación más reciente en los Partidos anteriores no cancelados (o de la
+ * que tiene en el anterior, si su Votación sigue abierta). Idempotente.
  */
 export async function materializarHerencias(
   supabase: ClienteServicio,
   ahora: Date,
   opciones: OpcionesMaterializar = {},
 ): Promise<ResultadoClub[]> {
-  const clubes = opciones.club ? [opciones.club] : CLUBES;
+  const clubes: readonly ClubOSeleccion[] = opciones.club ? [opciones.club] : [...CLUBES, SELECCION];
   const resultados: ResultadoClub[] = [];
   for (const club of clubes) {
-    resultados.push(await materializarClub(supabase, club, ahora, opciones.hinchaId));
+    const votaciones = votacionesAHeredar(await leerPartidos(supabase, club), ahora, club);
+    if (votaciones.length === 0) resultados.push({ club, partidoId: null, anteriorId: null, creadas: 0 });
+    // En orden cronológico: en una fecha doble, la segunda copia de la primera ya materializada.
+    for (const votacion of votaciones) {
+      resultados.push(await materializarVotacion(supabase, club, votacion, opciones.hinchaId));
+    }
   }
   return resultados;
 }
 
-async function materializarClub(
+async function materializarVotacion(
   supabase: ClienteServicio,
-  club: ClubId,
-  ahora: Date,
+  club: ClubOSeleccion,
+  votacion: VotacionAHeredar,
   hinchaId: string | undefined,
 ): Promise<ResultadoClub> {
-  const votacion = votacionAHeredar(await leerPartidos(supabase, club), ahora);
-  if (!votacion) return { club, partidoId: null, anteriorId: null, creadas: 0 };
   const resultado = { club, partidoId: votacion.partidoId, anteriorId: votacion.anteriorId, creadas: 0 };
 
   const yaTienen = await cargarQuienesTienen(supabase, votacion.partidoId, hinchaId);
-  const pendientes = (hinchaId ? [hinchaId] : await cargarHinchasDelClub(supabase, club)).filter((h) => !yaTienen.has(h));
+  const pendientes = (hinchaId ? [hinchaId] : await cargarHinchas(supabase, club)).filter((h) => !yaTienen.has(h));
   if (pendientes.length === 0) return resultado;
 
   let plantel: JugadorDelPlantel[] | null = null;
@@ -90,6 +107,7 @@ async function materializarClub(
     const herencias = alineacionesAHeredar({
       club,
       partidosAnteriores: votacion.partidosAnteriores,
+      anteriorAbierta: votacion.anteriorAbierta,
       anteriores,
       yaTienen,
       plantel,
@@ -124,7 +142,7 @@ async function insertar(supabase: ClienteServicio, partidoId: string, herencias:
  */
 async function cargarAnteriores(
   supabase: ClienteServicio,
-  club: ClubId,
+  club: ClubOSeleccion,
   hinchas: readonly string[],
 ): Promise<AlineacionAnterior[]> {
   const filas = await leerPorId(() =>
@@ -142,9 +160,15 @@ async function cargarAnteriores(
   }));
 }
 
-/** Ids de los Hinchas cuyo Club Favorito de hoy es `club` (paginado por id). */
-async function cargarHinchasDelClub(supabase: ClienteServicio, club: ClubId): Promise<string[]> {
-  const filas = await leerPorId(() => supabase.from("perfil").select("id").eq("club_favorito_id", club));
+/**
+ * Ids de los Hinchas que pueden heredar (paginado por id): los que hoy tienen
+ * a `club` de Club Favorito, o todos en la Selección.
+ */
+async function cargarHinchas(supabase: ClienteServicio, club: ClubOSeleccion): Promise<string[]> {
+  const filas = await leerPorId(() => {
+    const consulta = supabase.from("perfil").select("id");
+    return club === SELECCION ? consulta : consulta.eq("club_favorito_id", club);
+  });
   return filas.map((f) => f.id);
 }
 

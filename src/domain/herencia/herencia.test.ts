@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { PartidoCalendario } from "@/domain/calendario";
-import type { PosicionNatural } from "@/domain/comun/tipos";
+import { SELECCION, type PosicionNatural } from "@/domain/comun/tipos";
 import type { Alineacion, JugadorDelPlantel } from "@/domain/editor";
-import { alineacionesAHeredar, jugadoresNoDisponibles, votacionAHeredar, type AlineacionAnterior } from "./index";
+import { alineacionesAHeredar, jugadoresNoDisponibles, votacionAHeredar, votacionesAHeredar, type AlineacionAnterior } from "./index";
 
 const HORA = 60 * 60 * 1000;
 const DIA = 24 * HORA;
@@ -22,7 +22,7 @@ describe("votacionAHeredar", () => {
 
   it("la Votación abierta hereda del Partido anterior del Club", () => {
     const partidos = [partido("b", en(7 * DIA)), partido("a", en(0))];
-    expect(votacionAHeredar(partidos, en(3 * HORA))).toEqual({ partidoId: "b", anteriorId: "a", partidosAnteriores: ["a"] });
+    expect(votacionAHeredar(partidos, en(3 * HORA))).toEqual({ partidoId: "b", anteriorId: "a", anteriorAbierta: false, partidosAnteriores: ["a"] });
   });
 
   it("saltea los Partidos cancelados: hereda del último no cancelado", () => {
@@ -31,7 +31,7 @@ describe("votacionAHeredar", () => {
       partido("x", en(3 * DIA), { estado: "cancelado" }),
       partido("b", en(7 * DIA)),
     ];
-    expect(votacionAHeredar(partidos, en(4 * DIA))).toEqual({ partidoId: "b", anteriorId: "a", partidosAnteriores: ["a"] });
+    expect(votacionAHeredar(partidos, en(4 * DIA))).toEqual({ partidoId: "b", anteriorId: "a", anteriorAbierta: false, partidosAnteriores: ["a"] });
   });
 
   it("lista todos los Partidos anteriores no cancelados, del más reciente al más antiguo (incluidos los que nunca abrieron)", () => {
@@ -47,6 +47,7 @@ describe("votacionAHeredar", () => {
     expect(votacionAHeredar(partidos, en(4 * DIA))).toEqual({
       partidoId: "c",
       anteriorId: "n",
+      anteriorAbierta: false,
       partidosAnteriores: ["n", "b", "a"],
     });
   });
@@ -54,6 +55,16 @@ describe("votacionAHeredar", () => {
   it("el primer Partido del Club no hereda de nadie", () => {
     const partidos = [partido("x", en(-DIA), { estado: "cancelado" }), partido("a", en(DIA))];
     expect(votacionAHeredar(partidos, en(0))).toBeNull();
+  });
+});
+
+describe("votacionesAHeredar en la Selección (ADR-0005)", () => {
+  it("en una fecha doble, la segunda hereda de la primera, que sigue abierta", () => {
+    const partidos = [partido("vieja", en(-60 * DIA)), partido("a", en(5 * DIA)), partido("b", en(10 * DIA))];
+    expect(votacionesAHeredar(partidos, en(0), SELECCION)).toEqual([
+      { partidoId: "a", anteriorId: "vieja", anteriorAbierta: false, partidosAnteriores: ["vieja"] },
+      { partidoId: "b", anteriorId: "a", anteriorAbierta: true, partidosAnteriores: ["a", "vieja"] },
+    ]);
   });
 });
 
@@ -190,6 +201,69 @@ describe("alineacionesAHeredar: la Alineación más reciente de cada Hincha", ()
       plantel,
     });
     expect(herencias).toEqual([{ hinchaId: "h1", alineacion: vieja }]);
+  });
+});
+
+describe("alineacionesAHeredar en la Selección", () => {
+  const vieja: Alineacion = { esquema: "4-3-3", esquemaElegidoAMano: false, puestos: { ARQ: { jugadorId: "arq", modificadoEn: t1 } } };
+
+  it("hereda cualquier Hincha, tenga el Club que tenga o ninguno (la Selección no tiene Hinchas propios)", () => {
+    const herencias = alineacionesAHeredar({
+      club: SELECCION,
+      partidosAnteriores,
+      anteriores: [anterior("h1", vieja, { clubFavorito: "nacional" }), anterior("h2", vieja, { clubFavorito: null }), anterior("h3", vieja)],
+      yaTienen: [],
+      plantel,
+    });
+    expect(herencias.map((h) => h.hinchaId)).toEqual(["h1", "h2", "h3"]);
+  });
+
+  it("con la Votación anterior abierta, copia la Alineación que el Hincha tiene ahí, sin no Disponibles ni bajas", () => {
+    const herencias = alineacionesAHeredar({
+      club: SELECCION,
+      partidosAnteriores,
+      anteriorAbierta: true,
+      anteriores: [anterior("h1", anteriorCompleta, { clubFavorito: null })],
+      yaTienen: [],
+      plantel,
+    });
+    expect(herencias).toEqual([
+      {
+        hinchaId: "h1",
+        alineacion: {
+          ...anteriorCompleta,
+          puestos: {
+            ARQ: { jugadorId: "arq", modificadoEn: t1 },
+            LI: { jugadorId: "def", modificadoEn: t2 },
+            MC_D: { jugadorId: "med", modificadoEn: t2 },
+          },
+        },
+      },
+    ]);
+  });
+
+  it("con la Votación anterior abierta, no busca en Partidos más viejos: copia solo la del anterior", () => {
+    const herencias = alineacionesAHeredar({
+      club: SELECCION,
+      partidosAnteriores,
+      anteriorAbierta: true,
+      anteriores: [anterior("soloVieja", vieja, { partidoId: "p0" }), anterior("conAnterior", vieja, { partidoId: "p1" })],
+      yaTienen: [],
+      plantel,
+    });
+    expect(herencias.map((h) => h.hinchaId)).toEqual(["conAnterior"]);
+  });
+
+  it("con la Votación anterior cerrada, hereda como en los Clubes: la más reciente, aunque sea de un Partido más viejo", () => {
+    const herencias = alineacionesAHeredar({
+      club: SELECCION,
+      partidosAnteriores,
+      anteriorAbierta: false,
+      anteriores: [anterior("soloVieja", vieja, { partidoId: "p0" })],
+      yaTienen: [],
+      plantel,
+    });
+    expect(herencias).toEqual([{ hinchaId: "soloVieja", alineacion: vieja }]);
   });
 });
 

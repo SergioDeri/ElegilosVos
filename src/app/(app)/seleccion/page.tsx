@@ -10,6 +10,7 @@ import { formatearHoraUy } from "@/domain/comun/horario";
 import { SELECCION } from "@/domain/comun/tipos";
 import { requerirHincha } from "@/lib/auth/sesion";
 import { RUTA_SELECCION } from "@/lib/auth/rutas";
+import { asegurarHerencia } from "@/lib/herencia/asegurar";
 import { cargarAlineacion } from "../_alineacion/datos";
 import { EditorAlineacion } from "../_alineacion/editor-alineacion";
 import { AvisoNoDisponibles } from "../_herencia/aviso-no-disponibles";
@@ -18,7 +19,7 @@ import { cargarPantallaDeLaSeleccion } from "../_partido/pantalla";
 import { TarjetaPartido } from "../_partido/tarjeta-partido";
 
 export default async function Seleccion({ searchParams }: PageProps<"/seleccion">) {
-  await requerirHincha();
+  const hincha = await requerirHincha();
   const { partido: elegido } = await searchParams;
   const pantalla = await cargarPantallaDeLaSeleccion(typeof elegido === "string" ? elegido : undefined);
   const { votacion, partido, jugadores, opciones } = pantalla;
@@ -34,6 +35,8 @@ export default async function Seleccion({ searchParams }: PageProps<"/seleccion"
     );
   }
 
+  // Herencia (ticket 07): al entrar, se materializa la de cada Votación abierta (no depender solo del cron).
+  if (votacion.estado === "abierta") await asegurarHerencia(hincha.id, SELECCION, pantalla.ahora);
   const alineacion = await cargarAlineacion(pantalla.supabase, partido.id);
 
   return (
