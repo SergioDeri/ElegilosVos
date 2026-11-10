@@ -25,8 +25,38 @@
   height: 100%;
 }
 
-.grilla {
+/* Parte visible de la grilla. Con scroll, sin barra (las flechas la
+   reemplazan y no rompen la grilla de píxeles de arte) y con imán en cada
+   suplente, para que nunca quede uno cortado. */
+.ventana {
   position: absolute;
+  overflow: hidden;
+}
+
+.ventana[data-desplazamiento] {
+  scrollbar-width: none;
+  overscroll-behavior: contain;
+}
+
+.ventana[data-desplazamiento]::-webkit-scrollbar {
+  display: none;
+}
+
+.ventana[data-desplazamiento="horizontal"] {
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+}
+
+.ventana[data-desplazamiento="vertical"] {
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+}
+
+.ventana[data-desplazamiento] .grilla > li {
+  scroll-snap-align: start;
+}
+
+.grilla {
   display: grid;
   margin: 0;
   padding: 0;
@@ -35,4 +65,38 @@
 
 .grilla > li {
   display: flex;
+}
+
+/* Flechas de scroll: el ícono solo, sin el fondo ni la sombra de los botones
+   de pixel.css. Se apagan en el tope. */
+.flecha,
+.flecha:hover,
+.flecha:active,
+.flecha:disabled {
+  position: absolute;
+  display: block;
+  margin: 0;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--color-cal);
+  touch-action: manipulation;
+}
+
+.flecha rect {
+  fill: currentColor;
+}
+
+.flecha:active:not(:disabled) {
+  transform: translateY(var(--u));
+}
+
+.flecha:disabled {
+  color: var(--color-grisOscuro);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .flecha:hover:not(:disabled) {
+    color: var(--enlace);
+  }
 }

@@ -296,9 +296,9 @@ export function EditorAlineacion({ partidoId, club, inicial, jugadores, editable
               />
             );
           }}
-          banco={(b, orientacion) => (
+          banco={(b) => (
             <Banco editable={puedeEditar} cantidad={libres.length}>
-              <BancoPixel banco={b} orientacion={orientacion}>
+              <BancoPixel banco={b}>
                 {libres.map((j) => (
                   <li key={j.id}>
                     <JugadorDelBanco

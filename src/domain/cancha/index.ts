@@ -4,7 +4,7 @@
 // todo en píxeles de arte enteros y sin que ninguna Camiseta ni apellido se
 // pise con otro.
 import { esquema as esquemaDe, type EsquemaId, type PuestoId } from "@/domain/esquemas";
-import { PALETA, anchoTexto, camiseta, textoBitmap, type Matriz } from "@/domain/pixel";
+import { LADO_ICONO, PALETA, anchoTexto, camiseta, textoBitmap, type Matriz } from "@/domain/pixel";
 import { nombreCorto } from "@/domain/planteles";
 
 export type Orientacion = "vertical" | "horizontal";
@@ -24,15 +24,28 @@ export interface PuestoEnCancha extends Rect {
   etiqueta: string;
 }
 
-/** Banco de suplentes, relativo al área; la grilla es relativa al banco. */
+/**
+ * Banco de suplentes, relativo al área. En vertical va debajo de la cancha,
+ * con hasta FILAS_BANCO filas; en horizontal, a la derecha, con hasta
+ * COLUMNAS_BANCO columnas. Si los suplentes no entran, la grilla se scrollea
+ * dentro de la ventana (de costado en vertical, hacia abajo en horizontal) y
+ * a los lados de la ventana van dos flechas.
+ */
 export interface Banco extends Rect {
+  /** Tamaño de la grilla entera (puede ser más grande que la ventana). */
   columnas: number;
   filas: number;
   anchoItem: number;
   altoItem: number;
   separacion: number;
-  /** Arriba de la grilla va el título "SUPLENTES". */
-  grilla: { x: number; y: number };
+  /** Orden en que se llena la grilla: por filas o por columnas. */
+  flujo: "row" | "column";
+  /** Parte visible de la grilla, relativa al banco. Arriba va el título "SUPLENTES". */
+  ventana: Rect;
+  /** Hacia dónde se scrollea la ventana; null si entran todos. */
+  desplazamiento: "horizontal" | "vertical" | null;
+  /** Flechas de scroll (antes y después de la ventana), relativas al banco; null sin scroll. */
+  flechas: { antes: Rect; despues: Rect } | null;
 }
 
 export interface Disposicion {
@@ -63,6 +76,11 @@ const SEPARACION_BANCO = 3;
 const SEPARACION_CANCHA_BANCO = 4;
 export const TITULO_BANCO = "SUPLENTES";
 const ALTO_TITULO_BANCO = 6;
+/** Filas del banco debajo de la cancha (vertical) y columnas del banco al costado (horizontal). */
+export const FILAS_BANCO = 3;
+export const COLUMNAS_BANCO = 3;
+/** Las flechas de scroll del banco son íconos de 8x8. */
+const LADO_FLECHA = LADO_ICONO;
 /** Anchos posibles de cada suplente, del más cómodo al más apretado. */
 const ANCHOS_ITEM_BANCO = [40, 38, 36, 34, 32, 30, 28, 26, 24];
 
@@ -117,25 +135,79 @@ function repartir(
   anchoItem: number,
 ): { cancha: Rect; banco: Banco | null } {
   if (suplentes === 0) return { cancha: { x: 0, y: 0, ancho, alto }, banco: null };
-  const grilla = { x: 0, y: ALTO_TITULO_BANCO + SEPARACION_BANCO };
   const s = SEPARACION_BANCO;
+  const y = ALTO_TITULO_BANCO + s;
+  const largo = (n: number, item: number) => n * item + (n - 1) * s;
+  const caben = (espacio: number, item: number) => Math.max(1, Math.floor((espacio + s) / (item + s)));
+  const comun = { anchoItem, altoItem: ALTO_CAJA, separacion: s };
+
   if (orientacion === "vertical") {
-    const columnas = Math.max(1, Math.floor((ancho + s) / (anchoItem + s)));
-    const filas = Math.ceil(suplentes / columnas);
-    const altoBanco = grilla.y + filas * ALTO_CAJA + (filas - 1) * s;
+    const entran = caben(ancho, anchoItem);
+    let banco: Omit<Banco, "x" | "y" | "ancho" | "alto">;
+    if (suplentes <= entran * FILAS_BANCO) {
+      const filas = Math.ceil(suplentes / entran);
+      const ventana = { x: 0, y, ancho: largo(entran, anchoItem), alto: largo(filas, ALTO_CAJA) };
+      banco = { ...comun, columnas: entran, filas, flujo: "row", ventana, desplazamiento: null, flechas: null };
+    } else {
+      // Flecha, aire, ventana, aire, flecha: la ventana muestra columnas enteras.
+      const visibles = caben(ancho - 2 * (LADO_FLECHA + s), anchoItem);
+      const ventana = { x: LADO_FLECHA + s, y, ancho: largo(visibles, anchoItem), alto: largo(FILAS_BANCO, ALTO_CAJA) };
+      const yFlecha = y + Math.floor((ventana.alto - LADO_FLECHA) / 2);
+      banco = {
+        ...comun,
+        columnas: Math.ceil(suplentes / FILAS_BANCO),
+        filas: FILAS_BANCO,
+        flujo: "column",
+        ventana,
+        desplazamiento: "horizontal",
+        flechas: {
+          antes: { x: 0, y: yFlecha, ancho: LADO_FLECHA, alto: LADO_FLECHA },
+          despues: { x: ventana.x + ventana.ancho + s, y: yFlecha, ancho: LADO_FLECHA, alto: LADO_FLECHA },
+        },
+      };
+    }
+    const altoBanco = banco.ventana.y + banco.ventana.alto;
     const altoCancha = Math.max(0, alto - altoBanco - SEPARACION_CANCHA_BANCO);
     return {
       cancha: { x: 0, y: 0, ancho, alto: altoCancha },
-      banco: { x: 0, y: alto - altoBanco, ancho, alto: altoBanco, columnas, filas, anchoItem, altoItem: ALTO_CAJA, separacion: s, grilla },
+      banco: { x: 0, y: alto - altoBanco, ancho, alto: altoBanco, ...banco },
     };
   }
-  const filas = Math.max(1, Math.floor((alto - grilla.y + s) / (ALTO_CAJA + s)));
-  const columnas = Math.ceil(suplentes / filas);
-  const anchoBanco = Math.max(anchoTexto(TITULO_BANCO), columnas * anchoItem + (columnas - 1) * s);
-  const anchoCancha = Math.max(0, ancho - anchoBanco - SEPARACION_CANCHA_BANCO);
+
+  const entran = caben(alto - y, ALTO_CAJA);
+  if (suplentes <= entran * COLUMNAS_BANCO) {
+    const columnas = Math.min(COLUMNAS_BANCO, Math.ceil(suplentes / entran));
+    const filas = Math.ceil(suplentes / columnas);
+    const ventana = { x: 0, y, ancho: largo(columnas, anchoItem), alto: largo(filas, ALTO_CAJA) };
+    const anchoBanco = Math.max(anchoTexto(TITULO_BANCO), ventana.ancho);
+    return {
+      cancha: { x: 0, y: 0, ancho: Math.max(0, ancho - anchoBanco - SEPARACION_CANCHA_BANCO), alto },
+      banco: { x: ancho - anchoBanco, y: 0, ancho: anchoBanco, alto, ...comun, columnas, filas, flujo: "row", ventana, desplazamiento: null, flechas: null },
+    };
+  }
+  // Flecha arriba, ventana con filas enteras y flecha abajo.
+  const visibles = caben(alto - y - 2 * (LADO_FLECHA + s), ALTO_CAJA);
+  const ventana = { x: 0, y: y + LADO_FLECHA + s, ancho: largo(COLUMNAS_BANCO, anchoItem), alto: largo(visibles, ALTO_CAJA) };
+  const anchoBanco = Math.max(anchoTexto(TITULO_BANCO), ventana.ancho);
+  const xFlecha = Math.floor((ventana.ancho - LADO_FLECHA) / 2);
   return {
-    cancha: { x: 0, y: 0, ancho: anchoCancha, alto },
-    banco: { x: ancho - anchoBanco, y: 0, ancho: anchoBanco, alto, columnas, filas, anchoItem, altoItem: ALTO_CAJA, separacion: s, grilla },
+    cancha: { x: 0, y: 0, ancho: Math.max(0, ancho - anchoBanco - SEPARACION_CANCHA_BANCO), alto },
+    banco: {
+      x: ancho - anchoBanco,
+      y: 0,
+      ancho: anchoBanco,
+      alto,
+      ...comun,
+      columnas: COLUMNAS_BANCO,
+      filas: Math.ceil(suplentes / COLUMNAS_BANCO),
+      flujo: "row",
+      ventana,
+      desplazamiento: "vertical",
+      flechas: {
+        antes: { x: xFlecha, y, ancho: LADO_FLECHA, alto: LADO_FLECHA },
+        despues: { x: xFlecha, y: ventana.y + ventana.alto + s, ancho: LADO_FLECHA, alto: LADO_FLECHA },
+      },
+    },
   };
 }
 

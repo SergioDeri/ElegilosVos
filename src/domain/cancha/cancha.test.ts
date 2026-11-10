@@ -126,14 +126,69 @@ describe("disponer", () => {
       const d = disposicion(w, h, "4-3-3", n);
       const b = d.banco!;
       expect(b.columnas * b.filas).toBeGreaterThanOrEqual(n);
-      expect(b.columnas * b.filas - n).toBeLessThan(d.orientacion === "vertical" ? b.columnas : b.filas);
-      const anchoGrilla = b.columnas * b.anchoItem + (b.columnas - 1) * b.separacion;
-      const altoGrilla = b.filas * b.altoItem + (b.filas - 1) * b.separacion;
-      expect(anchoGrilla).toBeLessThanOrEqual(b.ancho);
-      expect(b.grilla.y + altoGrilla).toBeLessThanOrEqual(b.alto);
+      // Sin líneas vacías: sobra menos de una fila (o columna) de la grilla.
+      expect(b.columnas * b.filas - n).toBeLessThan(b.flujo === "row" ? b.columnas : b.filas);
+      expect(adentro(b.ventana, b)).toBe(true);
       expect(b.anchoItem % 2).toBe(0);
     },
   );
+
+  it.each(PANTALLAS.flatMap(([w, h]) => [1, 5, 11, 22, 30].map((n) => [w, h, n] as const)))(
+    "%ix%i, %i suplentes: hasta 3 filas debajo de la cancha o 3 columnas a su derecha",
+    (w, h, n) => {
+      const d = disposicion(w, h, "4-3-3", n);
+      const b = d.banco!;
+      if (d.orientacion === "vertical") expect(b.filas).toBeLessThanOrEqual(3);
+      else expect(b.columnas).toBeLessThanOrEqual(3);
+    },
+  );
+
+  it.each(PANTALLAS.flatMap(([w, h]) => [1, 5, 11, 22, 30].map((n) => [w, h, n] as const)))(
+    "%ix%i, %i suplentes: scroll solo si la grilla no entra, con la ventana en suplentes enteros",
+    (w, h, n) => {
+      const d = disposicion(w, h, "4-3-3", n);
+      const b = d.banco!;
+      const anchoGrilla = b.columnas * b.anchoItem + (b.columnas - 1) * b.separacion;
+      const altoGrilla = b.filas * b.altoItem + (b.filas - 1) * b.separacion;
+      if (!b.desplazamiento) {
+        expect(b.flechas).toBeNull();
+        expect(b.ventana.ancho).toBe(anchoGrilla);
+        expect(b.ventana.alto).toBe(altoGrilla);
+        return;
+      }
+      expect(b.desplazamiento).toBe(d.orientacion === "vertical" ? "horizontal" : "vertical");
+      const [visible, total, item] =
+        b.desplazamiento === "horizontal" ? [b.ventana.ancho, anchoGrilla, b.anchoItem] : [b.ventana.alto, altoGrilla, b.altoItem];
+      expect(visible).toBeLessThan(total);
+      // El imán deja siempre el primer suplente visible entero, también al final.
+      expect((visible + b.separacion) % (item + b.separacion)).toBe(0);
+      expect((total - visible) % (item + b.separacion)).toBe(0);
+      const { antes, despues } = b.flechas!;
+      for (const f of [antes, despues]) {
+        expect(adentro(f, b)).toBe(true);
+        expect(seSuperponen(f, b.ventana)).toBe(false);
+      }
+    },
+  );
+
+  it("con muchos suplentes, debajo de la cancha se scrollea de costado y a la derecha hacia abajo", () => {
+    const v = disposicion(390, 844, "4-3-3", 30);
+    expect(v.banco).toMatchObject({ filas: 3, desplazamiento: "horizontal", flujo: "column" });
+    expect(v.banco!.flechas!.antes.x).toBeLessThan(v.banco!.ventana.x);
+    expect(v.banco!.flechas!.despues.x).toBeGreaterThanOrEqual(v.banco!.ventana.x + v.banco!.ventana.ancho);
+    const h = disposicion(1470, 739, "4-3-3", 30);
+    expect(h.banco).toMatchObject({ columnas: 3, desplazamiento: "vertical", flujo: "row" });
+    expect(h.banco!.flechas!.antes.y).toBeLessThan(h.banco!.ventana.y);
+    expect(h.banco!.flechas!.despues.y).toBeGreaterThanOrEqual(h.banco!.ventana.y + h.banco!.ventana.alto);
+  });
+
+  it("con pocos suplentes no hay scroll ni flechas", () => {
+    for (const [w, h] of PANTALLAS) {
+      const b = disposicion(w, h, "4-3-3", 1).banco!;
+      expect(b.desplazamiento).toBeNull();
+      expect(b.flechas).toBeNull();
+    }
+  });
 
   it("el dibujo mide lo que la cancha, solo usa la paleta y es determinista", () => {
     for (const [w, h] of PANTALLAS) {
