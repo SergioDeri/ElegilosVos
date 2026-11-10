@@ -24,7 +24,7 @@ export default async function PaginaResultados() {
   // El cierre a pedido (si hace falta) va antes del historial, para que lo incluya.
   const resultado = partido ? await cargarResultado(supabase, partido, ahora) : null;
   const [historial, jugadores, misJugadores, onceReal] = await Promise.all([
-    cargarHistorial(supabase),
+    cargarHistorial(supabase, hincha.clubFavorito),
     cargarJugadores(supabase, hincha.clubFavorito),
     partido ? cargarMisJugadores(supabase, partido.id) : Promise.resolve(null),
     partido ? cargarOnceReal(supabase, partido.id) : Promise.resolve(null),

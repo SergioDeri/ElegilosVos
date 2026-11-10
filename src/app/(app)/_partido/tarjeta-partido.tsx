@@ -66,7 +66,8 @@ function MensajeVotacion(props: {
   // La Votación ya cerró y su resultado quedó congelado, pero el Partido se
   // postergó o se canceló después: el Calendario ya no refleja ese cierre.
   if (props.conOnceElegido) {
-    const enlace = <Link href={`/resultados/${props.partidoId}`}>Ver el 11 Elegido</Link>;
+    const base = props.seleccion ? "/seleccion/resultados" : "/resultados";
+    const enlace = <Link href={`${base}/${props.partidoId}`}>Ver el 11 Elegido</Link>;
     return props.estado === "anulada" ? (
       <p role="status">
         Este Partido se canceló después del cierre de su Votación: el 11 Elegido quedó igual. {enlace}.

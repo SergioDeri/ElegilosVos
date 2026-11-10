@@ -67,3 +67,19 @@ export async function cargarDatosDeConvocatorias(supabase: Cliente): Promise<Dat
     convocatorias,
   };
 }
+
+/**
+ * ¿La Convocatoria tiene Gran Ausente final publicado (Selección, ticket 10)?
+ * Sí, si alguno de sus Partidos ya tiene 11 Elegido: desde ahí la base no
+ * deja corregirla ni borrarla.
+ */
+export async function convocatoriaFija(supabase: Cliente, partidos: readonly string[]): Promise<boolean> {
+  if (partidos.length === 0) return false;
+  const { count, error } = await supabase
+    .from("resultado_votacion")
+    .select("partido_id", { count: "exact", head: true })
+    .in("partido_id", [...partidos])
+    .eq("estado", "con_once");
+  if (error) throw error;
+  return (count ?? 0) > 0;
+}

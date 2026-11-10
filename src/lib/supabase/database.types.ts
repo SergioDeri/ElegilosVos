@@ -283,14 +283,14 @@ isOneToOne: true
                   ]
                 },"resultado_votacion": {
                   Row: {
-                    "alineaciones_que_cuentan": number,"calculado_en": string,"cierre": string,"detalle": Json | null,"esquema": string | null,"estado": string,"once": Json | null,"partido_id": string
+                    "alineaciones_que_cuentan": number,"apariciones": Json | null,"calculado_en": string,"cierre": string,"detalle": Json | null,"esquema": string | null,"estado": string,"once": Json | null,"partido_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "alineaciones_que_cuentan"?: number,"calculado_en"?: string,"cierre": string,"detalle"?: Json | null,"esquema"?: string | null,"estado": string,"once"?: Json | null,"partido_id": string
+                    "alineaciones_que_cuentan"?: number,"apariciones"?: Json | null,"calculado_en"?: string,"cierre": string,"detalle"?: Json | null,"esquema"?: string | null,"estado": string,"once"?: Json | null,"partido_id": string
                   }
                   Update: {
-                    "alineaciones_que_cuentan"?: number,"calculado_en"?: string,"cierre"?: string,"detalle"?: Json | null,"esquema"?: string | null,"estado"?: string,"once"?: Json | null,"partido_id"?: string
+                    "alineaciones_que_cuentan"?: number,"apariciones"?: Json | null,"calculado_en"?: string,"cierre"?: string,"detalle"?: Json | null,"esquema"?: string | null,"estado"?: string,"once"?: Json | null,"partido_id"?: string
                   }
                   Relationships: [
                     {

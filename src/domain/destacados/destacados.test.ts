@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { EsquemaId, PuestoId } from "@/domain/esquemas";
-import { contarApariciones, destacado, type AlineacionConJugadores } from "./index";
+import { aparicionesDesdeJson, contarApariciones, destacado, granAusenteFinal, type AlineacionConJugadores } from "./index";
 
 /** Alineación con los Jugadores dados en los Puestos dados. */
 function alineacion(esquema: EsquemaId, puestos: Partial<Record<PuestoId, string>> = {}): AlineacionConJugadores {
@@ -113,5 +113,46 @@ describe("destacado: Gran Ausente (con Convocatoria)", () => {
 
   it("con Convocatoria null es como si no la hubiera: el Más Pedido", () => {
     expect(destacado(apariciones, null)?.tipo).toBe("mas_pedido");
+  });
+});
+
+describe("granAusenteFinal: el Gran Ausente con las apariciones congeladas al cierre", () => {
+  const congeladas = contarApariciones([
+    alineacion("4-3-3", { ARQ: "muslera", DEL: "suarez" }),
+    alineacion("4-3-3", { ARQ: "muslera", DEL: "suarez" }),
+    alineacion("4-3-3", { ARQ: "rochet", DEL: "nunez" }),
+  ]);
+
+  it("con Convocatoria es el no convocado que figura en más Alineaciones del cierre", () => {
+    expect(granAusenteFinal(congeladas, ["muslera", "rochet", "nunez"])).toEqual({
+      tipo: "gran_ausente",
+      jugadores: [{ jugadorId: "suarez", apariciones: 2, porcentaje: (2 / 3) * 100 }],
+    });
+  });
+
+  it("sin Convocatoria todavía no hay Gran Ausente final (ni Más Pedido)", () => {
+    expect(granAusenteFinal(congeladas, null)).toBeNull();
+  });
+
+  it("si ningún no convocado figura, no hay Gran Ausente final", () => {
+    expect(granAusenteFinal(congeladas, ["muslera", "rochet", "nunez", "suarez"])).toBeNull();
+  });
+
+  it("sin apariciones congeladas (la Votación no se contó) no hay Gran Ausente final", () => {
+    expect(granAusenteFinal(null, ["muslera"])).toBeNull();
+  });
+});
+
+describe("aparicionesDesdeJson", () => {
+  it("lee las apariciones congeladas (jsonb)", () => {
+    const congeladas = contarApariciones([alineacion("4-3-3", { ARQ: "muslera", DEL: "suarez" })]);
+    expect(aparicionesDesdeJson(JSON.parse(JSON.stringify(congeladas)))).toEqual(congeladas);
+  });
+
+  it("devuelve null si no hay o no tiene la forma esperada", () => {
+    expect(aparicionesDesdeJson(null)).toBeNull();
+    expect(aparicionesDesdeJson({ alineaciones: 1 })).toBeNull();
+    expect(aparicionesDesdeJson({ alineaciones: 1, porJugador: [{ jugadorId: "x" }] })).toBeNull();
+    expect(aparicionesDesdeJson([])).toBeNull();
   });
 });

@@ -18,8 +18,8 @@
 //
 // En la Selección (ticket 08 del feature Selección) cuentan las Alineaciones
 // de todos los Hinchas, sin importar su Club Favorito: un solo resultado, sin
-// separar por hinchada. El cierre de la Selección todavía no existe (ticket
-// 10): `src/lib/cierre/proceso.ts` saltea sus Partidos antes de llegar acá.
+// separar por hinchada. El cierre (`src/lib/cierre/proceso.ts`) usa esta
+// misma lectura y, en la Selección, congela además las apariciones (ticket 10).
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { esClubOSeleccion, SELECCION, type ClubOSeleccion } from "@/domain/comun/tipos";
 import type { ResultadoConteo } from "@/domain/conteo";

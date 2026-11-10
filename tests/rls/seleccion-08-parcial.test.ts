@@ -8,7 +8,8 @@
 // - Cualquier Hincha ve el Parcial de la Selección con la Votación abierta;
 //   nadie lo pide sin sesión, para un Partido que no es de la Selección, ni
 //   con la Votación sin abrir.
-// - Contar la Selección no hace que el cierre la procese (ticket 10).
+// - El cierre de la Selección (ticket 10) cuenta las mismas Alineaciones y
+//   congela sus apariciones.
 //
 // Crea Partidos de la Selección y Hinchas descartables (con la service role,
 // sin login) que se borran al final.
@@ -126,10 +127,10 @@ describe("conteo de la Selección", () => {
     expect(porJugador.get(defensores[0]!)).toBe(2);
   });
 
-  it("contar la Selección no hace que el cierre la procese (todavía)", async () => {
-    expect(await cerrarVotacion(servicio, vencido, new Date())).toEqual({ partidoId: vencido, estado: null, creado: false });
-    const { data } = await servicio.from("resultado_votacion").select("partido_id").eq("partido_id", vencido);
-    expect(data).toEqual([]);
+  it("el cierre de la Selección cuenta las mismas Alineaciones y congela sus apariciones (ticket 10)", async () => {
+    expect(await cerrarVotacion(servicio, vencido, new Date())).toEqual({ partidoId: vencido, estado: "con_once", creado: true });
+    const { data } = await servicio.from("resultado_votacion").select("apariciones").eq("partido_id", vencido).single();
+    expect(data!.apariciones).toEqual({ alineaciones: 1, porJugador: [{ jugadorId: arquero, apariciones: 1 }] });
   });
 });
 

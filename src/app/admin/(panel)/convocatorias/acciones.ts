@@ -7,6 +7,10 @@
 // Al guardar o borrar, el Parcial de cada Partido afectado (los de antes y
 // los de después) deja de estar en caché: pasa del Más Pedido al Gran Ausente
 // provisorio (o al revés) en la próxima visita.
+//
+// Una Convocatoria con Gran Ausente final publicado (alguno de sus Partidos
+// ya tiene 11 Elegido, ticket 10) queda fija: la base rechaza corregirla o
+// borrarla con `EV100` (trigger `convocatoria_proteger_fija`).
 import { updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { validarConvocatoria, type ErroresConvocatoria } from "@/domain/convocatoria";
@@ -21,6 +25,10 @@ export type EstadoConvocatoria = {
 };
 
 const RUTA = "/admin/convocatorias";
+
+/** La base rechaza cambiar una Convocatoria con Gran Ausente final publicado. */
+const CONVOCATORIA_FIJA = "EV100";
+const MENSAJE_FIJA = "Esta Convocatoria ya tiene Gran Ausente final publicado: no se puede cambiar ni borrar.";
 
 async function partidosDe(supabase: Supabase, convocatoria: string): Promise<string[]> {
   const { data, error } = await supabase.from("convocatoria_partido").select("partido_id").eq("convocatoria_id", convocatoria);
@@ -54,6 +62,7 @@ export async function guardarConvocatoria(
     if (error.code === "23505") return { errores: { partidos: "Un Partido elegido ya está en otra Convocatoria." } };
     if (error.code === "23514") return { mensaje: "Solo se convocan elegibles de la Selección, para Partidos de la Selección." };
     if (error.code === "P0002") return { mensaje: "Esa Convocatoria ya no existe." };
+    if (error.code === CONVOCATORIA_FIJA) return { mensaje: MENSAJE_FIJA };
     return { mensaje: "No se pudo guardar la Convocatoria." };
   }
   olvidarParciales([...antes, ...partidos]);
@@ -64,6 +73,8 @@ export async function borrarConvocatoria(id: string): Promise<void> {
   const supabase = await requerirAdminEnAccion();
   const antes = await partidosDe(supabase, id);
   const { error } = await supabase.from("convocatoria").delete().eq("id", id);
+  // La página no ofrece borrar una Convocatoria fija; si se llega igual, vuelve a la ficha.
+  if (error?.code === CONVOCATORIA_FIJA) redirect(`${RUTA}/${id}`);
   if (error) throw error;
   olvidarParciales(antes);
   redirect(RUTA);

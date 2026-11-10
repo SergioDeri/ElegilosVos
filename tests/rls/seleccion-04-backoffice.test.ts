@@ -5,9 +5,9 @@
 // Hinchas los lean lo prueba seleccion-05-votar).
 //
 // Además: un Partido de la Selección no rompe los procesos de los Clubes
-// (cierre, herencia). El cierre todavía no procesa la Selección
-// (ticket 10): sus Partidos vencidos quedan sin resultado. La herencia sí
-// (ticket 07, ver seleccion-07-herencia). El conteo de la Selección lo
+// (cierre, herencia). El cierre procesa también la Selección (ticket 10,
+// ver seleccion-10-cierre) y la herencia también (ticket 07, ver
+// seleccion-07-herencia). El conteo de la Selección lo
 // prueba seleccion-08-parcial.
 //
 // El escenario de los procesos vive en 2002, antes de todo Partido del seed.
@@ -234,16 +234,15 @@ describe("los procesos de los Clubes con Partidos de la Selección", () => {
     });
   });
 
-  it("el cierre no procesa todavía los Partidos de la Selección ni falla por ellos", async () => {
+  it("el cierre procesa los Partidos de la Selección (ticket 10) sin fallar", async () => {
     const resumen = await cerrarVotacionesVencidas(servicio, ahora);
     expect(resumen.errores).toEqual([]);
-    const ids = resumen.cerrados.map((c) => c.partidoId);
-    expect(ids).not.toContain(vencido);
-    expect(ids).not.toContain(canceladoVencido);
+    const porPartido = new Map(resumen.cerrados.map((c) => [c.partidoId, c]));
+    expect(porPartido.get(vencido)).toEqual({ partidoId: vencido, estado: "sin_alineaciones", creado: true });
+    expect(porPartido.get(canceladoVencido)).toEqual({ partidoId: canceladoVencido, estado: "anulada", creado: true });
 
-    expect(await cerrarVotacion(servicio, vencido, ahora)).toEqual({ partidoId: vencido, estado: null, creado: false });
-    const { data } = await servicio.from("resultado_votacion").select("partido_id").in("partido_id", [vencido, canceladoVencido]);
-    expect(data).toEqual([]);
+    // Idempotente: ya tiene resultado.
+    expect(await cerrarVotacion(servicio, vencido, ahora)).toEqual({ partidoId: vencido, estado: "sin_alineaciones", creado: false });
   });
 
   it("la herencia procesa los Clubes y la Selección (ticket 07) sin romperse", async () => {

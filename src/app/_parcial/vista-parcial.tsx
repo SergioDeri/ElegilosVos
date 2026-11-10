@@ -137,12 +137,18 @@ function DetalleDelParcial({ vista }: { vista: Extract<VistaDeDatos, { vacio: fa
  * Pedido (o el Gran Ausente), con cuántas Alineaciones lo incluyen y su
  * porcentaje. Con empate, todos. Sin destacado, no muestra nada.
  */
-export function VistaDestacado(props: { destacado: Destacado | null; jugadores: readonly JugadorParaMostrar[] }) {
+export function VistaDestacado(props: {
+  destacado: Destacado | null;
+  jugadores: readonly JugadorParaMostrar[];
+  /** Título en lugar del de su tipo (por ejemplo, "Gran Ausente final" en los resultados). */
+  titulo?: string;
+}) {
   const vista = vistaDelDestacado(props.destacado, props.jugadores);
   if (!vista) return null;
+  const titulo = props.titulo ?? vista.titulo;
   return (
-    <section aria-label={vista.titulo}>
-      <h3>{vista.jugadores.length === 1 ? vista.titulo : `${vista.titulo} (empate)`}</h3>
+    <section aria-label={titulo}>
+      <h3>{vista.jugadores.length === 1 ? titulo : `${titulo} (empate)`}</h3>
       <ul>
         {vista.jugadores.map((d, i) => (
           <li key={i}>
