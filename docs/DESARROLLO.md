@@ -8,7 +8,7 @@ Los hinchas de Peñarol y Nacional arman la alineación titular de su Club para 
 
 ## Stack
 
-- Next.js 16 (App Router) + TypeScript estricto. Deploy en Vercel.
+- Next.js 16 (App Router) + TypeScript estricto. Deploy en Vercel, con las funciones fijadas en `gru1` (São Paulo) por `vercel.json`: Supabase está en `sa-east-1` y cada página hace varias consultas en serie, así que con la región por defecto (`iad1`, Washington) cada click tardaba más de un segundo. No cambiar una región sin la otra.
 - Supabase (Postgres + Auth + Storage). **Toda la autorización vive en Postgres con RLS** (ADR-0003).
 - Vitest para tests de lógica pura y tests de RLS contra Supabase local.
 - npm (no pnpm ni yarn).
