@@ -10,7 +10,7 @@
 - [x] Los cambios de Disponibilidad de la Selección quedan registrados como en los Clubes
 - [x] El Admin carga, posterga y cancela Partidos de la Selección
 - [x] Tests de RLS: solo un Admin con 2FA escribe el Plantel y los Partidos de la Selección
-- [ ] Antes de terminar: `npm run typecheck && npm run lint && npm test && npm run test:rls` && npm run test:e2e (los cuatro primeros pasan; los E2E todavía no existen en esta rama: ticket 02)
+- [x] Antes de terminar: `npm run typecheck && npm run lint && npm test && npm run test:rls && npm run test:e2e` (los E2E, verificados al integrar con el ticket 02)
 
 ## Comments
 
