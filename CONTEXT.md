@@ -15,7 +15,7 @@ La selección uruguaya mayor masculina. No es un Club: cualquier Hincha arma su 
 _Avoid_: Celeste, Uruguay (como nombre del concepto), equipo nacional
 
 **Convocatoria**:
-Lista oficial de Jugadores que el DT llama a la Selección para uno o más Partidos (por ejemplo, los dos de una fecha doble). La carga el Admin. Una vez publicado el Gran Ausente final de uno de sus Partidos, queda fija.
+Lista oficial de Jugadores que el DT llama a la Selección para uno o más Partidos (por ejemplo, los dos de una fecha doble). La carga el Admin. Una vez publicado el Gran Ausente final de uno de sus Partidos, queda fija para ese Partido; en una fecha doble, el Partido que sigue abierto puede recibir una Convocatoria corregida.
 _Avoid_: Lista, nómina
 
 **Gran Ausente**:

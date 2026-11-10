@@ -229,17 +229,19 @@ export function avisosPendientes(entrada: EntradaAvisos): Aviso[] {
   };
 
   for (const datos of entrada.clubes) {
-    const hinchas = entrada.hinchas.filter((h) => h.club === datos.club && preferencias(h).miClub);
+    const hinchas = entrada.hinchas.filter((h) => h.club === datos.club && preferenciasDe(h).miClub);
     for (const aviso of avisosDelClub(datos, hinchas, entrada.ahora)) agregar(aviso);
   }
   if (entrada.seleccion) {
-    const hinchas = entrada.hinchas.filter((h) => preferencias(h).seleccion);
+    const hinchas = entrada.hinchas.filter((h) => preferenciasDe(h).seleccion);
     for (const aviso of avisosDeLaSeleccion(entrada.seleccion, hinchas, entrada.ahora)) agregar(aviso);
   }
   return avisos;
 }
 
-const preferencias = (h: HinchaConSuscripcion) => h.preferencias ?? PREFERENCIAS_POR_DEFECTO;
+/** Las preferencias de un Hincha: sin ellas, las de por defecto (los dos interruptores prendidos). */
+export const preferenciasDe = (h: Pick<HinchaConSuscripcion, "preferencias">): PreferenciasDeNotificacion =>
+  h.preferencias ?? PREFERENCIAS_POR_DEFECTO;
 
 /**
  * Las Votaciones abiertas de la Selección según el Calendario (puede haber dos

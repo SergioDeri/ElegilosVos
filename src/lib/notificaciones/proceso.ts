@@ -41,6 +41,7 @@ import {
   preferenciasDesdeFila,
   votacionAbiertaDelClub,
   votacionesAbiertasDeLaSeleccion,
+  preferenciasDe,
 } from "@/domain/notificaciones";
 import { aparicionesDeVotacion } from "@/domain/votacion";
 import { leerPartidos, leerPlantel } from "@/lib/club/lecturas";
@@ -83,10 +84,10 @@ export async function enviarNotificaciones(
 
   const clubes: DatosDelClub[] = [];
   for (const club of CLUBES) {
-    const ids = hinchas.filter((h) => h.club === club && h.preferencias?.miClub !== false).map((h) => h.id);
+    const ids = hinchas.filter((h) => h.club === club && preferenciasDe(h).miClub).map((h) => h.id);
     if (ids.length) clubes.push(await cargarClub(supabase, club, ahora, ids));
   }
-  const seleccion = hinchas.some((h) => h.preferencias?.seleccion !== false)
+  const seleccion = hinchas.some((h) => preferenciasDe(h).seleccion)
     ? await cargarSeleccion(supabase, ahora)
     : undefined;
   const referencias = new Set<string>();
@@ -294,7 +295,7 @@ async function cargarAparicionesProvisorias(
   yaEnviadas: readonly NotificacionEnviada[],
   ahora: Date,
 ): Promise<DatosDeLaSeleccion["apariciones"]> {
-  const destinatarios = hinchas.filter((h) => h.preferencias?.seleccion !== false).map((h) => h.id);
+  const destinatarios = hinchas.filter((h) => preferenciasDe(h).seleccion).map((h) => h.id);
   const avisados = new Set(
     yaEnviadas.filter((n) => n.tipo === "convocatoria_cargada").map((n) => `${n.hinchaId}|${n.referencia}`),
   );

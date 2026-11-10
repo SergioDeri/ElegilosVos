@@ -217,6 +217,30 @@ describe("la Convocatoria queda fija después de publicado el Gran Ausente final
     expect(await leerConvocados(servicio, vuelta)).toEqual([arquero, campo[0]!].sort());
   });
 
+  it.skipIf(!conDosFactores)(
+    "en una fecha doble, el Partido que sigue abierto se separa en una Convocatoria corregida sin tocar la del cerrado",
+    async () => {
+      // La misma Convocatoria (fija por la ida, que ya cerró) se aplica también a un Partido abierto.
+      const abierto = await crearPartido(SELECCION, new Date(Date.UTC(2035, 10, 25, 23)));
+      const { error: preparar } = await servicio
+        .from("convocatoria_partido")
+        .insert({ convocatoria_id: convocatoriaIda, partido_id: abierto });
+      if (preparar) throw preparar;
+      const antes = await leerConvocados(servicio, ida);
+
+      // El DT reemplaza a alguien para el segundo Partido: el Admin lo convoca aparte.
+      const { error } = await convocar(admin!.cliente, [arquero, campo[0]!], [abierto]);
+      expect(error).toBeNull();
+      expect(await leerConvocados(servicio, abierto)).toEqual([arquero, campo[0]!].sort());
+      expect(await leerConvocados(servicio, ida)).toEqual(antes);
+
+      // El Partido cerrado no se puede llevar a otra Convocatoria.
+      const llevarCerrado = await convocar(admin!.cliente, [arquero], [ida]);
+      expect(llevarCerrado.error).not.toBeNull();
+      expect(await leerConvocados(servicio, ida)).toEqual(antes);
+    },
+  );
+
   it.skipIf(!conDosFactores)("una Convocatoria de un Partido que todavía no cerró se sigue corrigiendo", async () => {
     const lejos = await crearPartido(SELECCION, new Date(Date.UTC(2035, 10, 20, 23)));
     const { data: id, error } = await convocar(admin!.cliente, [arquero], [lejos]);

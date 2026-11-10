@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { esUuid } from "@/domain/comun/ids";
 import { requerirAdmin } from "@/lib/auth/admin";
 import { crearClienteServidor } from "@/lib/supabase/server";
-import { cargarDatosDeConvocatorias, convocatoriaFija } from "../datos";
+import { cargarDatosDeConvocatorias, partidosFijos } from "../datos";
 import { BotonBorrarConvocatoria, FormularioConvocatoria } from "../formulario";
 
 export default async function PaginaConvocatoria({ params }: PageProps<"/admin/convocatorias/[id]">) {
@@ -15,7 +15,12 @@ export default async function PaginaConvocatoria({ params }: PageProps<"/admin/c
   const { elegibles, partidos, convocatorias } = await cargarDatosDeConvocatorias(supabase);
   const convocatoria = convocatorias.find((c) => c.id === id);
   if (!convocatoria) notFound();
-  const fija = await convocatoriaFija(supabase, convocatoria.partidos);
+  const fijos = await partidosFijos(supabase, convocatoria.partidos);
+  const fija = fijos.size > 0;
+  // En una fecha doble, los Partidos que siguen abiertos se pueden separar en una Convocatoria corregida.
+  const separables = partidos.filter(
+    (p) => convocatoria.partidos.includes(p.id) && !fijos.has(p.id) && p.votacion !== "cerrada" && !p.cancelado,
+  );
 
   return (
     <main>
@@ -33,6 +38,24 @@ export default async function PaginaConvocatoria({ params }: PageProps<"/admin/c
                 <li key={j.id}>{j.nombre}</li>
               ))}
           </ul>
+          {separables.length > 0 && (
+            <section aria-labelledby="corregir-abiertos">
+              <h2 id="corregir-abiertos">Corregir para los Partidos que siguen abiertos</h2>
+              <p>
+                Si el DT cambió la lista para un Partido cuya Votación sigue abierta, guardala como una Convocatoria nueva
+                para ese Partido. La de los Partidos cerrados no cambia.
+              </p>
+              <FormularioConvocatoria
+                id={null}
+                elegibles={elegibles}
+                partidos={partidos.map((p) =>
+                  separables.some((s) => s.id === p.id) ? { ...p, convocatoriaId: null } : p,
+                )}
+                convocados={convocatoria.jugadores}
+                aplicaA={separables.map((p) => p.id)}
+              />
+            </section>
+          )}
         </>
       ) : (
         <>

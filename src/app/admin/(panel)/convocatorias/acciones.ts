@@ -9,8 +9,10 @@
 // provisorio (o al revés) en la próxima visita.
 //
 // Una Convocatoria con Gran Ausente final publicado (alguno de sus Partidos
-// ya tiene 11 Elegido, ticket 10) queda fija: la base rechaza corregirla o
-// borrarla con `EV100` (trigger `convocatoria_proteger_fija`).
+// ya tiene 11 Elegido, ticket 10) queda fija: la base rechaza corregir sus
+// convocados o borrarla con `EV100` (trigger `convocatoria_proteger_fija`).
+// Sus Partidos abiertos se separan dando de alta una Convocatoria nueva para
+// ellos (`guardar_convocatoria` los saca de la fija).
 import { updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { validarConvocatoria, type ErroresConvocatoria } from "@/domain/convocatoria";

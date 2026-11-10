@@ -69,17 +69,19 @@ export async function cargarDatosDeConvocatorias(supabase: Cliente): Promise<Dat
 }
 
 /**
- * ¿La Convocatoria tiene Gran Ausente final publicado (Selección, ticket 10)?
- * Sí, si alguno de sus Partidos ya tiene 11 Elegido: desde ahí la base no
- * deja corregirla ni borrarla.
+ * Los Partidos (de los pedidos) con Gran Ausente final publicado (Selección,
+ * ticket 10): los que ya tienen 11 Elegido. Su Convocatoria queda fija (los
+ * convocados no se corrigen y no se la puede borrar), y ellos no se pueden
+ * sacar de ella. Los otros Partidos de esa Convocatoria se pueden separar en
+ * una Convocatoria nueva.
  */
-export async function convocatoriaFija(supabase: Cliente, partidos: readonly string[]): Promise<boolean> {
-  if (partidos.length === 0) return false;
-  const { count, error } = await supabase
+export async function partidosFijos(supabase: Cliente, partidos: readonly string[]): Promise<Set<string>> {
+  if (partidos.length === 0) return new Set();
+  const { data, error } = await supabase
     .from("resultado_votacion")
-    .select("partido_id", { count: "exact", head: true })
+    .select("partido_id")
     .in("partido_id", [...partidos])
     .eq("estado", "con_once");
   if (error) throw error;
-  return (count ?? 0) > 0;
+  return new Set(data.map((r) => r.partido_id));
 }
