@@ -4,11 +4,11 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] `npm run test:e2e` levanta lo necesario y corre Playwright contra Supabase local
-- [ ] Helpers para crear un usuario de prueba (con o sin Club Favorito) e iniciar sesión desde el test
-- [ ] Smoke test: un Hincha con Club inicia sesión y ve su pantalla principal
-- [ ] `npm test` no corre los E2E
-- [ ] `docs/DESARROLLO.md` documenta requisitos y comandos de los E2E
-- [ ] Antes de terminar: `npm run typecheck && npm run lint && npm test && npm run test:rls`
+- [x] `npm run test:e2e` levanta lo necesario y corre Playwright contra Supabase local
+- [x] Helpers para crear un usuario de prueba (con o sin Club Favorito) e iniciar sesión desde el test
+- [x] Smoke test: un Hincha con Club inicia sesión y ve su pantalla principal
+- [x] `npm test` no corre los E2E
+- [x] `docs/DESARROLLO.md` documenta requisitos y comandos de los E2E
+- [x] Antes de terminar: `npm run typecheck && npm run lint && npm test && npm run test:rls`
