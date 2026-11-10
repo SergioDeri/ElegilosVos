@@ -20,19 +20,11 @@ export const TEXTO_RECHAZO: Record<MotivoRechazo, string> = {
   con_alineaciones: "Hay Hinchas con Alineaciones guardadas para este Partido: no se puede borrar, cancelalo.",
 };
 
-/**
- * Mientras los Hinchas no votan la Selección (ticket 05 del feature Selección),
- * sus Partidos se cargan pero su Votación todavía no corre: el estado que se
- * muestra sigue la regla de los Clubes y ningún proceso los cierra.
- */
-export const AVISO_SELECCION =
-  "Los Hinchas todavía no votan la Selección: la Votación de estos Partidos (abre 14 días antes del inicio) y su 11 Real llegan más adelante.";
-
 /** Aviso de un Partido cuya Votación ya tiene resultado congelado. */
 export const ONCE_CONGELADO = "El 11 Elegido ya quedó congelado; la votación no se reabre.";
 
 export const NUNCA_ABRE =
-  "La Votación nunca abriría (abre después de cerrar): se carga menos de 1 hora antes del inicio o empieza menos de 3 horas después del Partido anterior.";
+  "La Votación nunca abriría (abre después de cerrar): se carga menos de 1 hora antes del inicio o, en un Club, empieza menos de 3 horas después del Partido anterior.";
 
 function describirVotacion(v: Votacion | null): string {
   if (!v) return "se borra el Partido";

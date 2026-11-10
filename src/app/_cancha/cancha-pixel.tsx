@@ -5,7 +5,7 @@
 // @/domain/cancha (orientación, cancha, Puestos y banco, en píxeles de arte).
 // El contenido de cada Puesto y del banco lo decide cada vista.
 import { memo, useCallback, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { TITULO_BANCO, disponer, type Banco, type Orientacion, type PuestoEnCancha, type Rect } from "@/domain/cancha";
+import { TITULO_BANCO, disponer, type Banco, type Orientacion, type PuestoEnCancha, type Rect, type Renglones } from "@/domain/cancha";
 import type { EsquemaId } from "@/domain/esquemas";
 import { icono, pxPara, textoBitmap, type Matriz } from "@/domain/pixel";
 import { Sprite } from "@/app/_pixel/sprite";
@@ -38,6 +38,8 @@ export interface PropsCanchaPixel {
   esquema: EsquemaId;
   /** Cantidad de suplentes (0: sin banco). */
   suplentes?: number;
+  /** Renglones del rótulo de cada caja: 2 en la Selección (nombre completo). */
+  renglones?: Renglones;
   /** Contenido de cada Puesto: ocupa su caja entera. */
   puesto: (p: PuestoEnCancha) => ReactNode;
   /** Contenido del banco: ocupa su rectángulo entero (ver BancoPixel). */
@@ -47,7 +49,7 @@ export interface PropsCanchaPixel {
   className?: string;
 }
 
-export function CanchaPixel({ esquema, suplentes = 0, puesto, banco, className, ...aria }: PropsCanchaPixel) {
+export function CanchaPixel({ esquema, suplentes = 0, renglones = 1, puesto, banco, className, ...aria }: PropsCanchaPixel) {
   const ref = useRef<HTMLDivElement>(null);
   const [medida, setMedida] = useState<Medida | null>(null);
 
@@ -68,8 +70,8 @@ export function CanchaPixel({ esquema, suplentes = 0, puesto, banco, className, 
   }, []);
 
   const disposicion = useMemo(
-    () => (medida && medida.ancho > 0 && medida.alto > 0 ? disponer({ ...medida, esquema, suplentes }) : null),
-    [medida, esquema, suplentes],
+    () => (medida && medida.ancho > 0 && medida.alto > 0 ? disponer({ ...medida, esquema, suplentes, renglones }) : null),
+    [medida, esquema, suplentes, renglones],
   );
 
   return (

@@ -127,14 +127,15 @@ describe("puestos_de_esquema (SQL) coincide con el Catálogo de Esquemas (TS)", 
 });
 
 describe("lecturas del Hincha", () => {
-  it("lee los Jugadores y los Partidos de su Club, y no los del otro", async () => {
+  it("lee los Jugadores y los Partidos de su Club (y de la Selección), y no los del otro", async () => {
     const penarol = clienteComo("hinchaPenarol");
     const { data: jugadores } = await penarol.from("jugador").select("club_id");
     const { data: partidos } = await penarol.from("partido").select("club_id");
     expect(jugadores!.length).toBeGreaterThan(0);
     expect(partidos!.length).toBeGreaterThan(0);
-    expect(new Set(jugadores!.map((j) => j.club_id))).toEqual(new Set(["penarol"]));
-    expect(new Set(partidos!.map((p) => p.club_id))).toEqual(new Set(["penarol"]));
+    // La Selección la leen todos los Hinchas (Selección, ticket 05).
+    expect(new Set(jugadores!.map((j) => j.club_id))).toEqual(new Set(["penarol", "seleccion"]));
+    expect(new Set(partidos!.map((p) => p.club_id))).toEqual(new Set(["penarol", "seleccion"]));
   });
 
   it("lee los Rivales activos y no los dados de baja sin Partidos de su Club", async () => {

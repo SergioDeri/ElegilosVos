@@ -39,7 +39,8 @@ export interface AlineacionParaConteo {
 
 export interface JugadorParaConteo {
   readonly id: string;
-  readonly numero: number;
+  /** Número de camiseta; null en la Selección (sin número). */
+  readonly numero: number | null;
   readonly posicionNatural: PosicionNatural;
   /** Disponibilidad al momento del conteo (al cierre, para el 11 Elegido). */
   readonly disponibilidad: Disponibilidad;
@@ -149,9 +150,17 @@ function respetaArquero(j: JugadorParaConteo, puesto: PuestoId): boolean {
   return (j.posicionNatural === "ARQ") === esPuestoDeArquero(puesto);
 }
 
-/** Orden fijo de Jugadores: número de camiseta y, si se repite, id. */
+/**
+ * Orden fijo de Jugadores: número de camiseta y, si se repite, id. Los
+ * Jugadores sin número (los de la Selección) van después de los numerados y
+ * entre ellos deciden por id.
+ */
 function compararOrdenFijo(a: JugadorParaConteo, b: JugadorParaConteo): number {
-  if (a.numero !== b.numero) return a.numero - b.numero;
+  if (a.numero !== b.numero) {
+    if (a.numero === null) return 1;
+    if (b.numero === null) return -1;
+    return a.numero - b.numero;
+  }
   return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
 }
 

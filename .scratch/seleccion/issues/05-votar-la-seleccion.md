@@ -4,13 +4,13 @@
 
 **Blocked by:** 02, 03, 04
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Calendario: apertura a 14 días, Partido cargado tarde, fecha doble con dos abiertas, postergación y cancelación, con tests; los Clubes siguen con una sola abierta
-- [ ] Un Hincha de Peñarol y uno de Nacional arman y guardan su Alineación de la Selección; persiste al recargar
-- [ ] Selector "mi club / Selección" en la barra
-- [ ] Nombre completo sin número en la cancha y en los bancos; nombres largos no se cortan
-- [ ] En fecha doble, el Hincha elige el Partido y arma los dos por separado
-- [ ] Tests de RLS: Hinchas de los dos Clubes escriben Alineaciones de la Selección; nadie lee la de otro; no se escribe fuera de la ventana de 14 días ni con la Votación cerrada o anulada; dos abiertas a la vez aceptan Alineaciones
-- [ ] E2E: fecha doble, el Hincha elige el Partido y arma los dos
-- [ ] Antes de terminar: `npm run typecheck && npm run lint && npm test && npm run test:rls` && npm run test:e2e
+- [x] Calendario: apertura a 14 días, Partido cargado tarde, fecha doble con dos abiertas, postergación y cancelación, con tests; los Clubes siguen con una sola abierta
+- [x] Un Hincha de Peñarol y uno de Nacional arman y guardan su Alineación de la Selección; persiste al recargar
+- [x] Selector "mi club / Selección" en la barra
+- [x] Nombre completo sin número en la cancha y en los bancos; nombres largos no se cortan
+- [x] En fecha doble, el Hincha elige el Partido y arma los dos por separado
+- [x] Tests de RLS: Hinchas de los dos Clubes escriben Alineaciones de la Selección; nadie lee la de otro; no se escribe fuera de la ventana de 14 días ni con la Votación cerrada o anulada; dos abiertas a la vez aceptan Alineaciones
+- [x] E2E: fecha doble, el Hincha elige el Partido y arma los dos
+- [x] Antes de terminar: `npm run typecheck && npm run lint && npm test && npm run test:rls` && npm run test:e2e

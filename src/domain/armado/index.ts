@@ -1,7 +1,7 @@
 /**
  * Armado de la Alineación (lógica pura de la pantalla principal del Hincha).
  *
- * - `votacionEnPantalla`: qué Partido (y qué Votación) se muestra.
+ * - `votacionEnPantalla` / `votacionesEnPantalla`: qué Partido (y qué Votación) se muestra.
  * - `textoCuentaRegresiva`: el texto de la cuenta regresiva al cierre.
  * - `validarAlineacion`: las reglas del Editor aplicadas a una Alineación
  *   completa que llega del cliente (no confiable), contra el Plantel actual.
@@ -9,6 +9,7 @@
  *   la tabla `alineacion` y la `Alineacion` del Editor.
  */
 import { calcularVotaciones, finDePartido, type PartidoCalendario, type Votacion } from "@/domain/calendario";
+import type { ClubOSeleccion } from "@/domain/comun/tipos";
 import {
   aJson,
   alineacionNueva,
@@ -39,20 +40,37 @@ export function votacionEnPantalla(
   ahora: Date,
   conOnceElegido: ReadonlySet<string> = new Set(),
 ): Votacion | null {
-  const votaciones = calcularVotaciones(partidos, ahora).map((v) =>
+  return votacionesEnPantalla(partidos, ahora, conOnceElegido)[0] ?? null;
+}
+
+/**
+ * Las Votaciones entre las que el Hincha elige en la pantalla de armado, con
+ * la regla de `de` (un Club o la Selección; ver `calcularVotaciones`):
+ *
+ * - todas las abiertas, en orden cronológico (en la Selección puede haber
+ *   dos, por una fecha doble; en un Club, a lo sumo una);
+ * - si no hay ninguna, solo la que elegiría `votacionEnPantalla`;
+ * - vacío si no hay Partido para mostrar.
+ */
+export function votacionesEnPantalla(
+  partidos: readonly PartidoCalendario[],
+  ahora: Date,
+  conOnceElegido: ReadonlySet<string> = new Set(),
+  de?: ClubOSeleccion,
+): Votacion[] {
+  const votaciones = calcularVotaciones(partidos, ahora, de).map((v) =>
     conOnceElegido.has(v.partidoId) && (v.estado === "abierta" || v.estado === "pendiente")
       ? { ...v, estado: "cerrada" as const }
       : v,
   );
-  const abierta = votaciones.find((v) => v.estado === "abierta");
-  if (abierta) return abierta;
+  const abiertas = votaciones.filter((v) => v.estado === "abierta");
+  if (abiertas.length > 0) return abiertas;
   const inicioDe = new Map(partidos.map((p) => [p.id, p.inicio]));
-  return (
-    votaciones.find((v) => {
-      const inicio = inicioDe.get(v.partidoId);
-      return inicio !== undefined && finDePartido(inicio).getTime() > ahora.getTime();
-    }) ?? null
-  );
+  const proxima = votaciones.find((v) => {
+    const inicio = inicioDe.get(v.partidoId);
+    return inicio !== undefined && finDePartido(inicio).getTime() > ahora.getTime();
+  });
+  return proxima ? [proxima] : [];
 }
 
 /**

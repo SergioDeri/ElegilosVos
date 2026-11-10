@@ -25,6 +25,17 @@ describe("analizarCambio: avisos antes de guardar", () => {
   const a = partido("A", "2026-11-05T23:00:00Z");
   const b = partido("B", "2026-11-12T23:00:00Z");
 
+  it("en la Selección usa su regla: con una fecha doble, postergar la vuelta afecta una Votación abierta", () => {
+    const ida = partido("ida", "2026-11-14T23:00:00Z");
+    const vuelta = partido("vuelta", "2026-11-19T23:00:00Z");
+    const postergada = { ...vuelta, inicio: t("2026-11-29T23:00:00Z") };
+    // Con la regla de los Clubes la vuelta está pendiente: no hay aviso.
+    expect(analizarCambio([ida, vuelta], [ida, postergada], ahora)).toEqual([]);
+    expect(analizarCambio([ida, vuelta], [ida, postergada], ahora, new Set(), "seleccion")).toMatchObject([
+      { tipo: "afecta_votacion_abierta", partidoId: "vuelta", despues: { estado: "pendiente" } },
+    ]);
+  });
+
   it("sin efecto sobre Votaciones abiertas ni ventanas vacías, no avisa", () => {
     const c = partido("C", "2026-11-20T23:00:00Z", { creadoEn: ahora });
     expect(analizarCambio([a, b], [a, b, c], ahora)).toEqual([]);

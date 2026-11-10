@@ -9,7 +9,8 @@ import { esquema, type EsquemaId, type PuestoId } from "@/domain/esquemas";
 export interface JugadorParaMostrar {
   readonly id: string;
   readonly nombre: string;
-  readonly numero: number;
+  /** null en la Selección (sin número). */
+  readonly numero: number | null;
 }
 
 export interface JugadorEnVista {

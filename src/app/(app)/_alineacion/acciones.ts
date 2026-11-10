@@ -7,10 +7,11 @@ import { crearClienteServidor } from "@/lib/supabase/server";
 import { leerPlantel } from "@/lib/club/lecturas";
 import { cargarAlineacion } from "./datos";
 import { esUuid } from "@/domain/comun/ids";
+import { clubOSeleccionDeLaBase, SELECCION } from "@/domain/comun/tipos";
 
 export type ResultadoGuardado =
   | { ok: true }
-  /** La Votación no está abierta (o el Partido no es de su Club). */
+  /** La Votación no está abierta (o el Partido no es de su Club ni de la Selección). */
   | { ok: false; error: "votacion_cerrada" }
   /** La Alineación no respeta las reglas contra el Plantel actual. */
   | { ok: false; error: "invalida"; motivo: MotivoRechazo | "formato_invalido" }
@@ -21,7 +22,7 @@ export type ResultadoGuardado =
  * Guarda (upsert) la Alineación del Hincha de la sesión para un Partido.
  * No confía en el cliente: lee la Alineación con `desdeJson`, la valida con las
  * reglas del Editor contra el Plantel actual y escribe con el cliente del
- * usuario, así que RLS exige que sea suya, de su Club y con la Votación
+ * usuario, así que RLS exige que sea suya, de su Club (o de la Selección) y con la Votación
  * abierta. Las horas de modificación las sella la base.
  */
 export async function guardarAlineacion(partidoId: unknown, alineacion: unknown): Promise<ResultadoGuardado> {
@@ -33,14 +34,18 @@ export async function guardarAlineacion(partidoId: unknown, alineacion: unknown)
 
   const supabase = await crearClienteServidor();
   try {
-    const { data: abierta, error } = await supabase.rpc("votacion_abierta", { partido: partidoId });
-    if (error) throw error;
-    if (!abierta) return { ok: false, error: "votacion_cerrada" };
-
-    const [plantel, guardada] = await Promise.all([
-      leerPlantel(supabase, hincha.clubFavorito),
-      cargarAlineacion(supabase, partidoId),
+    const [{ data: abierta, error }, { data: partido, error: errorPartido }] = await Promise.all([
+      supabase.rpc("votacion_abierta", { partido: partidoId }),
+      supabase.from("partido").select("club_id").eq("id", partidoId).maybeSingle(),
     ]);
+    if (error) throw error;
+    if (errorPartido) throw errorPartido;
+    if (!abierta || !partido) return { ok: false, error: "votacion_cerrada" };
+    // Un Partido de su Club o de la Selección (RLS no le deja ver otros).
+    const club = clubOSeleccionDeLaBase(partido.club_id);
+    if (club !== SELECCION && club !== hincha.clubFavorito) return { ok: false, error: "votacion_cerrada" };
+
+    const [plantel, guardada] = await Promise.all([leerPlantel(supabase, club), cargarAlineacion(supabase, partidoId)]);
     const validacion = validarAlineacion(leida.estado, guardada, plantel);
     if (!validacion.ok) return { ok: false, error: "invalida", motivo: validacion.motivo };
 

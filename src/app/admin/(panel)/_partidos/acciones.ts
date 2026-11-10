@@ -175,9 +175,10 @@ function pedirConfirmacion(
   formData: FormData,
   valores: EstadoPartido["valores"],
   conOnceElegido: ReadonlySet<string>,
+  club: ClubOSeleccion,
 ): EstadoPartido | null {
   if (formData.get("confirmar") === "1") return null;
-  const avisos = analizarCambio(antes.map(aCalendario), despues, ahora, conOnceElegido);
+  const avisos = analizarCambio(antes.map(aCalendario), despues, ahora, conOnceElegido, club);
   if (avisos.length === 0) return null;
   const porId = new Map(antes.map((p) => [p.id, p]));
   const nombre = (id: string) => {
@@ -234,7 +235,7 @@ export async function crearPartido(club: ClubOSeleccion, _previo: EstadoPartido,
   const ahora = new Date();
   const [antes, conOnceElegido] = await Promise.all([cargarPartidosDelClub(supabase, club), cargarConOnceElegido(supabase, club)]);
   const nuevo: PartidoCalendario = { id: NUEVO, inicio, estado: "programado", creadoEn: ahora };
-  const confirmacion = pedirConfirmacion(antes, [...antes.map(aCalendario), nuevo], ahora, formData, valores, conOnceElegido);
+  const confirmacion = pedirConfirmacion(antes, [...antes.map(aCalendario), nuevo], ahora, formData, valores, conOnceElegido, club);
   if (confirmacion) return confirmacion;
 
   const { error } = await supabase.from("partido").insert({ club_id: club, rival_id: rivalId, inicio: inicio.toISOString() });
@@ -259,7 +260,7 @@ export async function reprogramarPartido(id: string, _previo: EstadoPartido, for
   if (!permitido.ok) return { mensaje: TEXTO_RECHAZO[permitido.motivo], valores };
 
   const despues = actual.partidos.map((p) => (p.id === id ? { ...aCalendario(p), inicio } : aCalendario(p)));
-  const confirmacion = pedirConfirmacion(actual.partidos, despues, ahora, formData, valores, actual.conOnceElegido);
+  const confirmacion = pedirConfirmacion(actual.partidos, despues, ahora, formData, valores, actual.conOnceElegido, actual.club);
   if (confirmacion) return confirmacion;
 
   const { data, error } = await supabase
@@ -303,7 +304,7 @@ export async function cambiarEstadoPartido(
   const cambio =
     pedido.tipo === "reactivar" ? { estado: "programado" as const, inicio: pedido.inicio } : { estado: "cancelado" as const };
   const despues = actual.partidos.map((p) => (p.id === id ? { ...aCalendario(p), ...cambio } : aCalendario(p)));
-  const confirmacion = pedirConfirmacion(actual.partidos, despues, ahora, formData, valores, actual.conOnceElegido);
+  const confirmacion = pedirConfirmacion(actual.partidos, despues, ahora, formData, valores, actual.conOnceElegido, actual.club);
   if (confirmacion) return confirmacion;
 
   const { data, error } = await supabase
@@ -339,7 +340,7 @@ export async function borrarPartido(id: string, _previo: EstadoPartido, formData
   if (!permitido.ok) return { mensaje: TEXTO_RECHAZO[permitido.motivo] };
 
   const despues = actual.partidos.filter((p) => p.id !== id).map(aCalendario);
-  const confirmacion = pedirConfirmacion(actual.partidos, despues, ahora, formData, {}, actual.conOnceElegido);
+  const confirmacion = pedirConfirmacion(actual.partidos, despues, ahora, formData, {}, actual.conOnceElegido, actual.club);
   if (confirmacion) return confirmacion;
 
   // La base también lo impide si aparecieron Alineaciones entretanto (EV080).

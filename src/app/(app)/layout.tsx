@@ -10,7 +10,9 @@ import type { Viewport } from "next";
 import Link from "next/link";
 import { colorDeSistema, temaDe } from "@/domain/pixel";
 import { obtenerHincha, requerirHincha } from "@/lib/auth/sesion";
+import { NOMBRE_CLUB } from "@/domain/comun/textos";
 import { MenuUsuario } from "./_barra/menu-usuario";
+import { SelectorHinchada } from "./_barra/selector-hinchada";
 import barra from "./_barra/barra.module.css";
 
 export async function generateViewport(): Promise<Viewport> {
@@ -26,6 +28,7 @@ export default async function LayoutApp({ children }: LayoutProps<"/">) {
         <Link href="/" className={barra.marca} aria-label="Elegilos Vos: ir al inicio">
           Elegilos<span className={barra.vos}>Vos</span>
         </Link>
+        <SelectorHinchada club={NOMBRE_CLUB[hincha.clubFavorito]} />
         <MenuUsuario />
       </header>
       {children}

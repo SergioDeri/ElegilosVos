@@ -45,7 +45,7 @@ import type { JugadorDelClub } from "@/lib/club/lecturas";
 import { NOMBRE_DISPONIBILIDAD } from "@/domain/comun/textos";
 import { MENSAJE_DE_RECHAZO, POSICION } from "./textos";
 import { useGuardadoAutomatico, type EstadoGuardado } from "./use-guardado-automatico";
-import type { ClubId } from "@/domain/comun/tipos";
+import { SELECCION, type ClubOSeleccion } from "@/domain/comun/tipos";
 import { BancoPixel, CanchaPixel } from "@/app/_cancha/cancha-pixel";
 import { PuestoLibre } from "@/app/_cancha/puesto-libre";
 import { JugadorConCamiseta } from "@/app/_pixel/jugador-con-camiseta";
@@ -58,6 +58,8 @@ type Origen = { tipo: "jugador"; jugadorId: string } | { tipo: "puesto"; puesto:
 const ID_BANCO = "banco";
 const idPuesto = (p: PuestoId) => `puesto:${p}`;
 const idJugador = (j: string) => `jugador:${j}`;
+/** "10 Nombre" en un Club; solo el nombre en la Selección, que no lleva número. */
+const conNumero = (j: JugadorDelClub) => (j.numero === null ? j.nombre : `${j.numero} ${j.nombre}`);
 
 /**
  * Con mouse o toque manda el puntero (el banco es ancho y taparía Puestos
@@ -77,8 +79,8 @@ function leerOrigen(id: string | number): Origen | null {
 
 export interface PropsEditor {
   partidoId: string;
-  /** Club Favorito del Hincha: el de las Camisetas. */
-  club: ClubId;
+  /** De quién es el Partido (el Club Favorito del Hincha o la Selección): el de las Camisetas. */
+  club: ClubOSeleccion;
   inicial: AlineacionJson | null;
   jugadores: JugadorDelClub[];
   /** false: solo lectura (sin Votación abierta). */
@@ -275,6 +277,8 @@ export function EditorAlineacion({ partidoId, club, inicial, jugadores, editable
         <CanchaPixel
           className={estilos.area}
           esquema={alineacion.esquema}
+          // En la Selección el nombre completo puede ir en dos renglones.
+          renglones={club === SELECCION ? 2 : 1}
           // Con la Votación abierta siempre hay banco, aunque esté vacío: es
           // donde se suelta un Jugador para sacarlo de la cancha.
           suplentes={editable ? Math.max(1, libres.length) : 0}
@@ -324,7 +328,7 @@ export function EditorAlineacion({ partidoId, club, inicial, jugadores, editable
             {noDisponibles.map((j) => (
               <li key={j.id} className={estilos.noDisponible}>
                 <span>
-                  {j.numero} · {j.nombre} · {POSICION[j.posicionNatural]}
+                  {j.numero !== null && `${j.numero} · `}{j.nombre} · {POSICION[j.posicionNatural]}
                 </span>
                 <small>
                   {NOMBRE_DISPONIBILIDAD[j.disponibilidad]}
@@ -372,7 +376,7 @@ function IndicadorGuardado({ estado, reintentar }: { estado: EstadoGuardado; rei
 }
 
 function PuestoEnCancha(props: {
-  club: ClubId;
+  club: ClubOSeleccion;
   caja: CajaDePuesto;
   jugador: JugadorDelClub | undefined;
   jugadorIdDesconocido: string | undefined;
@@ -389,7 +393,7 @@ function PuestoEnCancha(props: {
   const arrastrable = useDraggable({ id: idPuesto(caja.id), disabled: !editable || !ocupado, data: { ancho: caja.ancho } });
   const noDisponible = jugador && (jugador.disponibilidad !== "disponible" || !jugador.enPlantel);
   const descripcion = jugador
-    ? `${etiqueta}: ${jugador.numero} ${jugador.nombre}${noDisponible ? " (no disponible)" : ""}`
+    ? `${etiqueta}: ${conNumero(jugador)}${noDisponible ? " (no disponible)" : ""}`
     : `${etiqueta}: vacío`;
 
   return (
@@ -441,7 +445,7 @@ function Banco(props: { editable: boolean; cantidad: number; children: ReactNode
 }
 
 function JugadorDelBanco(props: {
-  club: ClubId;
+  club: ClubOSeleccion;
   jugador: JugadorDelClub;
   ancho: number;
   editable: boolean;
@@ -461,7 +465,7 @@ function JugadorDelBanco(props: {
       {...listeners}
       {...attributes}
       aria-pressed={seleccionado}
-      aria-label={`${jugador.numero} ${jugador.nombre}, ${POSICION[jugador.posicionNatural]}`}
+      aria-label={`${conNumero(jugador)}, ${POSICION[jugador.posicionNatural]}`}
       onClick={alTocar}
       className={estilos.ficha}
       data-seleccionado={seleccionado}

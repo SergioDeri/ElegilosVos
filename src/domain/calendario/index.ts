@@ -44,11 +44,32 @@
  *   nuevo; se mueven su cierre y la apertura del Partido siguiente.
  * - **Cancelación**: el Partido cancelado deja de ser Anterior de nadie; el
  *   siguiente abre cuando termina el último no cancelado previo (o al cargarse).
+ *
+ * ## Regla de la Selección (ADR-0005)
+ *
+ * Los Partidos de la Selección (`calcularVotaciones(partidos, ahora, SELECCION)`)
+ * cambian solo el paso 5:
+ *
+ * 5'. **abre(P)** = `max(P.creado_en, P.inicio - APERTURA_SELECCION_ANTES_DEL_INICIO_MS)`
+ *     (14 días). No mira el Partido anterior.
+ *
+ * Cierre (4), estados (6), postergación y cancelación son iguales. Como la
+ * apertura no depende del anterior, **puede haber más de una abierta a la
+ * vez** (una fecha doble: dos Partidos con unos 5 días de diferencia); por eso
+ * se consultan con `votacionesAbiertas` (en plural). Un Partido cargado a
+ * menos de 14 días de su inicio abre al cargarse; uno cargado a menos de 1
+ * hora, nunca (ventana vacía). Cancelar uno no cambia la Votación de los demás.
+ *
+ * Equivalente SQL: en `votacion_de_partido`, si el Partido es de la Selección
+ * (`club.es_seleccion`), `abre = greatest(creado_en, inicio - interval '14 days')`.
  */
-import type { EstadoPartido } from "@/domain/comun/tipos";
+import { SELECCION, type ClubOSeleccion, type EstadoPartido } from "@/domain/comun/tipos";
 
 /** La Votación cierra este tiempo antes del inicio del Partido (1 hora). */
 export const CIERRE_ANTES_DEL_INICIO_MS = 60 * 60 * 1000;
+
+/** En la Selección, la Votación abre este tiempo antes del inicio (14 días). */
+export const APERTURA_SELECCION_ANTES_DEL_INICIO_MS = 14 * 24 * 60 * 60 * 1000;
 
 /** Un Partido se considera terminado este tiempo después de su inicio (2 horas). */
 export const DURACION_PARTIDO_MS = 2 * 60 * 60 * 1000;
@@ -93,19 +114,24 @@ function compararPartidos(a: PartidoCalendario, b: PartidoCalendario): number {
 }
 
 /**
- * Calcula la Votación de cada Partido de un Club en el instante `ahora`.
- * Todos los Partidos deben ser del mismo Club. Devuelve una Votación por
- * Partido (cancelados incluidos), en orden cronológico `(inicio, creadoEn, id)`.
+ * Calcula la Votación de cada Partido de un Club (o de la Selección) en el
+ * instante `ahora`. Todos los Partidos deben ser del mismo dueño, `de`: con
+ * `SELECCION` aplica la regla de la Selección; con un Club, o sin `de`, la de
+ * los Clubes. Devuelve una Votación por Partido (cancelados incluidos), en
+ * orden cronológico `(inicio, creadoEn, id)`.
  */
-export function calcularVotaciones(partidos: readonly PartidoCalendario[], ahora: Date): Votacion[] {
+export function calcularVotaciones(partidos: readonly PartidoCalendario[], ahora: Date, de?: ClubOSeleccion): Votacion[] {
   const ordenados = [...partidos].sort(compararPartidos);
   const t = ahora.getTime();
+  const seleccion = de === SELECCION;
   let anterior: PartidoCalendario | null = null;
 
   return ordenados.map((p) => {
-    const abre = anterior
-      ? new Date(Math.max(p.creadoEn.getTime(), finDePartido(anterior.inicio).getTime()))
-      : p.creadoEn;
+    const abre = seleccion
+      ? new Date(Math.max(p.creadoEn.getTime(), p.inicio.getTime() - APERTURA_SELECCION_ANTES_DEL_INICIO_MS))
+      : anterior
+        ? new Date(Math.max(p.creadoEn.getTime(), finDePartido(anterior.inicio).getTime()))
+        : p.creadoEn;
     const cierra = cierreDeVotacion(p.inicio);
     const estado: EstadoVotacion =
       p.estado === "cancelado"
@@ -121,8 +147,17 @@ export function calcularVotaciones(partidos: readonly PartidoCalendario[], ahora
 }
 
 /**
+ * Las Votaciones abiertas en el instante `ahora`, en orden cronológico. En la
+ * Selección (`de = SELECCION`) puede haber más de una; en un Club, a lo sumo una.
+ */
+export function votacionesAbiertas(partidos: readonly PartidoCalendario[], ahora: Date, de?: ClubOSeleccion): Votacion[] {
+  return calcularVotaciones(partidos, ahora, de).filter((v) => v.estado === "abierta");
+}
+
+/**
  * La Votación abierta del Club en el instante `ahora`, o `null` si no hay
- * ninguna. Por la regla de apertura nunca hay más de una.
+ * ninguna. Por la regla de apertura de los Clubes nunca hay más de una. Solo
+ * para Clubes: en la Selección, `votacionesAbiertas`.
  */
 export function votacionAbierta(partidos: readonly PartidoCalendario[], ahora: Date): Votacion | null {
   return calcularVotaciones(partidos, ahora).find((v) => v.estado === "abierta") ?? null;

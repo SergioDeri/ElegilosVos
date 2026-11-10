@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { PosicionNatural } from "@/domain/comun/tipos";
+import { SELECCION, type PosicionNatural } from "@/domain/comun/tipos";
 import type { PartidoCalendario } from "@/domain/calendario";
 import { alineacionNueva, type Alineacion, type JugadorDelPlantel } from "@/domain/editor";
 import {
@@ -8,6 +8,7 @@ import {
   textoCuentaRegresiva,
   validarAlineacion,
   votacionEnPantalla,
+  votacionesEnPantalla,
 } from "./index";
 
 const t = (iso: string) => new Date(iso);
@@ -92,6 +93,33 @@ describe("votacionEnPantalla", () => {
         estado: "anulada",
       });
     });
+  });
+});
+
+describe("votacionesEnPantalla", () => {
+  const ahora = t("2026-11-10T12:00:00Z");
+  const ida = partido("ida", "2026-11-14T23:00:00Z");
+  const vuelta = partido("vuelta", "2026-11-19T23:00:00Z");
+
+  it("en la Selección, con una fecha doble, muestra las dos Votaciones abiertas en orden", () => {
+    expect(votacionesEnPantalla([vuelta, ida], ahora, new Set(), SELECCION)).toMatchObject([
+      { partidoId: "ida", estado: "abierta" },
+      { partidoId: "vuelta", estado: "abierta" },
+    ]);
+  });
+
+  it("en la Selección, sin Votaciones abiertas, muestra solo el próximo Partido", () => {
+    const lejos = partido("lejos", "2026-12-30T23:00:00Z");
+    expect(votacionesEnPantalla([lejos], ahora, new Set(), SELECCION)).toMatchObject([{ partidoId: "lejos", estado: "pendiente" }]);
+    expect(votacionesEnPantalla([], ahora, new Set(), SELECCION)).toEqual([]);
+  });
+
+  it("en la Selección, una Votación con 11 Elegido congelado no cuenta como abierta", () => {
+    expect(votacionesEnPantalla([ida, vuelta], ahora, new Set(["ida"]), SELECCION)).toMatchObject([{ partidoId: "vuelta" }]);
+  });
+
+  it("en un Club es a lo sumo una, la de votacionEnPantalla", () => {
+    expect(votacionesEnPantalla([ida, vuelta], ahora, new Set(), "penarol")).toEqual([votacionEnPantalla([ida, vuelta], ahora)]);
   });
 });
 

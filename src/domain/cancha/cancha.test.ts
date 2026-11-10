@@ -1,7 +1,19 @@
 import { describe, expect, it } from "vitest";
 import { esquemas, type EsquemaId } from "@/domain/esquemas";
 import { PALETA, anchoTexto, pxPara } from "@/domain/pixel";
-import { ALTO_CAJA, LADO_CAMISETA_EN_CANCHA, canchaDeFondo, disponer, rotulo, siluetaDePuestoLibre, type Disposicion, type Rect } from "./index";
+import {
+  ALTO_CAJA,
+  ALTO_CAJA_DOS_RENGLONES,
+  ALTO_ROTULO_DOS_LINEAS,
+  LADO_CAMISETA_EN_CANCHA,
+  canchaDeFondo,
+  disponer,
+  rotulo,
+  rotuloCompleto,
+  siluetaDePuestoLibre,
+  type Disposicion,
+  type Rect,
+} from "./index";
 
 // Apellidos largos reales del seed.
 const LARGOS = [
@@ -229,6 +241,65 @@ describe("rotulo", () => {
   it("nunca se pasa del ancho, aunque sea mínimo", () => {
     for (const ancho of [24, 26, 32, 48])
       for (const nombre of LARGOS) for (const fila of rotulo(nombre, ancho)) expect(fila).toHaveLength(ancho);
+  });
+});
+
+describe("rotuloCompleto (Selección: nombre completo, sin cortar)", () => {
+  /** Columnas pintadas (primera y última) de las filas dadas. */
+  function tramo(m: ReturnType<typeof rotuloCompleto>, desde: number, hasta: number): [number, number] {
+    const filas = m.slice(desde, hasta);
+    const columnas = m[0].map((_, x) => filas.some((f) => f[x] !== null));
+    return [columnas.indexOf(true), columnas.lastIndexOf(true)];
+  }
+
+  it("si entra en una línea, va en una, centrado en el ancho pedido", () => {
+    const m = rotuloCompleto("Matías Viña", 48);
+    expect(m).toHaveLength(8);
+    for (const fila of m) expect(fila).toHaveLength(48);
+    const [desde, hasta] = tramo(m, 0, 8);
+    expect(hasta - desde + 1).toBe(anchoTexto("MATÍAS VIÑA") + 2);
+  });
+
+  it("si no entra, va en dos líneas cortando entre palabras", () => {
+    const m = rotuloCompleto("Giorgian De Arrascaeta", 48);
+    expect(m).toHaveLength(ALTO_ROTULO_DOS_LINEAS);
+    for (const fila of m) expect(fila).toHaveLength(48);
+    const [d1, h1] = tramo(m, 0, 7);
+    const [d2, h2] = tramo(m, 8, ALTO_ROTULO_DOS_LINEAS);
+    expect(h1 - d1 + 1).toBe(anchoTexto("GIORGIAN DE") + 2);
+    expect(h2 - d2 + 1).toBe(anchoTexto("ARRASCAETA") + 2);
+  });
+
+  it("nunca acorta el nombre: si una línea no entra, el rótulo es más ancho que la caja", () => {
+    for (const nombre of ["Giorgian De Arrascaeta", "Juan Manuel Sanabria", "José María Giménez", "Nicolás de la Cruz"]) {
+      for (const ancho of [24, 30, 40, 48]) {
+        const m = rotuloCompleto(nombre, ancho);
+        const palabras = nombre.toUpperCase().split(" ");
+        // La línea más ancha posible de las dos es como mínimo la palabra más larga.
+        const minimo = Math.max(...palabras.map((p) => anchoTexto(p) + 2));
+        expect(m[0].length).toBeGreaterThanOrEqual(Math.max(ancho, minimo));
+        const pintadas = m.flat().filter((c) => c !== null).length;
+        expect(pintadas).toBeGreaterThan(0);
+      }
+    }
+  });
+});
+
+describe("disponer con el nombre completo en dos líneas (Selección)", () => {
+  it.each(casos)("%ix%i %s con %i suplentes: cajas más altas que no se pisan", (w, h, esquema, n) => {
+    const d = disponer({ ancho: w, alto: h, px: pxPara(w, h), esquema, suplentes: n, renglones: 2 });
+    for (const p of d.puestos) {
+      expect(p.alto).toBe(ALTO_CAJA_DOS_RENGLONES);
+      expect(adentro(p, d.cancha), `${p.id} ${JSON.stringify(p)}`).toBe(true);
+    }
+    for (let i = 0; i < d.puestos.length; i++)
+      for (let j = i + 1; j < d.puestos.length; j++)
+        expect(seSuperponen(d.puestos[i], d.puestos[j]), `${d.puestos[i].id} y ${d.puestos[j].id}`).toBe(false);
+    if (d.banco) expect(d.banco.altoItem).toBe(ALTO_CAJA_DOS_RENGLONES);
+  });
+
+  it("la caja de dos renglones es la de uno más una línea de texto", () => {
+    expect(ALTO_CAJA_DOS_RENGLONES).toBe(ALTO_CAJA + ALTO_ROTULO_DOS_LINEAS - 8);
   });
 });
 

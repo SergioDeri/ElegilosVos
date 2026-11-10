@@ -1,8 +1,8 @@
 // Tests de RLS del ticket 04 del feature Selección: el Admin con 2FA mantiene
 // el Plantel de la Selección (sin número, con Disponibilidad registrada como
 // en los Clubes) y carga, posterga y cancela Partidos de la Selección contra
-// Rivales del catálogo que no son un Club. Nadie más los escribe, y los
-// Hinchas todavía no ven nada de la Selección (ticket 05).
+// Rivales del catálogo que no son un Club. Nadie más los escribe (que los
+// Hinchas los lean lo prueba seleccion-05-votar).
 //
 // Además: un Partido de la Selección no rompe los procesos de los Clubes
 // (cierre, conteo, herencia). El cierre todavía no procesa la Selección
@@ -173,11 +173,6 @@ describe("Plantel de la Selección", () => {
     const { data } = await servicio.from("jugador").select("disponibilidad").eq("id", jugadorSeleccion).single();
     expect(data!.disponibilidad).toBe("disponible");
   });
-
-  it("los Hinchas todavía no ven el Plantel de la Selección", async () => {
-    const { data } = await clienteComo("hinchaPenarol").from("jugador").select("id").eq("club_id", "seleccion");
-    expect(data).toEqual([]);
-  });
 });
 
 describe("Partidos de la Selección", () => {
@@ -220,11 +215,6 @@ describe("Partidos de la Selección", () => {
     expect(cancelar.data ?? []).toEqual([]);
     const { data } = await servicio.from("partido").select("estado").eq("id", partidoSeleccion).single();
     expect(data!.estado).toBe("programado");
-  });
-
-  it("los Hinchas todavía no ven los Partidos de la Selección", async () => {
-    const { data } = await clienteComo("hinchaNacional").from("partido").select("id").eq("club_id", "seleccion");
-    expect(data).toEqual([]);
   });
 });
 

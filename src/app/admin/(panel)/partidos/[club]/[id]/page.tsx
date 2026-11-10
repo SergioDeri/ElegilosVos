@@ -16,7 +16,7 @@ import {
   FormularioReactivar,
   FormularioReprogramar,
 } from "../../../_partidos/formularios";
-import { AVISO_SELECCION, ETIQUETA_VOTACION, NUNCA_ABRE, ONCE_CONGELADO, TEXTO_RECHAZO } from "../../../_partidos/textos";
+import { ETIQUETA_VOTACION, NUNCA_ABRE, ONCE_CONGELADO, TEXTO_RECHAZO } from "../../../_partidos/textos";
 
 function horaActual(): Date {
   return new Date();
@@ -33,7 +33,7 @@ export default async function PaginaPartido({ params }: PageProps<"/admin/partid
   if (!partido) notFound();
 
   const ahora = horaActual();
-  const votacion = calcularVotaciones(partidos, ahora).find((v) => v.partidoId === id)!;
+  const votacion = calcularVotaciones(partidos, ahora, club).find((v) => v.partidoId === id)!;
   const [{ data: tieneAlineaciones }, { data: tieneResultado }, rivales] = await Promise.all([
     supabase.rpc("partido_tiene_alineaciones", { partido: id }),
     supabase.rpc("tiene_resultado", { partido: id }),
@@ -116,10 +116,8 @@ export default async function PaginaPartido({ params }: PageProps<"/admin/partid
         </>
       )}
 
-      {club === SELECCION ? (
-        <p>{AVISO_SELECCION}</p>
-      ) : (
-        // El 11 Real de la Selección llega con el ticket 11 del feature Selección.
+      {/* El 11 Real de la Selección llega con el ticket 11 del feature Selección. */}
+      {club !== SELECCION && (
         <>
           <h2>11 Real</h2>
           <p>

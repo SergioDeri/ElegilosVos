@@ -11,7 +11,7 @@ import { crearClienteServidor } from "@/lib/supabase/server";
 import { esClubOSeleccion, SELECCION } from "@/domain/comun/tipos";
 import { deClubOSeleccion } from "../../../_comun/etiquetas";
 import { cargarConOnceElegido, cargarPartidosDelClub } from "../../_partidos/datos";
-import { AVISO_SELECCION, ETIQUETA_VOTACION } from "../../_partidos/textos";
+import { ETIQUETA_VOTACION } from "../../_partidos/textos";
 
 function horaActual(): Date {
   return new Date();
@@ -26,16 +26,17 @@ export default async function PaginaPartidos({ params }: PageProps<"/admin/parti
   const [partidos, conOnceElegido] = await Promise.all([cargarPartidosDelClub(supabase, club), cargarConOnceElegido(supabase, club)]);
   const porId = new Map(partidos.map((p) => [p.id, p]));
   const ahora = horaActual();
-  const votaciones = calcularVotaciones(partidos, ahora);
+  const votaciones = calcularVotaciones(partidos, ahora, club);
 
   return (
     <main>
       <h1>Partidos {deClubOSeleccion(club)}</h1>
       <p>
-        <Link href={`/admin/partidos/${club}/nuevo`}>Cargar un Partido</Link> · Horas de Uruguay. La Votación abre cuando
-        termina el Partido anterior (o al cargarlo) y cierra 1 hora antes del inicio.
+        <Link href={`/admin/partidos/${club}/nuevo`}>Cargar un Partido</Link> · Horas de Uruguay.{" "}
+        {club === SELECCION
+          ? "La Votación abre 14 días antes del inicio (o al cargarlo, si es después) y cierra 1 hora antes del inicio; puede haber dos abiertas a la vez."
+          : "La Votación abre cuando termina el Partido anterior (o al cargarlo) y cierra 1 hora antes del inicio."}
       </p>
-      {club === SELECCION && <p>{AVISO_SELECCION}</p>}
       {votaciones.length === 0 ? (
         <p>No hay Partidos cargados.</p>
       ) : (

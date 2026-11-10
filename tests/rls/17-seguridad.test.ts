@@ -197,6 +197,7 @@ describe("funciones de public", () => {
         "mi_club_favorito()", // Club del propio usuario
         "partido_tiene_alineaciones(uuid)", // es_admin()
         "registrar_suscripcion_push(text,text,text,text)", // auth.uid(), endpoint secreto del navegador
+        "tengo_perfil()", // bool del propio usuario (Selección, ticket 05)
         "tiene_resultado(uuid)", // solo si existe el resultado (lo ve cualquier Hincha del Club)
       ].sort(),
     );

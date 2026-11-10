@@ -7,6 +7,8 @@ export type Decision = { tipo: "seguir" } | { tipo: "redirigir"; destino: string
 export const RUTA_LOGIN = "/login";
 export const RUTA_ELEGIR_CLUB = "/elegir-club";
 export const RUTA_INICIO = "/";
+/** Armado de la Alineación de la Selección (selector "mi club / Selección" de la barra). */
+export const RUTA_SELECCION = "/seleccion";
 /**
  * Limpia una sesión huérfana (JWT con firma válida de un usuario que ya no
  * existe, p. ej. borrado) y manda al login. Está bajo /auth, libre en el proxy.

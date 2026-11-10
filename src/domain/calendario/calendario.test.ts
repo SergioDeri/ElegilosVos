@@ -1,12 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { aHoraUyLocal, desdeHoraUy } from "@/domain/comun/horario";
+import { SELECCION } from "@/domain/comun/tipos";
 import {
+  APERTURA_SELECCION_ANTES_DEL_INICIO_MS,
   CIERRE_ANTES_DEL_INICIO_MS,
   DURACION_PARTIDO_MS,
   calcularVotaciones,
   cierreDeVotacion,
   finDePartido,
   votacionAbierta,
+  votacionesAbiertas,
   type PartidoCalendario,
 } from "./index";
 
@@ -254,5 +257,71 @@ describe("Calendario de Votación", () => {
     expect(DURACION_PARTIDO_MS).toBe(2 * 60 * 60 * 1000);
     expect(cierreDeVotacion(t("2026-11-10T23:00:00Z"))).toEqual(t("2026-11-10T22:00:00Z"));
     expect(finDePartido(t("2026-11-10T23:00:00Z"))).toEqual(t("2026-11-11T01:00:00Z"));
+  });
+});
+
+describe("Calendario de Votación de la Selección", () => {
+  const DIA = 24 * 60 * 60 * 1000;
+
+  it("abre 14 días antes del inicio y cierra 1 hora antes", () => {
+    const p = partido("s1", "2026-11-30T23:00:00Z", "2026-10-01T12:00:00Z");
+    const [v] = calcularVotaciones([p], ahora, SELECCION);
+    expect(APERTURA_SELECCION_ANTES_DEL_INICIO_MS).toBe(14 * DIA);
+    expect(v.abre).toEqual(t("2026-11-16T23:00:00Z"));
+    expect(v.cierra).toEqual(t("2026-11-30T22:00:00Z"));
+    expect(calcularVotaciones([p], masSegundos(v.abre, -1), SELECCION)[0].estado).toBe("pendiente");
+    expect(calcularVotaciones([p], v.abre, SELECCION)[0].estado).toBe("abierta");
+    expect(calcularVotaciones([p], masSegundos(v.cierra, -1), SELECCION)[0].estado).toBe("abierta");
+    expect(calcularVotaciones([p], v.cierra, SELECCION)[0].estado).toBe("cerrada");
+  });
+
+  it("un Partido cargado a menos de 14 días del inicio abre al cargarse", () => {
+    const p = partido("s1", "2026-11-20T23:00:00Z", "2026-11-12T10:00:00Z");
+    const [v] = calcularVotaciones([p], ahora, SELECCION);
+    expect(v).toMatchObject({ estado: "pendiente", abre: t("2026-11-12T10:00:00Z") });
+    expect(calcularVotaciones([p], t("2026-11-12T10:00:00Z"), SELECCION)[0].estado).toBe("abierta");
+  });
+
+  it("no depende del Partido anterior: en una fecha doble las dos Votaciones están abiertas a la vez", () => {
+    const ida = partido("ida", "2026-11-14T23:00:00Z", "2026-10-01T12:00:00Z");
+    const vuelta = partido("vuelta", "2026-11-19T23:00:00Z", "2026-10-01T12:00:00Z");
+    const abiertas = votacionesAbiertas([vuelta, ida], ahora, SELECCION);
+    expect(abiertas.map((v) => v.partidoId)).toEqual(["ida", "vuelta"]);
+    expect(abiertas[1].abre).toEqual(t("2026-11-05T23:00:00Z"));
+    // Cerrada la ida, la vuelta sigue abierta.
+    const despuesDeLaIda = votacionesAbiertas([ida, vuelta], t("2026-11-15T00:00:00Z"), SELECCION);
+    expect(despuesDeLaIda.map((v) => v.partidoId)).toEqual(["vuelta"]);
+  });
+
+  it("la postergación mueve la apertura y el cierre con el inicio", () => {
+    const p = partido("s1", "2026-11-20T23:00:00Z", "2026-10-01T12:00:00Z");
+    expect(votacionesAbiertas([p], ahora, SELECCION)).toHaveLength(1);
+    const postergado = { ...p, inicio: t("2026-12-04T23:00:00Z") };
+    expect(calcularVotaciones([postergado], ahora, SELECCION)[0]).toMatchObject({
+      estado: "pendiente",
+      abre: t("2026-11-20T23:00:00Z"),
+      cierra: t("2026-12-04T22:00:00Z"),
+    });
+  });
+
+  it("la cancelación anula la Votación y no cambia la de los demás Partidos", () => {
+    const ida = partido("ida", "2026-11-14T23:00:00Z", "2026-10-01T12:00:00Z", "cancelado");
+    const vuelta = partido("vuelta", "2026-11-19T23:00:00Z", "2026-10-01T12:00:00Z");
+    const [vIda, vVuelta] = calcularVotaciones([ida, vuelta], ahora, SELECCION);
+    expect(vIda.estado).toBe("anulada");
+    expect(vVuelta).toMatchObject({ estado: "abierta", abre: t("2026-11-05T23:00:00Z") });
+    expect(votacionesAbiertas([ida, vuelta], ahora, SELECCION).map((v) => v.partidoId)).toEqual(["vuelta"]);
+  });
+
+  it("los Clubes siguen con su regla: a lo sumo una abierta", () => {
+    const ida = partido("ida", "2026-11-14T23:00:00Z", "2026-10-01T12:00:00Z");
+    const vuelta = partido("vuelta", "2026-11-19T23:00:00Z", "2026-10-01T12:00:00Z");
+    for (const club of [undefined, "penarol", "nacional"] as const) {
+      expect(votacionesAbiertas([ida, vuelta], ahora, club).map((v) => v.partidoId)).toEqual(["ida"]);
+      expect(calcularVotaciones([ida, vuelta], ahora, club)[1]).toMatchObject({
+        estado: "pendiente",
+        abre: finDePartido(ida.inicio),
+      });
+    }
   });
 });

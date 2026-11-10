@@ -33,7 +33,7 @@ export function AvisoNoDisponibles({ alineacion, jugadores }: { alineacion: Alin
           const detalle = a.motivo !== "fuera_del_plantel" && jugador?.motivo ? `: ${jugador.motivo}` : "";
           return (
             <li key={a.puesto}>
-              {jugador ? `${jugador.numero} ${jugador.nombre}` : "Jugador"} ({etiqueta.get(a.puesto)}) — {MOTIVO[a.motivo]}
+              {jugador ? (jugador.numero === null ? jugador.nombre : `${jugador.numero} ${jugador.nombre}`) : "Jugador"} ({etiqueta.get(a.puesto)}) — {MOTIVO[a.motivo]}
               {detalle}
             </li>
           );

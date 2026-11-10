@@ -290,11 +290,17 @@ isOneToOne: false
 "programar_crons":
 { Args: Record<PropertyKey, never>; Returns: (string)[]
                            },
+"puedo_votar_partido":
+{ Args: { "partido": string }; Returns: boolean
+                           },
 "puestos_de_esquema":
 { Args: { "esquema": string }; Returns: (string)[]
                            },
 "registrar_suscripcion_push":
 { Args: { "p_auth": string,"p_endpoint": string,"p_p256dh": string,"p_user_agent"?: string }; Returns: undefined
+                           },
+"tengo_perfil":
+{ Args: Record<PropertyKey, never>; Returns: boolean
                            },
 "tiene_resultado":
 { Args: { "partido": string }; Returns: boolean

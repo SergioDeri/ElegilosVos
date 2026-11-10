@@ -433,6 +433,30 @@ describe("Motor de Conteo", () => {
       expect(candidatosDe(r, "DEL")?.map((c) => c.jugadorId)).toEqual(["dc", "otro9", "del5"]);
     });
 
+    it("en la Selección (sin número de camiseta) con votos y horas iguales decide el id", () => {
+      const sinNumero = (id: string) => jugador(id, 0, "DEL", { numero: null });
+      const jugadores = [jugador("arq", 0, "ARQ", { numero: null }), sinNumero("del-b"), sinNumero("del-a"), sinNumero("del-c")];
+      const alineaciones = [
+        alineacion("4-3-3", { DEL: "del-c" }),
+        alineacion("4-3-3", { DEL: "del-b" }),
+        alineacion("4-3-3", { DEL: "del-a" }),
+      ];
+      const r = contar({ alineaciones, jugadores });
+      expect(onceDe(r).DEL).toBe("del-a");
+      expect(candidatosDe(r, "DEL")?.map((c) => c.jugadorId)).toEqual(["del-a", "del-b", "del-c"]);
+      // El orden no depende del orden de entrada.
+      expect(contar({ alineaciones: [...alineaciones].reverse(), jugadores: [...jugadores].reverse() })).toEqual(r);
+    });
+
+    it("un Jugador sin número va después de los que tienen número", () => {
+      const jugadores = [...plantel, jugador("aaa-sin-numero", 0, "DEL", { numero: null })];
+      const r = contar({
+        alineaciones: [alineacion("4-3-3", { DEL: "aaa-sin-numero" }), alineacion("4-3-3", { DEL: "del5" })],
+        jugadores,
+      });
+      expect(candidatosDe(r, "DEL")?.map((c) => c.jugadorId)).toEqual(["del5", "aaa-sin-numero"]);
+    });
+
     it("empate de asignaciones completas: gana la de votos consolidados antes", () => {
       // dc tiene 1 voto en DEL y 1 en EXT_D; del5 1 en DEL; ed 1 en EXT_D.
       // dc→DEL + ed→EXT_D y dc→EXT_D + del5→DEL suman 2 votos las dos.

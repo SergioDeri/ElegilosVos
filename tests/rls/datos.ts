@@ -7,7 +7,7 @@
 //   // afterAll: borrar los Partidos de `creados` (Alineaciones y resultados en cascada).
 import { esquema, type PuestoId } from "@/domain/esquemas";
 import { votacionAbierta } from "@/domain/calendario";
-import type { ClubId, EstadoPartido } from "@/domain/comun/tipos";
+import type { ClubId, ClubOSeleccion, EstadoPartido } from "@/domain/comun/tipos";
 import { leerPartidos } from "@/lib/club/lecturas";
 import { clienteServicio } from "./helpers";
 
@@ -22,7 +22,7 @@ const iso = (t: Instante) => (typeof t === "string" ? t : t.toISOString());
  */
 export function creadorDePartidos(creados: string[], porDefecto: { creadoEn?: Instante } = {}) {
   return async function crearPartido(
-    club: ClubId,
+    club: ClubOSeleccion,
     inicio: Instante,
     opciones: { creadoEn?: Instante; estado?: EstadoPartido } = {},
   ): Promise<string> {
@@ -61,7 +61,7 @@ export async function partidoAbierto(club: ClubId): Promise<string> {
 }
 
 /** Jugadores del Plantel Disponibles, por número: el primer arquero, los de campo y los defensores. */
-export async function jugadoresDisponibles(club: ClubId) {
+export async function jugadoresDisponibles(club: ClubOSeleccion) {
   const { data, error } = await clienteServicio()
     .from("jugador")
     .select("id, posicion_natural")

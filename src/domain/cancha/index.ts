@@ -4,7 +4,7 @@
 // todo en píxeles de arte enteros y sin que ninguna Camiseta ni apellido se
 // pise con otro.
 import { esquema as esquemaDe, type EsquemaId, type PuestoId } from "@/domain/esquemas";
-import { LADO_ICONO, PALETA, anchoTexto, camiseta, textoBitmap, type Matriz } from "@/domain/pixel";
+import { ALTO_TEXTO, LADO_ICONO, PALETA, anchoTexto, camiseta, textoBitmap, type Matriz } from "@/domain/pixel";
 import { nombreCorto } from "@/domain/planteles";
 
 export type Orientacion = "vertical" | "horizontal";
@@ -66,6 +66,17 @@ export interface Disposicion {
 export const LADO_CAMISETA_EN_CANCHA = 24;
 /** Camiseta (24) más el apellido con contorno (8), apoyado en el ruedo. */
 export const ALTO_CAJA = 31;
+/**
+ * Caja con el nombre completo en dos renglones (Selección): la Camiseta y el
+ * rótulo de `rotuloCompleto` en dos líneas.
+ */
+export const ALTO_CAJA_DOS_RENGLONES = ALTO_CAJA + ALTO_TEXTO + 1;
+/** Renglones del rótulo de cada caja: 1 con el apellido (Clubes), 2 con el nombre completo (Selección). */
+export type Renglones = 1 | 2;
+
+function altoDeCaja(renglones: Renglones): number {
+  return renglones === 2 ? ALTO_CAJA_DOS_RENGLONES : ALTO_CAJA;
+}
 /** Ancho máximo de la caja de un Puesto (el apellido no se estira más). */
 const ANCHO_MAXIMO_CAJA = 48;
 /** Separación mínima entre cajas vecinas. */
@@ -96,6 +107,8 @@ export interface PedidoDeDisposicion {
   px: number;
   esquema: EsquemaId;
   suplentes: number;
+  /** Renglones del rótulo de cada caja (1 por defecto; 2 en la Selección, con el nombre completo). */
+  renglones?: Renglones;
 }
 
 /**
@@ -110,20 +123,21 @@ export function disponer(pedido: PedidoDeDisposicion): Disposicion {
   const alto = Math.floor(pedido.alto / pedido.px);
   const orientacion: Orientacion = pedido.alto > pedido.ancho ? "vertical" : "horizontal";
   const e = esquemaDe(pedido.esquema);
+  const altoCaja = altoDeCaja(pedido.renglones ?? 1);
 
   let ultima: { cancha: Rect; banco: Banco | null } | null = null;
   const anchos = pedido.suplentes > 0 ? ANCHOS_ITEM_BANCO : [0];
   for (const anchoItem of anchos) {
-    const partes = repartir(ancho, alto, orientacion, pedido.suplentes, anchoItem);
+    const partes = repartir(ancho, alto, orientacion, pedido.suplentes, anchoItem, altoCaja);
     ultima = partes;
     for (const escala of ESCALAS) {
-      const puestos = ubicar(e.puestos, partes.cancha.ancho, partes.cancha.alto, orientacion, escala);
+      const puestos = ubicar(e.puestos, partes.cancha.ancho, partes.cancha.alto, orientacion, altoCaja, escala);
       if (puestos) return { orientacion, ancho, alto, ...partes, puestos, dibujo: dibujoDeCancha(partes.cancha, orientacion) };
     }
   }
   // No entra ni con el banco más apretado: se ubica igual (puede pisarse).
   const partes = ultima!;
-  const puestos = ubicar(e.puestos, partes.cancha.ancho, partes.cancha.alto, orientacion, 1, true)!;
+  const puestos = ubicar(e.puestos, partes.cancha.ancho, partes.cancha.alto, orientacion, altoCaja, 1, true)!;
   return { orientacion, ancho, alto, ...partes, puestos, dibujo: dibujoDeCancha(partes.cancha, orientacion) };
 }
 
@@ -133,25 +147,26 @@ function repartir(
   orientacion: Orientacion,
   suplentes: number,
   anchoItem: number,
+  altoCaja: number,
 ): { cancha: Rect; banco: Banco | null } {
   if (suplentes === 0) return { cancha: { x: 0, y: 0, ancho, alto }, banco: null };
   const s = SEPARACION_BANCO;
   const y = ALTO_TITULO_BANCO + s;
   const largo = (n: number, item: number) => n * item + (n - 1) * s;
   const caben = (espacio: number, item: number) => Math.max(1, Math.floor((espacio + s) / (item + s)));
-  const comun = { anchoItem, altoItem: ALTO_CAJA, separacion: s };
+  const comun = { anchoItem, altoItem: altoCaja, separacion: s };
 
   if (orientacion === "vertical") {
     const entran = caben(ancho, anchoItem);
     let banco: Omit<Banco, "x" | "y" | "ancho" | "alto">;
     if (suplentes <= entran * FILAS_BANCO) {
       const filas = Math.ceil(suplentes / entran);
-      const ventana = { x: 0, y, ancho: largo(entran, anchoItem), alto: largo(filas, ALTO_CAJA) };
+      const ventana = { x: 0, y, ancho: largo(entran, anchoItem), alto: largo(filas, altoCaja) };
       banco = { ...comun, columnas: entran, filas, flujo: "row", ventana, desplazamiento: null, flechas: null };
     } else {
       // Flecha, aire, ventana, aire, flecha: la ventana muestra columnas enteras.
       const visibles = caben(ancho - 2 * (LADO_FLECHA + s), anchoItem);
-      const ventana = { x: LADO_FLECHA + s, y, ancho: largo(visibles, anchoItem), alto: largo(FILAS_BANCO, ALTO_CAJA) };
+      const ventana = { x: LADO_FLECHA + s, y, ancho: largo(visibles, anchoItem), alto: largo(FILAS_BANCO, altoCaja) };
       const yFlecha = y + Math.floor((ventana.alto - LADO_FLECHA) / 2);
       banco = {
         ...comun,
@@ -174,11 +189,11 @@ function repartir(
     };
   }
 
-  const entran = caben(alto - y, ALTO_CAJA);
+  const entran = caben(alto - y, altoCaja);
   if (suplentes <= entran * COLUMNAS_BANCO) {
     const columnas = Math.min(COLUMNAS_BANCO, Math.ceil(suplentes / entran));
     const filas = Math.ceil(suplentes / columnas);
-    const ventana = { x: 0, y, ancho: largo(columnas, anchoItem), alto: largo(filas, ALTO_CAJA) };
+    const ventana = { x: 0, y, ancho: largo(columnas, anchoItem), alto: largo(filas, altoCaja) };
     const anchoBanco = Math.max(anchoTexto(TITULO_BANCO), ventana.ancho);
     return {
       cancha: { x: 0, y: 0, ancho: Math.max(0, ancho - anchoBanco - SEPARACION_CANCHA_BANCO), alto },
@@ -186,8 +201,8 @@ function repartir(
     };
   }
   // Flecha arriba, ventana con filas enteras y flecha abajo.
-  const visibles = caben(alto - y - 2 * (LADO_FLECHA + s), ALTO_CAJA);
-  const ventana = { x: 0, y: y + LADO_FLECHA + s, ancho: largo(COLUMNAS_BANCO, anchoItem), alto: largo(visibles, ALTO_CAJA) };
+  const visibles = caben(alto - y - 2 * (LADO_FLECHA + s), altoCaja);
+  const ventana = { x: 0, y: y + LADO_FLECHA + s, ancho: largo(COLUMNAS_BANCO, anchoItem), alto: largo(visibles, altoCaja) };
   const anchoBanco = Math.max(anchoTexto(TITULO_BANCO), ventana.ancho);
   const xFlecha = Math.floor((ventana.ancho - LADO_FLECHA) / 2);
   return {
@@ -233,13 +248,14 @@ function ubicar(
   ancho: number,
   alto: number,
   orientacion: Orientacion,
+  altoCaja: number,
   escala: number,
   aunqueSePisen = false,
 ): PuestoEnCancha[] | null {
   const vertical = orientacion === "vertical";
   // Margen para que la caja (Camiseta arriba, apellido abajo) quede adentro.
   const arriba = MEDIA_CAMISETA + 1;
-  const abajo = ALTO_CAJA - MEDIA_CAMISETA + 1;
+  const abajo = altoCaja - MEDIA_CAMISETA + 1;
   const costado = vertical ? MEDIA_CAMISETA + 1 : MEDIA_CAMISETA + 5;
   // Eje lateral (de izquierda a derecha del equipo) y eje de profundidad
   // (del arco propio al rival), en coordenadas de pantalla.
@@ -250,8 +266,8 @@ function ubicar(
   if (lateral.hasta < lateral.desde || (profundidad.hasta - profundidad.desde) * profundidad.sentido < 0)
     return aunqueSePisen ? [] : null;
   // Distancia mínima entre centros para que dos Camisetas no se pisen.
-  const sepLateral = vertical ? LADO_CAMISETA_EN_CANCHA + AIRE : ALTO_CAJA + 1;
-  const sepProfundidad = vertical ? ALTO_CAJA + 1 : LADO_CAMISETA_EN_CANCHA + AIRE;
+  const sepLateral = vertical ? LADO_CAMISETA_EN_CANCHA + AIRE : altoCaja + 1;
+  const sepProfundidad = vertical ? altoCaja + 1 : LADO_CAMISETA_EN_CANCHA + AIRE;
 
   const ys = puestos.map((p) => p.y);
   const yMin = Math.min(...ys);
@@ -285,11 +301,11 @@ function ubicar(
   for (const { p, cx, cy } of centros) {
     let limite = Math.min(ANCHO_MAXIMO_CAJA, 2 * cx, 2 * (ancho - cx));
     for (const o of centros)
-      if (o.p !== p && Math.abs(o.cy - cy) < ALTO_CAJA + 1) limite = Math.min(limite, Math.abs(o.cx - cx) - AIRE);
+      if (o.p !== p && Math.abs(o.cy - cy) < altoCaja + 1) limite = Math.min(limite, Math.abs(o.cx - cx) - AIRE);
     const anchoCaja = limite - (limite % 2);
     if (anchoCaja < LADO_CAMISETA_EN_CANCHA && !aunqueSePisen) return null;
     const a = Math.max(anchoCaja, LADO_CAMISETA_EN_CANCHA);
-    cajas.push({ id: p.id, sigla: p.sigla, etiqueta: p.etiqueta, x: cx - a / 2, y: cy - MEDIA_CAMISETA, ancho: a, alto: ALTO_CAJA });
+    cajas.push({ id: p.id, sigla: p.sigla, etiqueta: p.etiqueta, x: cx - a / 2, y: cy - MEDIA_CAMISETA, ancho: a, alto: altoCaja });
   }
   // En el orden del catálogo.
   return puestos.map((p) => cajas.find((c) => c.id === p.id)!);
@@ -304,9 +320,43 @@ function ubicar(
  * matriz de exactamente `ancho` columnas. Si no entra, se acorta con un punto.
  */
 export function rotulo(nombre: string, ancho: number): Matriz {
-  const texto = apellidoQueEntra(nombre, ancho);
-  const m = textoBitmap(texto, "cal", { contorno: true });
-  const sobra = ancho - (m[0]?.length ?? 0);
+  return centrada(textoBitmap(apellidoQueEntra(nombre, ancho), "cal", { contorno: true }), ancho);
+}
+
+/** Alto de una línea de rótulo con contorno. */
+const ALTO_LINEA = ALTO_TEXTO + 2;
+/** Alto del rótulo en dos líneas: la segunda comparte con la primera una fila de contorno. */
+export const ALTO_ROTULO_DOS_LINEAS = 2 * ALTO_LINEA - 1;
+
+/**
+ * El nombre completo del Jugador (en la Selección, que no lleva número), en
+ * texto bitmap con contorno y centrado en `ancho` columnas. Si no entra en una
+ * línea, va en dos, cortando entre palabras donde la más ancha de las dos
+ * quede más angosta. **Nunca se acorta**: si aun así una línea no entra (una
+ * palabra muy larga o una caja angosta), la matriz es más ancha que `ancho` y
+ * quien la dibuja la centra sobre su caja.
+ */
+export function rotuloCompleto(nombre: string, ancho: number): Matriz {
+  const palabras = nombre.trim().split(/\s+/);
+  const completo = palabras.join(" ");
+  const anchoLinea = (t: string) => anchoTexto(t) + 2;
+  if (palabras.length === 1 || anchoLinea(completo) <= ancho) {
+    return centrada(textoBitmap(completo, "cal", { contorno: true }), Math.max(ancho, anchoLinea(completo)));
+  }
+  let lineas: [string, string] = [palabras[0], palabras.slice(1).join(" ")];
+  for (let i = 2; i < palabras.length; i++) {
+    const candidata: [string, string] = [palabras.slice(0, i).join(" "), palabras.slice(i).join(" ")];
+    if (Math.max(...candidata.map(anchoLinea)) < Math.max(...lineas.map(anchoLinea))) lineas = candidata;
+  }
+  const total = Math.max(ancho, ...lineas.map(anchoLinea));
+  const [arriba, abajo] = lineas.map((l) => centrada(textoBitmap(l, "cal", { contorno: true }), total));
+  // La última fila de la primera línea y la primera de la segunda son contorno: se superponen.
+  return [...arriba.slice(0, ALTO_LINEA - 1), arriba[ALTO_LINEA - 1].map((c, x) => c ?? abajo[0][x]), ...abajo.slice(1)];
+}
+
+/** La matriz centrada en exactamente `ancho` columnas (si es más angosta). */
+function centrada(m: Matriz, ancho: number): Matriz {
+  const sobra = Math.max(0, ancho - (m[0]?.length ?? 0));
   const izquierda = Math.floor(sobra / 2);
   return m.map((fila) => [
     ...Array<string | null>(izquierda).fill(null),

@@ -129,17 +129,21 @@ export function ventanaVacia(votacion: Votacion): boolean {
  * congelado. Esa Votación es definitiva (no se reabre aunque el Calendario
  * la vea pendiente o abierta), así que no se avisa nada sobre ella; sí sobre
  * lo que el cambio provoca en las demás.
+ *
+ * `de`: el Club o la Selección de los Partidos (cada uno con su regla de
+ * apertura; ver `calcularVotaciones`).
  */
 export function analizarCambio(
   antes: readonly PartidoCalendario[],
   despues: readonly PartidoCalendario[],
   ahora: Date,
   conOnceElegido: ReadonlySet<string> = new Set(),
+  de?: ClubOSeleccion,
 ): AvisoCambio[] {
-  const previas = new Map(calcularVotaciones(antes, ahora).map((v) => [v.partidoId, v]));
+  const previas = new Map(calcularVotaciones(antes, ahora, de).map((v) => [v.partidoId, v]));
   const avisos: AvisoCambio[] = [];
 
-  for (const v of calcularVotaciones(despues, ahora)) {
+  for (const v of calcularVotaciones(despues, ahora, de)) {
     const previa = previas.get(v.partidoId);
     previas.delete(v.partidoId);
     if (conOnceElegido.has(v.partidoId)) continue;

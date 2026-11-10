@@ -59,6 +59,12 @@ describe("contarVotacion (filas de la base → Motor de Conteo)", () => {
     expect(r.once.find((a) => a.puesto === "ARQ")?.jugadorId).toBe("arq2");
   });
 
+  it("cuenta los Jugadores de la Selección, que no llevan número", () => {
+    const deLaSeleccion: FilaJugadorParaConteo[] = jugadores.map((j) => ({ ...j, numero: null }));
+    const resultado = contarVotacion([fila({ ARQ: "arq", LI: "def" })], deLaSeleccion);
+    expect(resultado).toMatchObject({ vacio: false, alineacionesQueCuentan: 1 });
+  });
+
   it("una fila ilegible no rompe el conteo (se lee como Alineación vacía)", () => {
     const r = contarVotacion([fila({ ARQ: "arq" }), { ...fila({}), esquema: "9-9-9", puestos: "basura" }], jugadores);
     expect(r.alineacionesQueCuentan).toBe(1);

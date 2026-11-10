@@ -78,3 +78,21 @@ a.marca:any-link {
 .vos {
   color: var(--color-amarillo);
 }
+
+/* Selector "mi club / Selección": dos pestañas; la actual, subrayada y sin enlace aparente. */
+.selector {
+  display: flex;
+  gap: calc(3 * var(--u));
+  margin-left: auto;
+}
+
+.selector a {
+  padding: var(--u) calc(2 * var(--u));
+  text-decoration: none;
+  opacity: 0.75;
+}
+
+.selector a[aria-current="page"] {
+  opacity: 1;
+  box-shadow: inset 0 calc(-1 * var(--u)) 0 0 currentColor;
+}

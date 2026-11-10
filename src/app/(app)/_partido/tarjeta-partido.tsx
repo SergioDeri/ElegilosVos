@@ -8,10 +8,11 @@ import type { PartidoDelClub } from "@/lib/club/lecturas";
 import { Escudo } from "@/app/_pixel/escudo";
 import { Icono } from "@/app/_pixel/icono";
 import { CuentaRegresiva } from "../_alineacion/cuenta-regresiva";
-import type { cargarPartidoEnPantalla } from "./pantalla";
+import { SELECCION } from "@/domain/comun/tipos";
+import type { PantallaDePartido } from "./pantalla";
 import estilos from "./partido.module.css";
 
-type EnPantalla = Awaited<ReturnType<typeof cargarPartidoEnPantalla>>;
+type EnPantalla = PantallaDePartido;
 
 export function TarjetaPartido(props: {
   pantalla: EnPantalla;
@@ -43,6 +44,7 @@ export function TarjetaPartido(props: {
         abre={votacion.abre}
         cierra={votacion.cierra}
         finDelPartido={finDePartido(partido.inicio)}
+        seleccion={pantalla.de === SELECCION}
       />
     </section>
   );
@@ -55,7 +57,12 @@ function MensajeVotacion(props: {
   abre: Date;
   cierra: Date;
   finDelPartido: Date;
+  /** En la Selección la Votación siguiente no abre al terminar este Partido (abre 14 días antes del suyo). */
+  seleccion: boolean;
 }) {
+  const siguiente = props.seleccion
+    ? ""
+    : ` La del próximo Partido abre cuando termine este (${formatearHoraUy(props.finDelPartido)}).`;
   // La Votación ya cerró y su resultado quedó congelado, pero el Partido se
   // postergó o se canceló después: el Calendario ya no refleja ese cierre.
   if (props.conOnceElegido) {
@@ -67,7 +74,7 @@ function MensajeVotacion(props: {
     ) : (
       <p role="status">
         La Votación de este Partido ya cerró y el 11 Elegido quedó congelado: aunque el Partido cambió de fecha, no se
-        reabre. {enlace}. La del próximo Partido abre cuando termine este ({formatearHoraUy(props.finDelPartido)}).
+        reabre. {enlace}.{siguiente}
       </p>
     );
   }
@@ -92,8 +99,8 @@ function MensajeVotacion(props: {
       return (
         <p role="status">
           <Icono nombre="cierre" />
-          La Votación de este Partido cerró el {formatearHoraUy(props.cierra)}. Tu Alineación ya no se puede cambiar. La
-          del próximo Partido abre cuando termine este ({formatearHoraUy(props.finDelPartido)}).
+          La Votación de este Partido cerró el {formatearHoraUy(props.cierra)}. Tu Alineación ya no se puede cambiar.
+          {siguiente}
         </p>
       );
     case "anulada":
