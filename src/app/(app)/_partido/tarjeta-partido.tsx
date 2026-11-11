@@ -21,16 +21,18 @@ export function TarjetaPartido(props: {
 }) {
   const { pantalla, partido, votacion } = props;
   const rival = partido.rival?.nombre ?? "Rival a confirmar";
+  // En la tarjeta del Partido la Selección juega como el país, no como "Selección".
+  const local = pantalla.de === SELECCION ? "Uruguay" : pantalla.club;
   return (
     <section className={estilos.partido} aria-label="Próximo Partido">
       <div className={estilos.rival}>
         <div className={estilos.escudos}>
-          <Escudo nombre={pantalla.club} url={urlEscudo(pantalla.supabase, pantalla.escudoDelClub)} />
+          <Escudo nombre={local} url={urlEscudo(pantalla.supabase, pantalla.escudoDelClub)} />
           <Escudo nombre={rival} url={urlEscudo(pantalla.supabase, partido.rival?.escudoPath ?? null)} />
         </div>
         <div>
           <h2 className={estilos.titulo}>
-            {pantalla.club} vs {rival}
+            {local} vs {rival}
           </h2>
           <p className={estilos.fecha}>
             <time dateTime={partido.inicio.toISOString()}>{formatearHoraUy(partido.inicio)}</time> (hora de Uruguay)
