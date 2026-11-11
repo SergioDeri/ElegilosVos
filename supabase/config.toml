@@ -461,7 +461,10 @@ project_id = "zfzwhyvufzpboavbwcdn"
 
 [remotes.produccion.auth]
 site_url = "env(PROD_SITE_URL)"
-additional_redirect_urls = ["env(PROD_AUTH_CALLBACK_URL)"]
+# La segunda URL deja seguir entrando con Google desde el dominio de Vercel:
+# si no está en la lista, Supabase manda la vuelta al Site URL y en ese dominio
+# no está la cookie de PKCE, así que el canje del código falla.
+additional_redirect_urls = ["env(PROD_AUTH_CALLBACK_URL)", "https://elegilosvos.vercel.app/auth/callback"]
 
 [remotes.produccion.auth.email]
 secure_password_change = true
