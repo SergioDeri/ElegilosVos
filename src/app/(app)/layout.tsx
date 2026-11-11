@@ -10,6 +10,9 @@
 // hay selector "mi club / Selección" ni links a pantallas de un Club. Hincha
 // con Club: el selector y, una vez por dispositivo, el aviso de la Selección.
 //
+// Notificaciones: mientras este navegador no las tenga activadas, un aviso
+// arriba de todo invita a activarlas (ver aviso-notificaciones).
+//
 // Tema: los acentos y la barra del sistema toman los colores del Club
 // Favorito (`data-club`, ver @/domain/pixel).
 import type { Viewport } from "next";
@@ -21,6 +24,7 @@ import { NOMBRE_CLUB } from "@/domain/comun/textos";
 import { MenuUsuario } from "./_barra/menu-usuario";
 import { SelectorHinchada } from "./_barra/selector-hinchada";
 import { AvisoSeleccion } from "./_seleccion/aviso-seleccion";
+import { AvisoNotificaciones } from "./cuenta/_notificaciones/aviso-notificaciones";
 import barra from "./_barra/barra.module.css";
 
 export async function generateViewport(): Promise<Viewport> {
@@ -40,6 +44,7 @@ export default async function LayoutApp({ children }: LayoutProps<"/">) {
         {club && <SelectorHinchada club={NOMBRE_CLUB[club]} />}
         <MenuUsuario conClub={club !== null} />
       </header>
+      <AvisoNotificaciones clavePublica={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? ""} />
       {club && <AvisoSeleccion />}
       {children}
     </div>
