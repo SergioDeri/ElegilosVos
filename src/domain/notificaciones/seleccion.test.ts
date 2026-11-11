@@ -62,7 +62,7 @@ describe("abrió la Votación de la Selección", () => {
     expect(claves(avisos)).toEqual(["con-club votacion_abierta peru", "sin-club votacion_abierta peru"]);
     expect(avisos[0]!.mensaje.cuerpo).toContain("Perú");
     expect(avisos[0]!.mensaje.titulo).toContain("Selección");
-    expect(avisos[0]!.mensaje.url).toBe("/seleccion?partido=peru");
+    expect(avisos[0]!.mensaje.url).toBe("/seleccion/mi-alineacion?partido=peru");
   });
 });
 
@@ -73,7 +73,7 @@ describe("fecha doble", () => {
     const vene = avisos.find((a) => a.referencia === "vene")!.mensaje;
     expect(vene.cuerpo).toContain("Venezuela");
     expect(vene.cuerpo).not.toContain("Perú");
-    expect(vene.url).toBe("/seleccion?partido=vene");
+    expect(vene.url).toBe("/seleccion/mi-alineacion?partido=vene");
     expect(new Set(avisos.map((a) => a.mensaje.etiqueta)).size).toBe(2);
   });
 

@@ -50,6 +50,7 @@ test("registro con \"solo Selección\": arma y guarda, lo invitan a elegir Club 
   await expect(page.getByRole("link", { name: "Mis formaciones" })).toHaveCount(0);
   await page.goto("/mis-formaciones");
   await expect(page).toHaveURL("/seleccion");
+  await page.getByRole("link", { name: "Ver mi alineación" }).click();
 
   // Todavía no guardó nada: no hay invitación.
   const invitacion = page.getByRole("status", { name: "Elegí tu Club" });

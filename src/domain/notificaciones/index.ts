@@ -421,8 +421,8 @@ function mensajeCierraPronto(partido: PartidoParaAvisos): AvisoSinHincha {
   };
 }
 
-/** Pantalla de la Selección con el Partido elegido (en una fecha doble hay dos). */
-const urlDeLaSeleccion = (partido: PartidoParaAvisos) => `/seleccion?partido=${partido.id}`;
+/** Armado de la Selección con el Partido elegido (en una fecha doble hay dos). */
+const urlDeLaSeleccion = (partido: PartidoParaAvisos) => `/seleccion/mi-alineacion?partido=${partido.id}`;
 
 function mensajeVotacionAbiertaSeleccion(partido: PartidoParaAvisos): AvisoSinHincha {
   return {

@@ -50,6 +50,12 @@ test("fecha doble: el Hincha elige el Partido, la segunda arranca con la copia d
   await expect(page).toHaveURL("/seleccion");
   await expect(selector.getByRole("link", { name: "Selección" })).toHaveAttribute("aria-current", "page");
 
+  // Primero el Parcial; el armado está en "Ver mi alineación", como en el Club.
+  await expect(page.getByRole("region", { name: "El 11 que va ganando" })).toBeVisible();
+  await page.getByRole("link", { name: "Ver mi alineación" }).click();
+  await expect(page).toHaveURL(`/seleccion/mi-alineacion?partido=${peru}`);
+  await expect(selector.getByRole("link", { name: "Selección" })).toHaveAttribute("aria-current", "page");
+
   // Dos Votaciones abiertas: elige el Partido; arranca por el primero.
   const partidos = page.getByRole("navigation", { name: "Elegí el Partido" });
   await expect(partidos.getByRole("link")).toHaveCount(2);
@@ -84,6 +90,7 @@ test("un Hincha de Nacional arma su Alineación de la Selección y sigue ahí al
   await iniciarSesion(page, hincha);
 
   await page.getByRole("navigation", { name: "Club o Selección" }).getByRole("link", { name: "Selección" }).click();
+  await page.getByRole("link", { name: "Ver mi alineación" }).click();
   await expect(page.getByRole("heading", { name: `Selección vs ${PERU}` })).toBeVisible();
   await colocar(page, "Giorgian De Arrascaeta", "MED", "Lateral izquierdo");
   await expect.poll(() => guardada(hincha.id, peru)).toEqual({ LI: "Giorgian De Arrascaeta" });

@@ -9,7 +9,7 @@ test("en la Selección, la búsqueda filtra el banco por nombre sin importar til
 }) => {
   const hincha = await crearHincha({ club: "penarol" });
   await iniciarSesion(page, hincha);
-  await page.goto("/seleccion");
+  await page.goto("/seleccion/mi-alineacion");
 
   const banco = page.getByRole("group", { name: /^Suplentes/ });
   const buscar = page.getByRole("searchbox", { name: "Buscar suplente" });

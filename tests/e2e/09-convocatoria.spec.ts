@@ -53,7 +53,7 @@ test("con Convocatoria, el armado marca a los convocados y el Parcial muestra el
     if (error) throw error;
     await iniciarSesion(page, hincha);
 
-    await page.goto(`/seleccion?partido=${partido.id}`);
+    await page.goto(`/seleccion/mi-alineacion?partido=${partido.id}`);
     await expect(page.getByText("Ya salió la Convocatoria")).toBeVisible();
     // En la cancha, el convocado y el no convocado (que se pudo poner igual).
     await expect(page.getByRole("button", { name: /Sergio Rochet, convocado/ })).toBeVisible();
