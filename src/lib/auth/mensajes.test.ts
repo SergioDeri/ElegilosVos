@@ -20,7 +20,17 @@ describe("mensajeDeErrorAuth", () => {
     expect(mensajeDeErrorAuth({ code: "weak_password", status: 422 })).toMatch(/8 caracteres/);
   });
 
-  it("un error desconocido da un mensaje genérico", () => {
-    expect(mensajeDeErrorAuth({ code: "algo_raro", status: 500 })).toBe("Algo salió mal. Probá de nuevo.");
+  it("la contraseña débil también cubre las filtradas", () => {
+    expect(mensajeDeErrorAuth({ code: "weak_password", status: 422 })).toMatch(/filtraciones/);
+  });
+
+  it("un error desconocido da un mensaje genérico con el código para reportarlo", () => {
+    expect(mensajeDeErrorAuth({ code: "algo_raro", status: 500 })).toBe("Algo salió mal (algo_raro). Probá de nuevo.");
+    expect(mensajeDeErrorAuth({ status: 500 })).toBe("Algo salió mal (HTTP 500). Probá de nuevo.");
+    expect(mensajeDeErrorAuth({})).toBe("Algo salió mal. Probá de nuevo.");
+  });
+
+  it("sin conexión lo dice", () => {
+    expect(mensajeDeErrorAuth({ status: 0 })).toMatch(/conexión/);
   });
 });

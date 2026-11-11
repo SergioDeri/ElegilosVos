@@ -9,8 +9,7 @@ import { useState, type FormEvent } from "react";
 import { mensajeDeErrorAuth } from "@/lib/auth/mensajes";
 import { crearClienteNavegador } from "@/lib/supabase/client";
 import { BotonReenviar } from "../(auth)/_componentes/boton-reenviar";
-
-const LARGO_MINIMO = 8; // igual a auth.minimum_password_length (supabase/config.toml)
+import { ContrasenaNueva, NO_COINCIDEN } from "../(auth)/_componentes/contrasena-nueva";
 
 export function FormularioRecuperar() {
   const router = useRouter();
@@ -42,7 +41,7 @@ export function FormularioRecuperar() {
     const codigo = String(datos.get("codigo") ?? "").trim();
     const password = String(datos.get("password") ?? "");
     if (password !== String(datos.get("repetida") ?? "")) {
-      setError("Las contraseñas no coinciden.");
+      setError(NO_COINCIDEN);
       return;
     }
 
@@ -107,14 +106,7 @@ export function FormularioRecuperar() {
             required
           />
         </label>
-        <label>
-          Contraseña nueva (mínimo {LARGO_MINIMO} caracteres)
-          <input name="password" type="password" autoComplete="new-password" minLength={LARGO_MINIMO} required />
-        </label>
-        <label>
-          Repetí la contraseña nueva
-          <input name="repetida" type="password" autoComplete="new-password" minLength={LARGO_MINIMO} required />
-        </label>
+        <ContrasenaNueva etiqueta="Contraseña nueva" etiquetaRepetida="Repetí la contraseña nueva" />
         {error && <p role="alert">{error}</p>}
         <button type="submit" disabled={cargando}>
           Cambiar contraseña

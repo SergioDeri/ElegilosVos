@@ -4,8 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { mensajeDeErrorAuth } from "@/lib/auth/mensajes";
 import { crearClienteNavegador } from "@/lib/supabase/client";
-
-const LARGO_MINIMO = 8; // igual a auth.minimum_password_length (supabase/config.toml)
+import { ContrasenaNueva, NO_COINCIDEN } from "../_componentes/contrasena-nueva";
 
 export function FormularioRegistro() {
   const router = useRouter();
@@ -20,7 +19,7 @@ export function FormularioRegistro() {
     const repetida = String(datos.get("repetida") ?? "");
 
     if (password !== repetida) {
-      setError("Las contraseñas no coinciden.");
+      setError(NO_COINCIDEN);
       return;
     }
 
@@ -44,14 +43,7 @@ export function FormularioRegistro() {
         Email
         <input name="email" type="email" autoComplete="email" required />
       </label>
-      <label>
-        Contraseña (mínimo {LARGO_MINIMO} caracteres)
-        <input name="password" type="password" autoComplete="new-password" minLength={LARGO_MINIMO} required />
-      </label>
-      <label>
-        Repetí la contraseña
-        <input name="repetida" type="password" autoComplete="new-password" minLength={LARGO_MINIMO} required />
-      </label>
+      <ContrasenaNueva etiqueta="Contraseña" etiquetaRepetida="Repetí la contraseña" />
       {error && <p role="alert">{error}</p>}
       <button type="submit" disabled={cargando}>
         Crear cuenta
