@@ -124,3 +124,16 @@ describe("el PNG del escudo de la Selección en el repo (assets/escudos/seleccio
     expect(new Uint8Array(readFileSync(ruta))).toEqual(png);
   });
 });
+
+describe("los escudos estáticos de la app (public/escudos, cargados por migración)", () => {
+  const leer = (ruta: string) => new Uint8Array(readFileSync(fileURLToPath(new URL(ruta, import.meta.url))));
+
+  it("el de la Selección es el mismo PNG del repo", () => {
+    expect(leer("../../../public/escudos/seleccion.png")).toEqual(leer("../../../assets/escudos/seleccion.png"));
+  });
+
+  it.each(["seleccion", "argentina"])("%s pasa la validación de escudos (PNG 48x48)", (nombre) => {
+    const png = leer(`../../../public/escudos/${nombre}.png`);
+    expect(validarEscudo({ tamano: png.length, cabecera: png.subarray(0, CABECERA_ESCUDO) })).toEqual({ ok: true, tipo: "image/png", extension: "png" });
+  });
+});

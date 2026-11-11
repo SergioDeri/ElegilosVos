@@ -24,7 +24,7 @@ import {
 } from "@/domain/partidos";
 import { requerirAdminEnAccion } from "@/lib/auth/admin";
 import { MENSAJE_ESCUDO, archivoElegido, leerEscudo, subirEscudo, type EscudoLeido } from "@/lib/imagenes/subida";
-import { BUCKET_ESCUDOS } from "@/lib/imagenes/subida";
+import { BUCKET_ESCUDOS, esEscudoDelBucket } from "@/lib/imagenes/subida";
 import { cargarConOnceElegido, cargarPartidosDelClub, cargarRivales, type PartidoAdmin } from "./datos";
 import { TEXTO_RECHAZO, textosDeAvisos } from "./textos";
 
@@ -132,7 +132,7 @@ export async function quitarEscudo(id: string): Promise<void> {
   const { data: rival } = await supabase.from("rival").select("escudo_path").eq("id", id).maybeSingle();
   if (!rival?.escudo_path) return;
   const { error } = await supabase.from("rival").update({ escudo_path: null }).eq("id", id);
-  if (!error) await supabase.storage.from(BUCKET_ESCUDOS).remove([rival.escudo_path]);
+  if (!error && esEscudoDelBucket(rival.escudo_path)) await supabase.storage.from(BUCKET_ESCUDOS).remove([rival.escudo_path]);
   refresh();
 }
 
@@ -149,7 +149,7 @@ export async function borrarRival(id: string): Promise<void> {
   const { data, error } = await supabase.from("rival").delete().eq("id", id).select("escudo_path");
   if (error || data.length === 0) redirect(`/admin/rivales/${id}?aviso=borrar`);
   const escudo = data[0]?.escudo_path;
-  if (escudo) await supabase.storage.from(BUCKET_ESCUDOS).remove([escudo]);
+  if (escudo && esEscudoDelBucket(escudo)) await supabase.storage.from(BUCKET_ESCUDOS).remove([escudo]);
   redirect("/admin/rivales");
 }
 

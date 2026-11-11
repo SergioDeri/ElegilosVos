@@ -9,9 +9,19 @@ import type { Database } from "@/lib/supabase/database.types";
 
 export const BUCKET_ESCUDOS = "escudos";
 
-/** URL pública de un escudo (de Club o de Rival) del bucket, o null si no hay. */
+/**
+ * Un `escudo_path` que empieza con "/" es un archivo estático de la app
+ * (`public/escudos/...`, cargado por migración sin pasar por el bucket); si
+ * no, es una ruta del bucket `escudos` (lo subió el Admin).
+ */
+export function esEscudoDelBucket(path: string): boolean {
+  return !path.startsWith("/");
+}
+
+/** URL pública de un escudo (de Club o de Rival): del bucket o estático de la app; null si no hay. */
 export function urlEscudo(supabase: SupabaseClient<Database>, path: string | null): string | null {
-  return path ? supabase.storage.from(BUCKET_ESCUDOS).getPublicUrl(path).data.publicUrl : null;
+  if (!path) return null;
+  return esEscudoDelBucket(path) ? supabase.storage.from(BUCKET_ESCUDOS).getPublicUrl(path).data.publicUrl : path;
 }
 
 /** Mensaje para el Admin por cada motivo de rechazo. */
@@ -62,6 +72,7 @@ export async function subirEscudo(
     await supabase.storage.from(BUCKET_ESCUDOS).remove([ruta]);
     return false;
   }
-  if (anterior) await supabase.storage.from(BUCKET_ESCUDOS).remove([anterior]);
+  // Un escudo estático de la app no está en el bucket: no hay nada que borrar.
+  if (anterior && esEscudoDelBucket(anterior)) await supabase.storage.from(BUCKET_ESCUDOS).remove([anterior]);
   return true;
 }
