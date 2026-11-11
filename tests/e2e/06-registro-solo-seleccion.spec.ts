@@ -27,8 +27,19 @@ test("registro con \"solo Selección\": arma y guarda, lo invitan a elegir Club 
 
   // El selector de Club del registro ofrece votar solo por la Selección y explica que el Club se elige después.
   await expect(page).toHaveURL("/elegir-club");
-  await expect(page.getByText("podés elegir tu Club más tarde")).toBeVisible();
-  await page.getByRole("button", { name: "Quiero votar solo por la Selección" }).click();
+  // La Selección aparece como una opción más, con su escudo; el aviso llega en la confirmación.
+  const opcionSeleccion = page.getByRole("button", { name: "Escudo de Selección Solo la Selección" });
+  await expect(opcionSeleccion.getByRole("img", { name: "Escudo de Selección" })).toBeVisible();
+  await expect(page.getByText("podés elegir tu Club más tarde")).toHaveCount(0);
+  await opcionSeleccion.click();
+  const confirmacion = page.getByRole("alertdialog", { name: "¿Votás solo por la Selección?" });
+  await expect(confirmacion.getByText("Por ahora no vas a poder votar por ningún Club.")).toBeVisible();
+  await expect(confirmacion.getByText("podés elegir tu Club más tarde")).toBeVisible();
+  // Volver no elige nada.
+  await confirmacion.getByRole("button", { name: "Volver" }).click();
+  await expect(page).toHaveURL("/elegir-club");
+  await opcionSeleccion.click();
+  await page.getByRole("button", { name: "Sí, solo la Selección" }).click();
 
   // Entra directo a la Selección, sin selector ni pantallas de Clubes.
   await expect(page).toHaveURL("/seleccion");
@@ -62,7 +73,7 @@ test("registro con \"solo Selección\": arma y guarda, lo invitan a elegir Club 
   await page.goto("/cuenta");
   await page.getByRole("link", { name: "Elegir mi Club" }).click();
   await expect(page).toHaveURL("/elegir-club");
-  await expect(page.getByRole("button", { name: "Quiero votar solo por la Selección" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /Solo la Selección/ })).toHaveCount(0);
   await page.getByRole("button", { name: "Nacional" }).click();
   await page.getByRole("button", { name: "Sí, soy de Nacional" }).click();
   await expect(page).toHaveURL("/");

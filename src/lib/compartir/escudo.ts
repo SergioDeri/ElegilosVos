@@ -26,7 +26,8 @@ async function delBucket(cliente: SupabaseClient<Database>): Promise<string | nu
   }
 }
 
-async function delRepo(): Promise<string | null> {
+/** El PNG del repo (assets/escudos/seleccion.png) como data URL, o null si no se puede leer. */
+export async function escudoDeLaSeleccionDelRepo(): Promise<string | null> {
   try {
     return aDataUrl(await readFile(join(process.cwd(), "assets/escudos/seleccion.png")));
   } catch {
@@ -36,5 +37,5 @@ async function delRepo(): Promise<string | null> {
 
 /** El escudo de la Selección como data URL PNG, o null si no hay ninguno. */
 export async function escudoDeLaSeleccion(cliente: SupabaseClient<Database>): Promise<string | null> {
-  return (await delBucket(cliente)) ?? (await delRepo());
+  return (await delBucket(cliente)) ?? (await escudoDeLaSeleccionDelRepo());
 }

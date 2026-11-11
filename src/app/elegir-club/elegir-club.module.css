@@ -1,4 +1,4 @@
-/* Elección del Club: dos botones grandes, cada uno con su escudo y los
+/* Elección del Club: botones grandes (los Clubes y la Selección), cada uno con su escudo y los
    colores de su Club. Medidas en píxeles de arte (--u). */
 .clubes {
   display: grid;
@@ -14,6 +14,13 @@
   gap: calc(3 * var(--u));
   margin: 0;
   padding: calc(4 * var(--u)) calc(3 * var(--u)) calc(5 * var(--u));
+}
+
+/* La Selección no es un Club ni tiene tema: celeste, como su Camiseta. */
+.seleccion {
+  --acento: var(--color-celeste);
+  --acento-tinta: var(--color-contorno);
+  --acento-sombra: var(--color-celesteSombra);
 }
 
 /* Confirmación: escudo, pregunta, aviso y botones centrados en la caja. */
