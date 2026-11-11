@@ -134,19 +134,37 @@ export function disponer(pedido: PedidoDeDisposicion): Disposicion {
   const e = esquemaDe(pedido.esquema);
   const altoCaja = altoDeCaja(pedido.renglones ?? 1);
 
-  let ultima: { cancha: Rect; banco: Banco | null } | null = null;
   const anchos = pedido.suplentes > 0 ? ANCHOS_ITEM_BANCO : [0];
-  for (const anchoItem of anchos) {
-    const partes = repartir(ancho, alto, orientacion, pedido.suplentes, anchoItem, altoCaja, pedido.buscador ?? false);
-    ultima = partes;
-    for (const escala of ESCALAS) {
-      const puestos = ubicar(e.puestos, partes.cancha.ancho, partes.cancha.alto, orientacion, altoCaja, escala);
-      if (puestos) return { orientacion, ancho, alto, ...partes, puestos, dibujo: dibujoDeCancha(partes.cancha, orientacion) };
-    }
-  }
+  const todas = anchos.map((anchoItem) => repartir(ancho, alto, orientacion, pedido.suplentes, anchoItem, altoCaja, pedido.buscador ?? false));
+  // Abrir el equipo a lo ancho hasta las bandas: el Puesto más abierto queda
+  // contra el costado. Solo se usa si sin abrirlo alguien se tendría que correr.
+  const maximo = Math.max(...e.puestos.map((p) => Math.abs(p.x - 0.5)));
+  const abierto = maximo > 0 ? Math.max(1, 0.5 / maximo) : 1;
+  const ensanches = abierto > 1 ? [1, abierto] : [1];
+
+  // Primero, que cada Puesto quede donde lo pone el Esquema, sin correr a
+  // nadie (una línea se ve alineada); si no se puede, se corre hacia adelante
+  // al que se pisa con otro, con el equipo abierto (se corren menos).
+  for (const { sinCorrer, opciones } of [
+    { sinCorrer: true, opciones: ensanches },
+    { sinCorrer: false, opciones: [abierto] },
+  ])
+    for (const partes of todas)
+      for (const escala of ESCALAS)
+        for (const ensanche of opciones) {
+          const puestos = ubicar(e.puestos, partes.cancha.ancho, partes.cancha.alto, orientacion, altoCaja, escala, {
+            ensanche,
+            sinCorrer,
+          });
+          if (puestos) return { orientacion, ancho, alto, ...partes, puestos, dibujo: dibujoDeCancha(partes.cancha, orientacion) };
+        }
   // No entra ni con el banco más apretado: se ubica igual (puede pisarse).
-  const partes = ultima!;
-  const puestos = ubicar(e.puestos, partes.cancha.ancho, partes.cancha.alto, orientacion, altoCaja, 1, true)!;
+  const partes = todas[todas.length - 1];
+  const puestos = ubicar(e.puestos, partes.cancha.ancho, partes.cancha.alto, orientacion, altoCaja, 1, {
+    ensanche: abierto,
+    sinCorrer: false,
+    aunqueSePisen: true,
+  })!;
   return { orientacion, ancho, alto, ...partes, puestos, dibujo: dibujoDeCancha(partes.cancha, orientacion) };
 }
 
@@ -265,8 +283,15 @@ function ubicar(
   orientacion: Orientacion,
   altoCaja: number,
   escala: number,
-  aunqueSePisen = false,
+  opciones: {
+    /** Cuánto se abre el equipo a lo ancho desde el centro (1: como en el Esquema). */
+    ensanche: number;
+    /** null si dos Puestos se pisan (en vez de correr uno hacia adelante). */
+    sinCorrer: boolean;
+    aunqueSePisen?: boolean;
+  },
 ): PuestoEnCancha[] | null {
+  const { ensanche, sinCorrer, aunqueSePisen = false } = opciones;
   const vertical = orientacion === "vertical";
   // Margen para que la caja (Camiseta arriba, apellido abajo) quede adentro.
   const arriba = MEDIA_CAMISETA + 1;
@@ -292,12 +317,14 @@ function ubicar(
   const ubicados: { p: PuestoDelEsquema; lat: number; prof: number }[] = [];
   const enOrden = [...puestos].sort((a, b) => a.y - b.y || a.x - b.x);
   for (const p of enOrden) {
-    const lat = lateral.desde + Math.round(p.x * (lateral.hasta - lateral.desde));
+    const x = Math.min(1, Math.max(0, 0.5 + (p.x - 0.5) * ensanche));
+    const lat = lateral.desde + Math.round(x * (lateral.hasta - lateral.desde));
     let avance = Math.round(((p.y - yMin) / rango) * escala * largo);
     for (let cambio = true; cambio; ) {
       cambio = false;
       for (const q of ubicados) {
         if (Math.abs(lat - q.lat) < sepLateral && Math.abs(avance - q.prof) < sepProfundidad) {
+          if (sinCorrer) return null;
           avance = Math.max(avance, q.prof + sepProfundidad);
           cambio = true;
         }

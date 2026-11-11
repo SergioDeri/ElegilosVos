@@ -383,3 +383,23 @@ describe("disponer con buscador en el banco (Selección)", () => {
     expect(b.buscador!.ancho).toBeGreaterThanOrEqual(b.ventana.ancho);
   });
 });
+
+describe("las líneas quedan alineadas (nombre completo en dos renglones, cancha horizontal)", () => {
+  // Antes, si dos zagueros no entraban uno al lado del otro, el segundo se
+  // corría hacia adelante y desarmaba la línea; ahora primero se abre el equipo.
+  const pantallas: [number, number][] = [];
+  for (let w = 700; w <= 1800; w += 60) for (let h = 400; h <= Math.min(w, 1000); h += 50) pantallas.push([w, h]);
+  const centro = (p: { x: number; ancho: number }) => p.x + p.ancho / 2;
+
+  it.each(esquemas().map((e) => e.id))("%s: los Puestos espejados quedan a la misma altura de la cancha", (esquema) => {
+    for (const [w, h] of pantallas) {
+      const d = disponer({ ancho: w, alto: h, px: pxPara(w, h), esquema, suplentes: 100, renglones: 2, buscador: true });
+      const por = new Map(d.puestos.map((p) => [p.id, p]));
+      for (const [i, dd] of [["ZAG_I", "ZAG_D"], ["LI", "LD"], ["CAR_I", "CAR_D"]] as const) {
+        const a = por.get(i);
+        const b = por.get(dd);
+        if (a && b) expect(centro(a), `${esquema} ${w}x${h} ${i}/${dd}`).toBe(centro(b));
+      }
+    }
+  });
+});
