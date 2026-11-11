@@ -1,0 +1,8 @@
+/* "Donar con PayPal", al pie y más chico que el resto. Jersey 10 solo se ve
+   nítida en múltiplos enteros de sus 10 px: va un escalón abajo del cuerpo
+   (--px - 1 en vez de --px), o sea a la mitad en las pantallas de --px 2. */
+.donar {
+  margin-top: calc(6 * var(--u));
+  font-size: calc(10px * max(1, var(--px) - 1));
+  line-height: calc(12px * max(1, var(--px) - 1));
+}

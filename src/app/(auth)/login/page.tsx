@@ -4,6 +4,9 @@ import { BotonGoogle } from "../_componentes/boton-google";
 import { primero } from "../_componentes/parametros";
 import { QueEs } from "../_componentes/que-es";
 import { FormularioLogin } from "./formulario-login";
+import estilos from "./login.module.css";
+
+const DONAR_PAYPAL = "https://www.paypal.com/donate/?hosted_button_id=U3EP35SY7MMCN";
 
 export default async function PaginaLogin({ searchParams }: PageProps<"/login">) {
   const parametros = await searchParams;
@@ -23,6 +26,11 @@ export default async function PaginaLogin({ searchParams }: PageProps<"/login">)
       </p>
       <p>
         ¿No tenés cuenta? <Link href="/registro">Registrate</Link>
+      </p>
+      <p className={estilos.donar}>
+        <a href={DONAR_PAYPAL} target="_blank" rel="noopener noreferrer">
+          Donar con PayPal
+        </a>
       </p>
     </main>
   );

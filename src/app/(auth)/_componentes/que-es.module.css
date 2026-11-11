@@ -1,16 +1,5 @@
-/* "¿Qué es Elegilos Vos?" y "Donar con PayPal": a la izquierda, en ese orden;
-   si no entran en un renglón, el de PayPal baja. */
-.fila {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-  align-items: baseline;
-  gap: calc(2 * var(--u)) calc(6 * var(--u));
-}
-
-/* Los dos se ven como los links de la app (pixel.css, `a`): al botón se le
-   sacan el fondo, el marco y el movimiento de los botones, también al pasar
-   el mouse y al apretar. */
+/* El botón se ve como los links de la app (pixel.css, `a`): sin el fondo, el
+   marco ni el movimiento de los botones, tampoco al pasar el mouse o apretar. */
 .link,
 .link:hover,
 .link:active {
@@ -28,6 +17,25 @@
   cursor: pointer;
 }
 
-.queEs p {
-  margin-top: calc(2 * var(--u));
+/* El pop-up: la caja de los avisos (negro con el marco pixel), centrada por
+   el navegador, del ancho de la caja de acceso. El padding de abajo es más
+   chico porque el botón ya trae su margen. */
+.dialogo {
+  --borde: var(--acento);
+  width: min(calc(150 * var(--u)), round(down, calc(100% - 8 * var(--u)), var(--u)));
+  max-height: calc(100dvh - 8 * var(--u));
+  padding: calc(2 * var(--u)) calc(6 * var(--u)) calc(3 * var(--u));
+  border: 0;
+  background: var(--color-negro);
+  color: var(--color-cal);
+  box-shadow: var(--marco);
+}
+
+.dialogo::backdrop {
+  background: rgb(0 0 0 / 0.6);
+}
+
+.dialogo > form {
+  display: block;
+  text-align: right;
 }
