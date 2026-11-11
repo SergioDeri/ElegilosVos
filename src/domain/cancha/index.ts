@@ -370,31 +370,140 @@ const ALTO_LINEA = ALTO_TEXTO + 2;
 /** Alto del rótulo en dos líneas: la segunda comparte con la primera una fila de contorno. */
 export const ALTO_ROTULO_DOS_LINEAS = 2 * ALTO_LINEA - 1;
 
+/** Partículas que van con el apellido que sigue ("De Arrascaeta", "De La Cruz"). */
+const PARTICULAS = new Set(["DE", "DEL", "LA", "LAS", "LOS", "DA", "DO", "DOS"]);
+
 /**
- * El nombre completo del Jugador (en la Selección, que no lleva número), en
- * texto bitmap con contorno y centrado en `ancho` columnas. Si no entra en una
- * línea, va en dos, cortando entre palabras donde la más ancha de las dos
- * quede más angosta. **Nunca se acorta**: si aun así una línea no entra (una
- * palabra muy larga o una caja angosta), la matriz es más ancha que `ancho` y
- * quien la dibuja la centra sobre su caja.
+ * El nombre del Jugador en la Selección (que no lleva número), en texto
+ * bitmap con contorno, en una o dos líneas y centrado en exactamente `ancho`
+ * columnas: **nunca sale de su caja**, así no pisa al de al lado. Las líneas
+ * las elige `lineasDelRotulo`.
  */
 export function rotuloCompleto(nombre: string, ancho: number): Matriz {
-  const palabras = nombre.trim().split(/\s+/);
-  const completo = palabras.join(" ");
-  const anchoLinea = (t: string) => anchoTexto(t) + 2;
-  if (palabras.length === 1 || anchoLinea(completo) <= ancho) {
-    return centrada(textoBitmap(completo, "cal", { contorno: true }), Math.max(ancho, anchoLinea(completo)));
-  }
-  let lineas: [string, string] = [palabras[0], palabras.slice(1).join(" ")];
-  for (let i = 2; i < palabras.length; i++) {
-    const candidata: [string, string] = [palabras.slice(0, i).join(" "), palabras.slice(i).join(" ")];
-    if (Math.max(...candidata.map(anchoLinea)) < Math.max(...lineas.map(anchoLinea))) lineas = candidata;
-  }
-  const total = Math.max(ancho, ...lineas.map(anchoLinea));
-  const [arriba, abajo] = lineas.map((l) => centrada(textoBitmap(l, "cal", { contorno: true }), total));
+  return enLineas(lineasDelRotulo(nombre, ancho), ancho);
+}
+
+/**
+ * El apellido del Jugador de un Club (el número va en la Camiseta), como
+ * `rotuloCompleto` pero sin el nombre de pila: en una o dos líneas, partido
+ * entre sílabas si hace falta, y nunca fuera de su caja.
+ */
+export function rotuloDeClub(nombre: string, ancho: number): Matriz {
+  return enLineas(lineasDelRotulo(nombre, ancho, { conNombre: false }), ancho);
+}
+
+function enLineas(lineas: readonly string[], ancho: number): Matriz {
+  const [arriba, abajo] = lineas.map((l) => centrada(textoBitmap(l, "cal", { contorno: true }), ancho));
+  if (!abajo) return arriba;
   // La última fila de la primera línea y la primera de la segunda son contorno: se superponen.
   return [...arriba.slice(0, ALTO_LINEA - 1), arriba[ALTO_LINEA - 1].map((c, x) => c ?? abajo[0][x]), ...abajo.slice(1)];
 }
+
+/**
+ * Las líneas (una o dos) del rótulo de la Selección, en mayúsculas, cada una
+ * de a lo sumo `ancho` columnas con contorno. Prueba, en orden, hasta que algo
+ * entra:
+ * 1. El nombre completo, cortando entre palabras ("JOSÉ MARÍA" / "GIMÉNEZ").
+ *    Con `conNombre: false` (los Clubes), sin el primer nombre ("DE LEÓN").
+ * 2. El apellido: la última palabra con las partículas que la preceden
+ *    ("DE ARRASCAETA", "DE LA CRUZ"); si no, la última palabra sola
+ *    ("ARRASCAETA").
+ * 3. Lo mismo partiendo una palabra con guion entre sílabas ("RODRÍ-" /
+ *    "GUEZ") y, si así no entra, por donde entre.
+ * 4. La última palabra acortada con un punto, como el apellido de un Club.
+ */
+export function lineasDelRotulo(
+  nombre: string,
+  ancho: number,
+  { conNombre = true }: { conNombre?: boolean } = {},
+): [string] | [string, string] {
+  const palabras = nombre.trim().toUpperCase().split(/\s+/).filter(Boolean);
+  if (palabras.length === 0) return [""];
+  const entra = (t: string) => anchoTexto(t) + 2 <= ancho;
+  const principal = palabras[palabras.length - 1];
+  let desde = palabras.length - 1;
+  while (desde > 1 && PARTICULAS.has(palabras[desde - 1])) desde--;
+  const apellido = palabras.slice(desde).join(" ");
+
+  const intentos = [
+    () => entrePalabras((conNombre || palabras.length === 1 ? palabras : palabras.slice(1)).join(" "), entra),
+    () => entrePalabras(apellido, entra),
+    () => entrePalabras(principal, entra),
+    () => conGuion(apellido, entra, true),
+    () => conGuion(principal, entra, true),
+    () => conGuion(apellido, entra, false),
+    () => conGuion(principal, entra, false),
+  ];
+  for (const intento of intentos) {
+    const lineas = intento();
+    if (lineas) return lineas;
+  }
+  const letras = [...principal];
+  for (let n = letras.length - 1; n > 0; n--) {
+    const corto = `${letras.slice(0, n).join("")}.`;
+    const lineas = entrePalabras(corto, entra) ?? conGuion(corto, entra, false);
+    if (lineas) return lineas;
+  }
+  return [""];
+}
+
+/** En una línea si entra; si no, en dos cortando entre palabras, la más ancha lo más angosta posible. */
+function entrePalabras(texto: string, entra: (t: string) => boolean): [string] | [string, string] | null {
+  if (entra(texto)) return [texto];
+  const palabras = texto.split(" ");
+  let mejor: [string, string] | null = null;
+  for (let i = 1; i < palabras.length; i++) {
+    const lineas: [string, string] = [palabras.slice(0, i).join(" "), palabras.slice(i).join(" ")];
+    if (lineas.every(entra) && (!mejor || anchoMayor(lineas) < anchoMayor(mejor))) mejor = lineas;
+  }
+  return mejor;
+}
+
+/**
+ * En dos líneas partiendo una palabra con guion (al menos 2 letras de cada
+ * lado). Prefiere cortar entre sílabas (con `soloSilabas`, solo así) y, entre
+ * esos cortes, el más parejo.
+ */
+function conGuion(texto: string, entra: (t: string) => boolean, soloSilabas: boolean): [string, string] | null {
+  const letras = [...texto];
+  let mejor: { lineas: [string, string]; silaba: boolean } | null = null;
+  for (let i = 2; i <= letras.length - 2; i++) {
+    const [a, b, c] = [letras[i - 1], letras[i], letras[i + 1]];
+    if (a === " " || b === " " || letras[i - 2] === " " || c === " " || c === undefined) continue;
+    const lineas: [string, string] = [`${letras.slice(0, i).join("")}-`, letras.slice(i).join("")];
+    if (!lineas.every(entra)) continue;
+    const silaba = cortaEntreSilabas(letras.slice(0, i).join("").split(" ").pop()!, letras.slice(i).join("").split(" ")[0]);
+    if (soloSilabas && !silaba) continue;
+    if (
+      !mejor ||
+      (silaba && !mejor.silaba) ||
+      (silaba === mejor.silaba && anchoMayor(lineas) < anchoMayor(mejor.lineas))
+    )
+      mejor = { lineas, silaba };
+  }
+  return mejor?.lineas ?? null;
+}
+
+const VOCALES = new Set([..."AEIOUÁÉÍÓÚÜ"]);
+const esVocal = (letra: string | undefined) => letra !== undefined && VOCALES.has(letra);
+/** Dos consonantes que no se separan: "BR", "PL", "CH", "LL", "RR"... */
+const inseparables = (x: string | undefined, y: string | undefined) =>
+  x !== undefined && y !== undefined && (("BCDFGKPT".includes(x) && "LR".includes(y)) || ["CH", "LL", "RR"].includes(x + y));
+
+/**
+ * Regla simple de sílabas del español: se corta antes de una consonante
+ * seguida de vocal (o de un grupo como "BR" o "CH"), sin separar esos grupos
+ * y con una vocal de cada lado: "RODRÍ-GUEZ", "HOMEN-CHENKO", "RO-DRÍGUEZ".
+ */
+function cortaEntreSilabas(izquierda: string, derecha: string): boolean {
+  const a = izquierda.at(-1);
+  const [b, c] = derecha;
+  if (![...izquierda].some(esVocal) || ![...derecha].some(esVocal)) return false;
+  if (b === undefined || esVocal(b) || inseparables(a, b)) return false;
+  return esVocal(c) || inseparables(b, c);
+}
+
+const anchoMayor = (lineas: readonly string[]) => Math.max(...lineas.map(anchoTexto));
 
 /** La matriz centrada en exactamente `ancho` columnas (si es más angosta). */
 function centrada(m: Matriz, ancho: number): Matriz {

@@ -315,8 +315,8 @@ export function EditorAlineacion({
         <CanchaPixel
           className={estilos.area}
           esquema={alineacion.esquema}
-          // En la Selección el nombre completo puede ir en dos renglones.
-          renglones={club === SELECCION ? 2 : 1}
+          // El nombre puede ir en dos renglones (Clubes y Selección).
+          renglones={2}
           // Con la Votación abierta siempre hay banco, aunque esté vacío: es
           // donde se suelta un Jugador para sacarlo de la cancha.
           // La cuenta es la de todos los suplentes, no la de la búsqueda: buscar

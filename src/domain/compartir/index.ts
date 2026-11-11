@@ -124,7 +124,8 @@ function normalizar(nombre: string): string {
 /**
  * El nombre completo en uno o dos renglones de hasta `maximo` caracteres,
  * cortando entre palabras donde el renglón más largo quede más corto. Nunca
- * se acorta (como `rotuloCompleto` de `@/domain/cancha`).
+ * se acorta: la imagen tiene lugar (la cancha, en cambio, usa
+ * `rotuloCompleto` de `@/domain/cancha`, que sí acorta para no salir de la caja).
  */
 export function renglonesDelNombre(nombre: string, maximo: number = LARGO_MAXIMO_RENGLON_SELECCION): string[] {
   const completo = normalizar(nombre);

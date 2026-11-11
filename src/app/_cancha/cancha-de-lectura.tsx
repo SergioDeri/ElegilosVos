@@ -2,9 +2,9 @@
 
 // Cancha pixel de solo lectura (ticket 04): el Parcial, el 11 Elegido y el
 // link público. Recibe datos serializables desde Server Components y los
-// dibuja en CanchaPixel: Camiseta, número y apellido por Puesto, con un
+// dibuja en CanchaPixel: Camiseta, número y nombre por Puesto, con un
 // detalle opcional (por ejemplo, el porcentaje) en una chapita.
-import { SELECCION, type ClubOSeleccion } from "@/domain/comun/tipos";
+import type { ClubOSeleccion } from "@/domain/comun/tipos";
 import { esPuestoDeArquero, type EsquemaId, type PuestoId } from "@/domain/esquemas";
 import { JugadorConCamiseta } from "@/app/_pixel/jugador-con-camiseta";
 import { CanchaPixel } from "./cancha-pixel";
@@ -35,8 +35,8 @@ export function CanchaDeLectura(props: {
     <div className={estilos.contenedor}>
       <CanchaPixel
         esquema={esquema}
-        // En la Selección el nombre completo puede ir en dos renglones.
-        renglones={club === SELECCION ? 2 : 1}
+        // El nombre puede ir en dos renglones (Clubes y Selección).
+        renglones={2}
         role="list"
         aria-label={props["aria-label"]}
         puesto={(caja) => {

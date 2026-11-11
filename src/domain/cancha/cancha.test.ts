@@ -11,7 +11,9 @@ import {
   canchaDeFondo,
   disponer,
   rotulo,
+  lineasDelRotulo,
   rotuloCompleto,
+  rotuloDeClub,
   siluetaDePuestoLibre,
   type Disposicion,
   type Rect,
@@ -246,7 +248,7 @@ describe("rotulo", () => {
   });
 });
 
-describe("rotuloCompleto (Selección: nombre completo, sin cortar)", () => {
+describe("rotuloCompleto (Selección: nombre completo si entra, nunca fuera de la caja)", () => {
   /** Columnas pintadas (primera y última) de las filas dadas. */
   function tramo(m: ReturnType<typeof rotuloCompleto>, desde: number, hasta: number): [number, number] {
     const filas = m.slice(desde, hasta);
@@ -272,18 +274,53 @@ describe("rotuloCompleto (Selección: nombre completo, sin cortar)", () => {
     expect(h2 - d2 + 1).toBe(anchoTexto("ARRASCAETA") + 2);
   });
 
-  it("nunca acorta el nombre: si una línea no entra, el rótulo es más ancho que la caja", () => {
-    for (const nombre of ["Giorgian De Arrascaeta", "Juan Manuel Sanabria", "José María Giménez", "Nicolás de la Cruz"]) {
-      for (const ancho of [24, 30, 40, 48]) {
+  it("nunca sale de su caja, así no pisa al de al lado", () => {
+    const nombres = ["Giorgian De Arrascaeta", "Juan Manuel Sanabria", "Agustín Álvarez Martínez", "Santiago Homenchenko", "Ignacio De Arruabarrena"];
+    for (const nombre of nombres) {
+      for (let ancho = 24; ancho <= 48; ancho += 2) {
         const m = rotuloCompleto(nombre, ancho);
-        const palabras = nombre.toUpperCase().split(" ");
-        // La línea más ancha posible de las dos es como mínimo la palabra más larga.
-        const minimo = Math.max(...palabras.map((p) => anchoTexto(p) + 2));
-        expect(m[0].length).toBeGreaterThanOrEqual(Math.max(ancho, minimo));
-        const pintadas = m.flat().filter((c) => c !== null).length;
-        expect(pintadas).toBeGreaterThan(0);
+        for (const fila of m) expect(fila).toHaveLength(ancho);
+        expect(m.flat().some((c) => c !== null)).toBe(true);
       }
     }
+  });
+});
+
+describe("lineasDelRotulo (qué se escribe cuando el nombre completo no entra)", () => {
+  it("el nombre completo, si entra en una o dos líneas", () => {
+    expect(lineasDelRotulo("Matías Viña", 48)).toEqual(["MATÍAS VIÑA"]);
+    expect(lineasDelRotulo("José María Giménez", 48)).toEqual(["JOSÉ MARÍA", "GIMÉNEZ"]);
+  });
+
+  it("si no, el apellido con sus partículas", () => {
+    expect(lineasDelRotulo("José María Giménez", 34)).toEqual(["GIMÉNEZ"]);
+    expect(lineasDelRotulo("Nicolás De La Cruz", 26)).toEqual(["DE LA", "CRUZ"]);
+    expect(lineasDelRotulo("Juan Cruz De los Santos", 26)).toEqual(["DE LOS", "SANTOS"]);
+  });
+
+  it("si el apellido no entra entero, lo parte con guion entre sílabas", () => {
+    expect(lineasDelRotulo("Juan Rodríguez", 26)).toEqual(["RODRÍ-", "GUEZ"]);
+    expect(lineasDelRotulo("Santiago Homenchenko", 34)).toEqual(["HOMEN-", "CHENKO"]);
+    // Antes que partir mal "DE ARRASCAETA", deja la partícula.
+    expect(lineasDelRotulo("Giorgian De Arrascaeta", 26)).toEqual(["ARRAS-", "CAETA"]);
+  });
+
+  it("si ni partido entra, lo acorta con un punto", () => {
+    expect(lineasDelRotulo("Ignacio De Arruabarrena", 24)).toEqual(["ARRU-", "ABAR."]);
+  });
+
+  it("en un Club, el apellido sin el nombre de pila, entero o partido entre sílabas", () => {
+    const club = { conNombre: false };
+    expect(lineasDelRotulo("Sebastián De León", 48, club)).toEqual(["DE LEÓN"]);
+    expect(lineasDelRotulo("Agustín Laborda", 34, club)).toEqual(["LABORDA"]);
+    expect(lineasDelRotulo("Agustín Laborda", 26, club)).toEqual(["LA-", "BORDA"]);
+    expect(lineasDelRotulo("Federico Arismendi", 26, club)).toEqual(["ARIS-", "MENDI"]);
+  });
+
+  it("cada línea entra en el ancho pedido", () => {
+    for (const nombre of ["Giorgian De Arrascaeta", "Agustín Álvarez Martínez", "Facundo Pellistri"])
+      for (let ancho = 24; ancho <= 48; ancho += 2)
+        for (const linea of lineasDelRotulo(nombre, ancho)) expect(anchoTexto(linea) + 2).toBeLessThanOrEqual(ancho);
   });
 });
 
@@ -401,5 +438,12 @@ describe("las líneas quedan alineadas (nombre completo en dos renglones, cancha
         if (a && b) expect(centro(a), `${esquema} ${w}x${h} ${i}/${dd}`).toBe(centro(b));
       }
     }
+  });
+});
+
+describe("rotuloDeClub", () => {
+  it("nunca sale de su caja", () => {
+    for (const nombre of LARGOS)
+      for (let ancho = 24; ancho <= 48; ancho += 2) for (const fila of rotuloDeClub(nombre, ancho)) expect(fila).toHaveLength(ancho);
   });
 });
