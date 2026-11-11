@@ -4,7 +4,7 @@ import { ICONOS, LADO_ICONO, PALETA, icono, type NombreIcono } from "./index";
 const coloresDeLaPaleta = new Set<string>(Object.values(PALETA));
 
 describe("íconos", () => {
-  it("están los de guardado, cierre de la Votación, compartir, menú, usuario y las flechas", () => {
+  it("están los de guardado, cierre de la Votación, compartir, menú, usuario, info y las flechas", () => {
     expect([...ICONOS].sort()).toEqual([
       "cierre",
       "compartir",
@@ -13,6 +13,7 @@ describe("íconos", () => {
       "flechaDerecha",
       "flechaIzquierda",
       "guardado",
+      "info",
       "menu",
       "usuario",
     ]);

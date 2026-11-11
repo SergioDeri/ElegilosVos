@@ -2,6 +2,7 @@ import Link from "next/link";
 import { rutaSegura } from "@/lib/auth/rutas";
 import { BotonGoogle } from "../_componentes/boton-google";
 import { primero } from "../_componentes/parametros";
+import { QueEs } from "../_componentes/que-es";
 import { FormularioLogin } from "./formulario-login";
 
 export default async function PaginaLogin({ searchParams }: PageProps<"/login">) {
@@ -12,6 +13,7 @@ export default async function PaginaLogin({ searchParams }: PageProps<"/login">)
   return (
     <main>
       <h1>Iniciar sesión</h1>
+      <QueEs />
       {errorGoogle && <p role="alert">No se pudo entrar con Google. Probá de nuevo.</p>}
       <BotonGoogle next={next} />
       <p>o con tu email</p>

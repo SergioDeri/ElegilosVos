@@ -430,6 +430,17 @@ const DIBUJOS_ICONOS = {
     "########",
     "........",
   ],
+  // "i": qué es la app (pantalla de login).
+  info: [
+    "...##...",
+    "...##...",
+    "........",
+    "..###...",
+    "...##...",
+    "...##...",
+    "..####..",
+    "........",
+  ],
   // Flechas: scroll del banco de suplentes.
   flechaArriba: [
     "........",

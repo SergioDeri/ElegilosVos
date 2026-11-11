@@ -1,0 +1,33 @@
+/* "¿Qué es Elegilos Vos?" y "Donar con PayPal": a la izquierda, en ese orden;
+   si no entran en un renglón, el de PayPal baja. */
+.fila {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: baseline;
+  gap: calc(2 * var(--u)) calc(6 * var(--u));
+}
+
+/* Los dos se ven como los links de la app (pixel.css, `a`): al botón se le
+   sacan el fondo, el marco y el movimiento de los botones, también al pasar
+   el mouse y al apretar. */
+.link,
+.link:hover,
+.link:active {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  transform: none;
+  font: inherit;
+  color: var(--enlace);
+  text-decoration: underline;
+  text-decoration-thickness: var(--u);
+  text-underline-offset: calc(2 * var(--u));
+  cursor: pointer;
+}
+
+.queEs p {
+  margin-top: calc(2 * var(--u));
+}
