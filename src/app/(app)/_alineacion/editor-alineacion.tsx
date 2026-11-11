@@ -133,6 +133,9 @@ export function EditorAlineacion({
   const conBusqueda = club === SELECCION;
   const libres = banco(alineacion, jugadores);
   const enElBanco = conBusqueda ? buscarPorNombre(libres, busqueda) : libres;
+  // Búsqueda en el banco: solo con la Votación abierta (hay banco para elegir).
+  const buscador = conBusqueda && editable;
+  const sinResultados = buscador && busqueda.trim() !== "" && enElBanco.length === 0;
   const noDisponibles = jugadores.filter((j) => j.enPlantel && j.disponibilidad !== "disponible");
 
   function aplicar(resultado: ResultadoOperacion) {
@@ -285,6 +288,7 @@ export function EditorAlineacion({
         <div className={estilos.renglon}>
           <p aria-live="polite" className={estilos.aviso}>
             {aviso ??
+              (sinResultados ? "Ningún suplente con ese nombre." : null) ??
               (seleccionado && puedeEditar
                 ? `Elegiste a ${seleccionado.nombre}. Tocá un Puesto${seleccion?.tipo === "puesto" ? " o Quitar" : ""}.`
                 : "")}
@@ -301,29 +305,6 @@ export function EditorAlineacion({
           )}
         </div>
 
-        {conBusqueda && editable && (
-          <div className={estilos.busqueda}>
-            <label>
-              Buscar{" "}
-              <input
-                type="search"
-                value={busqueda}
-                onChange={(e) => setBusqueda(e.target.value)}
-                placeholder="Nombre del Jugador"
-                autoComplete="off"
-                aria-controls={idBanco}
-              />
-            </label>
-            {busqueda.trim() !== "" && (
-              <span role="status" aria-live="polite">
-                {enElBanco.length === 0
-                  ? "Ningún suplente con ese nombre."
-                  : `${enElBanco.length} de ${libres.length} suplentes.`}
-              </span>
-            )}
-          </div>
-        )}
-
         {convocado && (
           <p className={estilos.convocatoria}>
             Ya salió la Convocatoria: los convocados llevan una <span className={estilos.convocado}>C</span>. Podés poner
@@ -338,7 +319,10 @@ export function EditorAlineacion({
           renglones={club === SELECCION ? 2 : 1}
           // Con la Votación abierta siempre hay banco, aunque esté vacío: es
           // donde se suelta un Jugador para sacarlo de la cancha.
-          suplentes={editable ? Math.max(1, enElBanco.length) : 0}
+          // La cuenta es la de todos los suplentes, no la de la búsqueda: buscar
+          // no cambia el tamaño de la cancha ni del banco.
+          suplentes={editable ? Math.max(1, libres.length) : 0}
+          buscador={buscador}
           role="group"
           aria-label={`Cancha, Esquema ${alineacion.esquema}`}
           puesto={(caja) => {
@@ -360,7 +344,31 @@ export function EditorAlineacion({
           }}
           banco={(b) => (
             <Banco id={idBanco} editable={puedeEditar} cantidad={enElBanco.length}>
-              <BancoPixel banco={b}>
+              <BancoPixel
+                banco={b}
+                reinicio={busqueda}
+                buscador={
+                  <>
+                    <input
+                      type="search"
+                      className={estilos.buscar}
+                      aria-label="Buscar suplente"
+                      value={busqueda}
+                      onChange={(e) => setBusqueda(e.target.value)}
+                      placeholder="Buscar jugador"
+                      autoComplete="off"
+                      aria-controls={idBanco}
+                    />
+                    <span role="status" className={estilos.oculto}>
+                      {busqueda.trim() === ""
+                        ? ""
+                        : enElBanco.length === 0
+                          ? "Ningún suplente con ese nombre."
+                          : `${enElBanco.length} de ${libres.length} suplentes.`}
+                    </span>
+                  </>
+                }
+              >
                 {enElBanco.map((j) => (
                   <li key={j.id}>
                     <JugadorDelBanco

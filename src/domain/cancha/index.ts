@@ -46,6 +46,11 @@ export interface Banco extends Rect {
   desplazamiento: "horizontal" | "vertical" | null;
   /** Flechas de scroll (antes y después de la ventana), relativas al banco; null sin scroll. */
   flechas: { antes: Rect; despues: Rect } | null;
+  /**
+   * Lugar del buscador (Selección), relativo al banco: entre el título y la
+   * ventana, de todo el ancho del banco. null si no se pidió.
+   */
+  buscador: Rect | null;
 }
 
 export interface Disposicion {
@@ -87,6 +92,8 @@ const SEPARACION_BANCO = 3;
 const SEPARACION_CANCHA_BANCO = 4;
 export const TITULO_BANCO = "SUPLENTES";
 const ALTO_TITULO_BANCO = 6;
+/** Alto del buscador del banco: un campo de texto (10 de renglón y 2 arriba y abajo). */
+export const ALTO_BUSCADOR_BANCO = 14;
 /** Filas del banco debajo de la cancha (vertical) y columnas del banco al costado (horizontal). */
 export const FILAS_BANCO = 3;
 export const COLUMNAS_BANCO = 3;
@@ -109,6 +116,8 @@ export interface PedidoDeDisposicion {
   suplentes: number;
   /** Renglones del rótulo de cada caja (1 por defecto; 2 en la Selección, con el nombre completo). */
   renglones?: Renglones;
+  /** Reserva lugar para un buscador arriba de los suplentes (Selección). */
+  buscador?: boolean;
 }
 
 /**
@@ -128,7 +137,7 @@ export function disponer(pedido: PedidoDeDisposicion): Disposicion {
   let ultima: { cancha: Rect; banco: Banco | null } | null = null;
   const anchos = pedido.suplentes > 0 ? ANCHOS_ITEM_BANCO : [0];
   for (const anchoItem of anchos) {
-    const partes = repartir(ancho, alto, orientacion, pedido.suplentes, anchoItem, altoCaja);
+    const partes = repartir(ancho, alto, orientacion, pedido.suplentes, anchoItem, altoCaja, pedido.buscador ?? false);
     ultima = partes;
     for (const escala of ESCALAS) {
       const puestos = ubicar(e.puestos, partes.cancha.ancho, partes.cancha.alto, orientacion, altoCaja, escala);
@@ -148,17 +157,22 @@ function repartir(
   suplentes: number,
   anchoItem: number,
   altoCaja: number,
+  conBuscador: boolean,
 ): { cancha: Rect; banco: Banco | null } {
   if (suplentes === 0) return { cancha: { x: 0, y: 0, ancho, alto }, banco: null };
   const s = SEPARACION_BANCO;
-  const y = ALTO_TITULO_BANCO + s;
+  // Título, y debajo (si hay) el buscador; después la ventana.
+  const yBuscador = ALTO_TITULO_BANCO + s;
+  const y = conBuscador ? yBuscador + ALTO_BUSCADOR_BANCO + s : yBuscador;
+  const buscador = (anchoBanco: number): Rect | null =>
+    conBuscador ? { x: 0, y: yBuscador, ancho: anchoBanco, alto: ALTO_BUSCADOR_BANCO } : null;
   const largo = (n: number, item: number) => n * item + (n - 1) * s;
   const caben = (espacio: number, item: number) => Math.max(1, Math.floor((espacio + s) / (item + s)));
   const comun = { anchoItem, altoItem: altoCaja, separacion: s };
 
   if (orientacion === "vertical") {
     const entran = caben(ancho, anchoItem);
-    let banco: Omit<Banco, "x" | "y" | "ancho" | "alto">;
+    let banco: Omit<Banco, "x" | "y" | "ancho" | "alto" | "buscador">;
     if (suplentes <= entran * FILAS_BANCO) {
       const filas = Math.ceil(suplentes / entran);
       const ventana = { x: 0, y, ancho: largo(entran, anchoItem), alto: largo(filas, altoCaja) };
@@ -185,7 +199,7 @@ function repartir(
     const altoCancha = Math.max(0, alto - altoBanco - SEPARACION_CANCHA_BANCO);
     return {
       cancha: { x: 0, y: 0, ancho, alto: altoCancha },
-      banco: { x: 0, y: alto - altoBanco, ancho, alto: altoBanco, ...banco },
+      banco: { x: 0, y: alto - altoBanco, ancho, alto: altoBanco, ...banco, buscador: buscador(ancho) },
     };
   }
 
@@ -197,7 +211,7 @@ function repartir(
     const anchoBanco = Math.max(anchoTexto(TITULO_BANCO), ventana.ancho);
     return {
       cancha: { x: 0, y: 0, ancho: Math.max(0, ancho - anchoBanco - SEPARACION_CANCHA_BANCO), alto },
-      banco: { x: ancho - anchoBanco, y: 0, ancho: anchoBanco, alto, ...comun, columnas, filas, flujo: "row", ventana, desplazamiento: null, flechas: null },
+      banco: { x: ancho - anchoBanco, y: 0, ancho: anchoBanco, alto, ...comun, columnas, filas, flujo: "row", ventana, desplazamiento: null, flechas: null, buscador: buscador(anchoBanco) },
     };
   }
   // Flecha arriba, ventana con filas enteras y flecha abajo.
@@ -222,6 +236,7 @@ function repartir(
         antes: { x: xFlecha, y, ancho: LADO_FLECHA, alto: LADO_FLECHA },
         despues: { x: xFlecha, y: ventana.y + ventana.alto + s, ancho: LADO_FLECHA, alto: LADO_FLECHA },
       },
+      buscador: buscador(anchoBanco),
     },
   };
 }

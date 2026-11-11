@@ -25,6 +25,12 @@
   height: 100%;
 }
 
+/* Lugar del buscador (Selección): alto fijo, lo ocupa entero. */
+.buscador {
+  position: absolute;
+  display: flex;
+}
+
 /* Parte visible de la grilla. Con scroll, sin barra (las flechas la
    reemplazan y no rompen la grilla de píxeles de arte) y con imán en cada
    suplente, para que nunca quede uno cortado. */

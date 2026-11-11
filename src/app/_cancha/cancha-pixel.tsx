@@ -40,6 +40,8 @@ export interface PropsCanchaPixel {
   suplentes?: number;
   /** Renglones del rótulo de cada caja: 2 en la Selección (nombre completo). */
   renglones?: Renglones;
+  /** Reserva lugar para un buscador arriba de los suplentes (ver BancoPixel). */
+  buscador?: boolean;
   /** Contenido de cada Puesto: ocupa su caja entera. */
   puesto: (p: PuestoEnCancha) => ReactNode;
   /** Contenido del banco: ocupa su rectángulo entero (ver BancoPixel). */
@@ -49,7 +51,7 @@ export interface PropsCanchaPixel {
   className?: string;
 }
 
-export function CanchaPixel({ esquema, suplentes = 0, renglones = 1, puesto, banco, className, ...aria }: PropsCanchaPixel) {
+export function CanchaPixel({ esquema, suplentes = 0, renglones = 1, buscador = false, puesto, banco, className, ...aria }: PropsCanchaPixel) {
   const ref = useRef<HTMLDivElement>(null);
   const [medida, setMedida] = useState<Medida | null>(null);
 
@@ -70,8 +72,8 @@ export function CanchaPixel({ esquema, suplentes = 0, renglones = 1, puesto, ban
   }, []);
 
   const disposicion = useMemo(
-    () => (medida && medida.ancho > 0 && medida.alto > 0 ? disponer({ ...medida, esquema, suplentes, renglones }) : null),
-    [medida, esquema, suplentes, renglones],
+    () => (medida && medida.ancho > 0 && medida.alto > 0 ? disponer({ ...medida, esquema, suplentes, renglones, buscador }) : null),
+    [medida, esquema, suplentes, renglones, buscador],
   );
 
   return (
@@ -114,8 +116,21 @@ interface Topes {
  * El título "SUPLENTES" y la grilla del banco que calculó la disposición.
  * Si los suplentes no entran, la grilla se scrollea dentro de su ventana
  * (con rueda, gesto o foco) y las flechas la mueven de a una ventana.
+ * `buscador`: lo que va en el lugar reservado entre el título y la grilla
+ * (si la disposición lo reservó); al cambiar `reinicio`, la ventana vuelve
+ * al principio (p. ej. con otra búsqueda).
  */
-export function BancoPixel({ banco, children }: { banco: Banco; children: ReactNode }) {
+export function BancoPixel({
+  banco,
+  buscador,
+  reinicio,
+  children,
+}: {
+  banco: Banco;
+  buscador?: ReactNode;
+  reinicio?: unknown;
+  children: ReactNode;
+}) {
   const u = (n: number) => `calc(${n} * var(--u))`;
   const ventana = useRef<HTMLDivElement>(null);
   const [topes, setTopes] = useState<Topes>({ antes: true, despues: false });
@@ -134,6 +149,11 @@ export function BancoPixel({ banco, children }: { banco: Banco; children: ReactN
   // Al cambiar la grilla (otra ventana, más o menos suplentes) los topes cambian.
   useLayoutEffect(medirTopes, [medirTopes, banco]);
 
+  useLayoutEffect(() => {
+    ventana.current?.scrollTo({ left: 0, top: 0 });
+    medirTopes();
+  }, [reinicio, medirTopes]);
+
   const mover = (sentido: -1 | 1) => {
     const v = ventana.current;
     if (!v) return;
@@ -148,6 +168,11 @@ export function BancoPixel({ banco, children }: { banco: Banco; children: ReactN
   return (
     <div className={estilos.bancoPixel}>
       <Sprite matriz={titulo} />
+      {banco.buscador && buscador && (
+        <div className={estilos.buscador} style={estiloDeRect(banco.buscador)}>
+          {buscador}
+        </div>
+      )}
       {flechas && desplazamiento && (
         <>
           <Flecha rect={flechas.antes} matriz={ICONOS_FLECHA[desplazamiento].antes} tope={topes.antes} alTocar={() => mover(-1)} />

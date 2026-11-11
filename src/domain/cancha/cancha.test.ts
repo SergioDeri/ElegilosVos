@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { esquemas, type EsquemaId } from "@/domain/esquemas";
 import { PALETA, anchoTexto, pxPara } from "@/domain/pixel";
 import {
+  ALTO_BUSCADOR_BANCO,
+  COLUMNAS_BANCO,
   ALTO_CAJA,
   ALTO_CAJA_DOS_RENGLONES,
   ALTO_ROTULO_DOS_LINEAS,
@@ -350,5 +352,34 @@ describe("canchaDeFondo", () => {
   it("redondea hacia abajo y no falla con tamaños chicos", () => {
     expect(tamano(canchaDeFondo(10.9, 5.2))).toEqual({ ancho: 10, alto: 5 });
     expect(canchaDeFondo(0, 0)).toEqual([]);
+  });
+});
+
+describe("disponer con buscador en el banco (Selección)", () => {
+  const pantallas = [
+    [390, 700],
+    [1280, 640],
+  ] as const;
+
+  it.each(pantallas)("en %ix%i reserva el buscador entre el título y la grilla, de todo el ancho del banco", (w, h) => {
+    const d = disponer({ ancho: w, alto: h, px: pxPara(w, h), esquema: "4-3-3", suplentes: 90, renglones: 2, buscador: true });
+    const b = d.banco!;
+    expect(b.buscador).toEqual({ x: 0, y: expect.any(Number), ancho: b.ancho, alto: ALTO_BUSCADOR_BANCO });
+    expect(b.buscador!.y).toBeGreaterThan(0);
+    const arribaDeLaGrilla = Math.min(b.ventana.y, ...(b.flechas ? [b.flechas.antes.y] : []));
+    expect(b.buscador!.y + b.buscador!.alto).toBeLessThan(arribaDeLaGrilla);
+  });
+
+  it("sin pedirlo no hay buscador", () => {
+    const d = disponer({ ancho: 1280, alto: 640, px: 2, esquema: "4-3-3", suplentes: 20 });
+    expect(d.banco!.buscador).toBeNull();
+  });
+
+  it("en desktop el buscador ocupa las 3 columnas del banco", () => {
+    const d = disponer({ ancho: 1280, alto: 640, px: 2, esquema: "4-3-3", suplentes: 90, renglones: 2, buscador: true });
+    const b = d.banco!;
+    expect(d.orientacion).toBe("horizontal");
+    expect(b.columnas).toBe(COLUMNAS_BANCO);
+    expect(b.buscador!.ancho).toBeGreaterThanOrEqual(b.ventana.ancho);
   });
 });
