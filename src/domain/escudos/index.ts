@@ -67,99 +67,81 @@ export function faltaEscudo(): Matriz {
 // Escudo de la Selección (AUF)
 // -----------------------------------------------------------------------------
 
-// Estrella de 5x5 (con contorno ocupa 7x7). Van cuatro arriba del escudo.
-const ESTRELLA = ["..#..", ".###.", "#####", ".###.", ".#.#."];
-/** Columna izquierda (con contorno) de cada estrella: simétricas respecto del centro. */
-const COLUMNAS_ESTRELLAS = [6, 15, 26, 35];
-
-// Letras AUF de 3x5, que se dibujan al doble (6x10).
-const AUF = [
-  [".#.", "#.#", "###", "#.#", "#.#"],
-  ["#.#", "#.#", "#.#", "#.#", "###"],
-  ["###", "#..", "##.", "#..", "#.."],
+// Dibujo 48x48 del escudo de la AUF, pasado a pixel art desde el escudo que
+// aprobó el dueño del producto. Una letra por píxel:
+// . transparente · o contorno · 4/5/6 dorado (sombra/medio/luz) · 9 blanco
+// h celeste · r rojo.
+const DIBUJO_SELECCION = [
+  ".......oooooooooooooooooooooooooooooooooo.......",
+  "......oo55555555555555555555555555555555oo......",
+  ".....oo5555555555555555555555555555555555oo.....",
+  ".....o55oooooooooooooooooooooooooooooooo55o.....",
+  ".....o55ohhhhhhhhhhhhhhhhhhhhhhhhhhhhhho55o.....",
+  ".....o55oh999o999999o999999o999999o999ho55o.....",
+  ".....o55oh99o5o9999o5o9999o5o9999o5o99ho55o.....",
+  ".....o55oh9o555o99o555o99o555o99o555o9ho55o.....",
+  ".....o55oho55555oo55555oo55555oo55555oho55o.....",
+  ".....o55oh9o555o99o555o99o555o99o555o9ho55o.....",
+  ".....o55oh9o5o5o99o5o5o99o5o5o99o5o5o9ho55o.....",
+  ".....o55oh99o9o9999o9o9999o9o9999o9o99ho55o.....",
+  ".....o55oh999h99999oo999999oo99999h999ho55o.....",
+  ".....o55oh99h6h9999o6oo99oo4o9999h6h99ho55o.....",
+  ".....o55oh9h565h999o65rrrr54o999h565h9ho55o.....",
+  ".....o55oh9h555h999o6rr55rr4o999h555h9ho55o.....",
+  ".....o55ohh5o5o5h99o6rrrrrr4o99h5o5o5hho55o.....",
+  ".....o55oh9h555h999o6rr55rr4o999h555h9ho55o.....",
+  ".....o55ohh5o5o5h99o6rr55rr4o99h5o5o5hho55o.....",
+  ".....o55oh9h555h999o65555554o999h555h9ho55o.....",
+  ".....o55ohh5o5o5h99o6rr55rr4o99h5o5o5hho55o.....",
+  ".....o55oh9h555h999o6rr55rr4o999h555h9ho55o.....",
+  ".....o55ohh5o5o5h99o6rr55rr4o99h5o5o5hho55o.....",
+  ".....o55oh9h555h999o6rr55rr4o999h555h9ho55o.....",
+  ".....o55ohh5o5o5h99o65rrrr54o99h5o5o5hho55o.....",
+  ".....o55oh9h454h999o65555554o999h454h9ho55o.....",
+  ".....o55oh99h4h9999o6rrrrrr4o9999h4h99ho55o.....",
+  ".....o55oh99h4h9999o6rr55554o9999h4h99ho55o.....",
+  ".....o55oh999h99999o6rrrrr54o99999h999ho55o.....",
+  ".....o55oh999999999o6rr55554o999999999ho55o.....",
+  ".....o55ooh99999999o6rr55554o99999999hoo55o.....",
+  ".....oo55ohooooooooooooooooooooooooooho55oo.....",
+  "......o55ohhhhhhhhhhhhhoohhhhhhhhhhhhho55o......",
+  "......o55oh9999999999oo99oo9999999999ho55o......",
+  "......o55oohhhhhhhhho999999ohhhhhhhhhoo55o......",
+  "......oo55oh99999999o99oo99o99999999ho55oo......",
+  ".......o55oohooooooo99oooo99ooooooohoo55o.......",
+  ".......oo55ooho9999o999oo999o9999ohoo55oo.......",
+  "........oo55oohh999oo999999oo999hhoo55oo........",
+  ".........oo55ooohh9oo999999oo9hhooo55oo.........",
+  "..........oo555ooohh6oo99oo4hhooo555oo..........",
+  "...........oo5555ooohh9oo9hhooo5555oo...........",
+  "............ooo5555ooohhhhooo5555ooo............",
+  "..............ooo5555oooooo5555ooo..............",
+  "................ooo5555oo5555ooo................",
+  "..................ooo555555ooo..................",
+  "....................ooo55ooo....................",
+  "......................oooo......................",
 ];
 
+const COLOR_DEL_DIBUJO: Record<string, string | null> = {
+  ".": null,
+  o: PALETA.contorno,
+  "4": PALETA.amarilloSombra,
+  "5": PALETA.amarillo,
+  "6": PALETA.amarilloLuz,
+  "9": PALETA.blancoLuz,
+  h: PALETA.celeste,
+  r: PALETA.rojo,
+};
+
 /**
- * Matriz 48x48 del escudo de la Selección: cuatro estrellas doradas arriba y
- * un escudo celeste con ribete blanco, el Sol de Mayo y las letras AUF. Es el
- * PNG que el Admin sube como escudo de la Selección (`pngDeMatriz`), con la
- * misma validación que los escudos de los Clubes.
+ * Matriz 48x48 del escudo de la Selección (AUF): ribete dorado, cuatro
+ * estrellas, la banda dorada con las letras AUF en rojo entre dos espigas,
+ * la franja celeste y blanca y la pelota. Es el PNG que el Admin sube como
+ * escudo de la Selección (`pngDeMatriz`), con la misma validación que los
+ * escudos de los Clubes.
  */
 export function escudoDeLaSeleccion(): Matriz {
-  const lado = LADO_ESCUDO;
-  const centro = (lado - 1) / 2;
-  const m: Matriz = Array.from({ length: lado }, () => Array<string | null>(lado).fill(null));
-
-  // Silueta: recta hasta el hombro y en punta abajo (cuarto de elipse).
-  const ARRIBA = 9;
-  const HOMBRO = 27;
-  const ABAJO = 47;
-  const MAXIMA = 19;
-  const mediaAnchura = (y: number) => {
-    if (y < ARRIBA || y > ABAJO) return -1;
-    if (y <= HOMBRO) return MAXIMA;
-    const t = (y - HOMBRO) / (ABAJO - HOMBRO);
-    return Math.round(MAXIMA * Math.sqrt(1 - t * t));
-  };
-  const adentro = (x: number, y: number) => {
-    const hw = mediaAnchura(y);
-    return hw >= 0 && Math.abs(x - centro) <= hw + 0.5;
-  };
-  const enBorde = (x: number, y: number) =>
-    adentro(x, y) && (!adentro(x - 1, y) || !adentro(x + 1, y) || !adentro(x, y - 1) || !adentro(x, y + 1));
-  const ribete = (x: number, y: number) =>
-    adentro(x, y) && !enBorde(x, y) && (enBorde(x - 1, y) || enBorde(x + 1, y) || enBorde(x, y - 1) || enBorde(x, y + 1));
-
-  for (let y = 0; y < lado; y++)
-    for (let x = 0; x < lado; x++) {
-      if (!adentro(x, y)) continue;
-      if (enBorde(x, y)) m[y][x] = PALETA.contorno;
-      else if (ribete(x, y)) m[y][x] = PALETA.blanco;
-      // Celeste con luz arriba y sombra en la punta.
-      else m[y][x] = y <= ARRIBA + 3 ? PALETA.celesteLuz : y >= 40 ? PALETA.celesteSombra : PALETA.celeste;
-    }
-
-  // Sol de Mayo: disco con borde en sombra y ocho rayos.
-  const SOL_Y = 19.5;
-  const RADIO = 4.2;
-  for (let y = ARRIBA + 2; y <= HOMBRO; y++)
-    for (let x = 0; x < lado; x++) {
-      const dx = x - centro;
-      const dy = y - SOL_Y;
-      const d = Math.hypot(dx, dy);
-      if (d <= RADIO - 1) m[y][x] = PALETA.amarilloLuz;
-      else if (d <= RADIO) m[y][x] = PALETA.amarillo;
-      else if (d <= RADIO + 3.6) {
-        // Rayos: rectos (vertical y horizontal) y en diagonal.
-        const recto = Math.abs(dx) < 1 || Math.abs(dy) < 1;
-        const diagonal = Math.abs(Math.abs(dx) - Math.abs(dy)) < 1;
-        if (recto || diagonal) m[y][x] = PALETA.amarillo;
-      }
-    }
-
-  // Letras AUF en blanco, al doble y centradas.
-  const anchoAuf = (AUF.length * 3 + AUF.length - 1) * 2;
-  const xAuf = Math.round(centro - anchoAuf / 2 + 0.5);
-  const Y_AUF = 30;
-  AUF.forEach((letra, i) =>
-    letra.forEach((fila, dy) =>
-      [...fila].forEach((c, dx) => {
-        if (c !== "#") return;
-        for (let sy = 0; sy < 2; sy++)
-          for (let sx = 0; sx < 2; sx++) m[Y_AUF + dy * 2 + sy][xAuf + (i * 4 + dx) * 2 + sx] = PALETA.blancoLuz;
-      }),
-    ),
-  );
-
-  // Cuatro estrellas doradas con contorno, arriba del escudo.
-  for (const x0 of COLUMNAS_ESTRELLAS) {
-    const encendidos: [number, number][] = [];
-    ESTRELLA.forEach((fila, dy) => [...fila].forEach((c, dx) => c === "#" && encendidos.push([x0 + 1 + dx, 1 + dy])));
-    for (const [x, y] of encendidos)
-      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) m[y + dy][x + dx] = PALETA.contorno;
-    for (const [x, y] of encendidos) m[y][x] = PALETA.amarillo;
-  }
-  return m;
+  return DIBUJO_SELECCION.map((fila) => [...fila].map((letra) => COLOR_DEL_DIBUJO[letra]));
 }
 
 // -----------------------------------------------------------------------------

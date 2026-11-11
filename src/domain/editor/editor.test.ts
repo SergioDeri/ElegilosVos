@@ -6,6 +6,7 @@ import {
   alineacionNueva,
   desdeJson,
   banco,
+  buscarPorNombre,
   estaVacia,
   heredar,
   cambiarEsquema,
@@ -433,5 +434,32 @@ describe("Editor de Alineación", () => {
         });
       });
     });
+  });
+});
+
+describe("buscarPorNombre", () => {
+  const jugadores = [{ nombre: "Darwin Núñez" }, { nombre: "Federico Valverde" }, { nombre: "Federico Viñas" }, { nombre: "Ronald Araújo" }];
+
+  it("con la búsqueda vacía (o solo espacios) devuelve todos, en el mismo orden", () => {
+    expect(buscarPorNombre(jugadores, "")).toEqual(jugadores);
+    expect(buscarPorNombre(jugadores, "   ")).toEqual(jugadores);
+  });
+
+  it("no distingue mayúsculas ni tildes", () => {
+    expect(buscarPorNombre(jugadores, "nunez")).toEqual([{ nombre: "Darwin Núñez" }]);
+    expect(buscarPorNombre(jugadores, "ARAUJO")).toEqual([{ nombre: "Ronald Araújo" }]);
+    expect(buscarPorNombre(jugadores, "viñas")).toEqual([{ nombre: "Federico Viñas" }]);
+  });
+
+  it("busca dentro del nombre y exige todas las palabras", () => {
+    expect(buscarPorNombre(jugadores, "fede")).toEqual([{ nombre: "Federico Valverde" }, { nombre: "Federico Viñas" }]);
+    expect(buscarPorNombre(jugadores, "fede  val")).toEqual([{ nombre: "Federico Valverde" }]);
+    expect(buscarPorNombre(jugadores, "suárez")).toEqual([]);
+  });
+
+  it("devuelve los mismos objetos y no modifica la lista", () => {
+    const copia = [...jugadores];
+    expect(buscarPorNombre(jugadores, "darwin")[0]).toBe(jugadores[0]);
+    expect(jugadores).toEqual(copia);
   });
 });

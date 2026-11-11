@@ -1,6 +1,6 @@
 // Selección, ticket 05: votar la Selección. Usa la fecha doble de
 // supabase/seeds/e2e-05-votar-la-seleccion.sql (vs Perú y vs Venezuela, con
-// las dos Votaciones abiertas) y los elegibles de seleccion-04-plantel.sql.
+// las dos Votaciones abiertas) y los elegibles de la migración *_seleccion15_elegibles_completos.sql.
 import type { Page } from "@playwright/test";
 import { expect, iniciarSesion, test } from "./fixtures";
 import { clienteServicio } from "./usuarios";

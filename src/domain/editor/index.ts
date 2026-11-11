@@ -257,6 +257,25 @@ export function banco<J extends JugadorDelPlantel>(estado: Alineacion, plantel: 
   return plantel.filter((j) => j.enPlantel && j.disponibilidad === "disponible" && !enCancha.has(j.id));
 }
 
+/** Minúsculas y sin tildes: "Núñez" y "nunez" se comparan igual. */
+function normalizar(texto: string): string {
+  return texto.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().trim();
+}
+
+/**
+ * Búsqueda en el banco (Selección): los Jugadores cuyo nombre contiene todas
+ * las palabras buscadas, sin importar mayúsculas ni tildes, en el mismo orden
+ * en que vienen. Con la búsqueda vacía devuelve la lista entera.
+ */
+export function buscarPorNombre<J extends { nombre: string }>(jugadores: readonly J[], busqueda: string): J[] {
+  const palabras = normalizar(busqueda).split(/\s+/).filter(Boolean);
+  if (palabras.length === 0) return [...jugadores];
+  return jugadores.filter((j) => {
+    const nombre = normalizar(j.nombre);
+    return palabras.every((p) => nombre.includes(p));
+  });
+}
+
 /** Forma JSON de una Alineación (para la base y el cliente). Horas en ISO 8601 UTC. */
 export interface AlineacionJson {
   esquema: EsquemaId;

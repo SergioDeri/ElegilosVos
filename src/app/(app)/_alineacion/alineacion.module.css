@@ -35,6 +35,27 @@
   margin: 0;
 }
 
+/* Búsqueda del banco (solo Selección): no crece, la cancha toma el resto. */
+.busqueda {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(2 * var(--u)) calc(4 * var(--u));
+  align-items: center;
+}
+
+.busqueda label {
+  flex-direction: row;
+  align-items: center;
+  align-self: auto;
+  gap: calc(2 * var(--u));
+}
+
+.busqueda input {
+  width: calc(80 * var(--u));
+  max-width: 100%;
+}
+
 .guardado[data-estado="error"],
 .guardado[data-estado="cerrada"],
 .guardado[data-estado="invalida"] {

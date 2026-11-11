@@ -61,24 +61,24 @@ describe("escudoDeLaSeleccion", () => {
       }
   });
 
-  it("es celeste, con el sol y las cuatro estrellas en dorado", () => {
+  it("es la AUF: ribete dorado, cuatro estrellas, las letras en rojo y la franja celeste", () => {
     const cuenta = (color: string) => m.flat().filter((c) => c === color).length;
-    const celeste = cuenta(PALETA.celesteLuz) + cuenta(PALETA.celeste) + cuenta(PALETA.celesteSombra);
-    const otros = m.flat().filter((c) => c !== null).length - celeste;
-    expect(celeste).toBeGreaterThan(otros);
-    // Las estrellas: cuatro manchas doradas separadas en las filas de arriba del escudo.
-    const arriba = m[3].map((c) => c === PALETA.amarillo);
-    const manchas = arriba.filter((on, x) => on && !arriba[x - 1]).length;
-    expect(manchas).toBe(4);
-    // El sol, dorado, en el centro de la mitad de arriba.
-    expect([PALETA.amarillo, PALETA.amarilloLuz]).toContain(m[19][23]);
+    // Las estrellas: cuatro manchas doradas separadas en la fila más ancha de las estrellas.
+    const fila = m[8].map((c, x) => c === PALETA.amarillo && x > 9 && x < 38);
+    expect(fila.filter((on, x) => on && !fila[x - 1]).length).toBe(4);
+    // Ribete dorado a los costados, letras AUF en rojo y celeste en la franja.
+    expect(m[20][6]).toBe(PALETA.amarillo);
+    expect(m[20][41]).toBe(PALETA.amarillo);
+    expect(cuenta(PALETA.rojo)).toBeGreaterThan(30);
+    expect(m[32].filter((c) => c === PALETA.celeste).length).toBeGreaterThan(10);
   });
 
   it("se ve como el dibujo aprobado (si cambia, revisarlo con el dueño del producto)", () => {
     const letra = new Map<string, string>([
       [PALETA.contorno, "o"], [PALETA.blanco, "8"], [PALETA.blancoLuz, "9"],
-      [PALETA.amarillo, "5"], [PALETA.amarilloLuz, "6"],
+      [PALETA.amarilloSombra, "4"], [PALETA.amarillo, "5"], [PALETA.amarilloLuz, "6"],
       [PALETA.celesteSombra, "g"], [PALETA.celeste, "h"], [PALETA.celesteLuz, "i"],
+      [PALETA.rojo, "r"],
     ]);
     const dibujo = m.map((f) => f.map((c) => (c === null ? "." : (letra.get(c) ?? "?"))).join("")).join("\n");
     expect(dibujo).not.toContain("?");

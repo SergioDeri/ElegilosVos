@@ -284,7 +284,8 @@ const CAMISETAS: Record<ClubOSeleccion, { campo: DisenoCamiseta; arquero: Diseno
   // Los Jugadores de la Selección no tienen número: sus Camisetas no lo estampan.
   seleccion: {
     campo: { cuerpo: () => "celeste", manga: "celeste", puno: "blanco", cuello: "blanco" },
-    arquero: { cuerpo: () => "negro", manga: "negro", puno: "celeste", cuello: "celeste" },
+    // Arquero: toda negra (cuerpo, mangas, puños y cuello).
+    arquero: { cuerpo: () => "negro", manga: "negro", puno: "negro", cuello: "negro" },
   },
 };
 

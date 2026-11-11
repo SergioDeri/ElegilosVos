@@ -178,8 +178,17 @@ describe("camiseta de la Selección", () => {
   });
 
   it("no se confunde con las de los Clubes", () => {
-    for (const club of CLUBES)
-      for (const pos of ["DEF", "ARQ"] as const) expect(camiseta(SELECCION, pos)).not.toEqual(camiseta(club, pos));
+    for (const club of CLUBES) {
+      expect(camiseta(SELECCION, "DEF")).not.toEqual(camiseta(club, "DEF"));
+      // La de arquero es toda negra, como la de Peñarol sin número: en un Club
+      // siempre lleva el número estampado, en la Selección nunca.
+      expect(camiseta(SELECCION, "ARQ")).not.toEqual(camiseta(club, "ARQ", { numero: 1 }));
+    }
+  });
+
+  it("la de arquero es toda negra: cuerpo, mangas, puños y cuello", () => {
+    const familias = new Set(camiseta(SELECCION, "ARQ").flat().filter((c) => c !== null).map(familia));
+    expect([...familias].filter((f) => f !== "contorno")).toEqual(["negro"]);
   });
 
   it.each(POSICIONES_NATURALES)("%s: no estampa número aunque se lo pidan", (pos) => {

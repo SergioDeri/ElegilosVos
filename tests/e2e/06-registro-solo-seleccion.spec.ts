@@ -1,7 +1,7 @@
 // Selección, ticket 06: registro "solo Selección" y aviso de la Selección.
 // Usa la fecha doble de supabase/seeds/e2e-05-votar-la-seleccion.sql (las dos
 // Votaciones abiertas; la pantalla arranca por la de Perú) y los elegibles de
-// seleccion-04-plantel.sql. Un login por test.
+// la migración *_seleccion15_elegibles_completos.sql. Un login por test.
 import { expect, iniciarSesion, test } from "./fixtures";
 import { clienteServicio } from "./usuarios";
 

@@ -2,7 +2,7 @@
 -- Selección, ticket 05 (E2E): una fecha doble de la Selección con las dos
 -- Votaciones abiertas al hacer el reset (inician en 3 y 8 días; abren 14 días
 -- antes, o sea al cargarse). Los usa tests/e2e/05-votar-la-seleccion.spec.ts.
--- Los Jugadores son los elegibles de seleccion-04-plantel.sql.
+-- Los Jugadores son los elegibles de la migración *_seleccion15_elegibles_completos.sql.
 -- =============================================================================
 
 insert into public.rival (nombre, activo) values

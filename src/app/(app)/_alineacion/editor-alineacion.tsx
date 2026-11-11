@@ -31,6 +31,7 @@ import {
 } from "@dnd-kit/core";
 import {
   banco,
+  buscarPorNombre,
   cambiarEsquema,
   colocar,
   desdeJson,
@@ -108,6 +109,7 @@ export function EditorAlineacion({
   convocados = null,
 }: PropsEditor) {
   const router = useRouter();
+  const idBanco = useId();
   const [alineacion, setAlineacion] = useState<Alineacion>(() => {
     const leida = inicial ? desdeJson(inicial) : null;
     return leida?.ok ? leida.estado : { esquema: "4-3-3", esquemaElegidoAMano: false, puestos: {} };
@@ -115,6 +117,8 @@ export function EditorAlineacion({
   const [seleccion, setSeleccion] = useState<Origen | null>(null);
   const [arrastrando, setArrastrando] = useState<{ origen: Origen; ancho: number } | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
+  // Búsqueda en el banco: solo en la Selección, que tiene muchos elegibles.
+  const [busqueda, setBusqueda] = useState("");
   // Último Puesto donde se soltó una Camiseta: salta y suelta partículas.
   const [salto, setSalto] = useState<{ puesto: PuestoId; vez: number } | null>(null);
   const { estado: guardado, guardoAlgunaVez, programar, reintentar } = useGuardadoAutomatico(partidoId);
@@ -126,7 +130,9 @@ export function EditorAlineacion({
 
   const porId = useMemo(() => new Map(jugadores.map((j) => [j.id, j])), [jugadores]);
   const convocado = useMemo(() => (convocados ? new Set(convocados) : null), [convocados]);
+  const conBusqueda = club === SELECCION;
   const libres = banco(alineacion, jugadores);
+  const enElBanco = conBusqueda ? buscarPorNombre(libres, busqueda) : libres;
   const noDisponibles = jugadores.filter((j) => j.enPlantel && j.disponibilidad !== "disponible");
 
   function aplicar(resultado: ResultadoOperacion) {
@@ -295,6 +301,29 @@ export function EditorAlineacion({
           )}
         </div>
 
+        {conBusqueda && editable && (
+          <div className={estilos.busqueda}>
+            <label>
+              Buscar{" "}
+              <input
+                type="search"
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                placeholder="Nombre del Jugador"
+                autoComplete="off"
+                aria-controls={idBanco}
+              />
+            </label>
+            {busqueda.trim() !== "" && (
+              <span role="status" aria-live="polite">
+                {enElBanco.length === 0
+                  ? "Ningún suplente con ese nombre."
+                  : `${enElBanco.length} de ${libres.length} suplentes.`}
+              </span>
+            )}
+          </div>
+        )}
+
         {convocado && (
           <p className={estilos.convocatoria}>
             Ya salió la Convocatoria: los convocados llevan una <span className={estilos.convocado}>C</span>. Podés poner
@@ -309,7 +338,7 @@ export function EditorAlineacion({
           renglones={club === SELECCION ? 2 : 1}
           // Con la Votación abierta siempre hay banco, aunque esté vacío: es
           // donde se suelta un Jugador para sacarlo de la cancha.
-          suplentes={editable ? Math.max(1, libres.length) : 0}
+          suplentes={editable ? Math.max(1, enElBanco.length) : 0}
           role="group"
           aria-label={`Cancha, Esquema ${alineacion.esquema}`}
           puesto={(caja) => {
@@ -330,9 +359,9 @@ export function EditorAlineacion({
             );
           }}
           banco={(b) => (
-            <Banco editable={puedeEditar} cantidad={libres.length}>
+            <Banco id={idBanco} editable={puedeEditar} cantidad={enElBanco.length}>
               <BancoPixel banco={b}>
-                {libres.map((j) => (
+                {enElBanco.map((j) => (
                   <li key={j.id}>
                     <JugadorDelBanco
                       club={club}
@@ -468,10 +497,10 @@ function PuestoEnCancha(props: {
   );
 }
 
-function Banco(props: { editable: boolean; cantidad: number; children: ReactNode }) {
+function Banco(props: { id: string; editable: boolean; cantidad: number; children: ReactNode }) {
   const { setNodeRef, isOver } = useDroppable({ id: ID_BANCO, disabled: !props.editable });
   return (
-    <div ref={setNodeRef} className={estilos.banco} data-sobre={isOver} aria-label={`Suplentes (${props.cantidad})`} role="group">
+    <div id={props.id} ref={setNodeRef} className={estilos.banco} data-sobre={isOver} aria-label={`Suplentes (${props.cantidad})`} role="group">
       {props.children}
     </div>
   );

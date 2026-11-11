@@ -1,0 +1,125 @@
+-- =============================================================================
+-- Selección, ticket 15: los elegibles de la Selección (102 futbolistas
+-- uruguayos), desde assets/uruguay_players_complete.md: la convocatoria de
+-- noviembre 2026, la prelista de 46 de Forlán y la lista extendida.
+--
+-- Va en una migración (y no en un seed) para que también llegue a producción.
+-- No duplica: si ya hay un elegible con el mismo nombre (sin importar
+-- mayúsculas), no lo vuelve a cargar ni lo modifica.
+--
+-- Posiciones: las de la lista. Los dos de posición ambigua (lateral izquierdo
+-- / volante: Velázquez y Oyarzo) van como DEF. Los 15 sin posición en la lista
+-- van con una posición estimada (Ferrari DEL; Arbío, Antoni y Ponte DEF; el
+-- resto MED): el Admin las corrige en el backoffice si hace falta.
+-- =============================================================================
+
+insert into public.jugador (club_id, nombre, numero, posicion_natural)
+select 'seleccion', e.nombre, null, e.posicion::public.posicion_natural
+from (values
+  ('Cristopher Fiermarín',     'ARQ'),
+  ('Ignacio De Arruabarrena',  'ARQ'),
+  ('Santiago Mele',            'ARQ'),
+  ('Sebastián Jaume',          'ARQ'),
+  ('Thiago Cardozo',           'ARQ'),
+  ('Federico Bonilla',         'ARQ'),
+  ('Felipe Ortiz',             'ARQ'),
+  ('Fernando Muslera',         'ARQ'),
+  ('Franco Israel',            'ARQ'),
+  ('Randall Rodríguez',        'ARQ'),
+  ('Sergio Rochet',            'ARQ'),
+  ('Guillermo Varela',         'DEF'),
+  ('Joaquín Piquerez',         'DEF'),
+  ('José María Giménez',       'DEF'),
+  ('Juan Manuel Sanabria',     'DEF'),
+  ('Juan Rodríguez',           'DEF'),
+  ('Mathías Olivera',          'DEF'),
+  ('Ronald Araújo',            'DEF'),
+  ('Santiago Mouriño',         'DEF'),
+  ('Sebastián Cáceres',        'DEF'),
+  ('Alexander Barboza',        'DEF'),
+  ('José Luis Rodríguez',      'DEF'),
+  ('Kevin Amaro',              'DEF'),
+  ('Lucas Olaza',              'DEF'),
+  ('Marcelo Saracchi',         'DEF'),
+  ('Nahitan Nández',           'DEF'),
+  ('Nicolás Marichal',         'DEF'),
+  ('Santiago Bueno',           'DEF'),
+  ('Sebastián Boselli',        'DEF'),
+  ('Agustín Rogel',            'DEF'),
+  ('Alan Matturro',            'DEF'),
+  ('Benjamín García',          'DEF'),
+  ('Facundo González',         'DEF'),
+  ('Leandro Cabrera',          'DEF'),
+  ('Mateo Caballero',          'DEF'),
+  ('Matías Viña',              'DEF'),
+  ('Agustín Canobbio',         'MED'),
+  ('Facundo Bernal',           'MED'),
+  ('Facundo Pellistri',        'MED'),
+  ('Federico Valverde',        'MED'),
+  ('Giorgian De Arrascaeta',   'MED'),
+  ('Lucas Torreira',           'MED'),
+  ('Maximiliano Araújo',       'MED'),
+  ('Rodrigo Bentancur',        'MED'),
+  ('Rodrigo Zalazar',          'MED'),
+  ('Nicolás De La Cruz',       'MED'),
+  ('Brian Rodríguez',          'MED'),
+  ('Diego Rossi',              'MED'),
+  ('Emiliano Martínez',        'MED'),
+  ('Lucas Villalba',           'MED'),
+  ('Luciano Rodríguez',        'MED'),
+  ('Matías Abaldo',            'MED'),
+  ('Santiago Homenchenko',     'MED'),
+  ('Fabricio Díaz',            'MED'),
+  ('Facundo Torres',           'MED'),
+  ('Germán Barbas',            'MED'),
+  ('Ignacio Sosa',             'MED'),
+  ('Julio Daguer',             'MED'),
+  ('Luciano González',         'MED'),
+  ('Manuel Ugarte',            'MED'),
+  ('Mathías De Ritis',         'MED'),
+  ('Mauro Arambarri',          'MED'),
+  ('Nicolás Fonseca',          'MED'),
+  ('Pablo Alcoba',             'MED'),
+  ('Darwin Núñez',             'DEL'),
+  ('Federico Viñas',           'DEL'),
+  ('Martín Satriano',          'DEL'),
+  ('Rodrigo Aguirre',          'DEL'),
+  ('Bruno Damiani',            'DEL'),
+  ('Agustín Álvarez Martínez', 'DEL'),
+  ('Miguel Merentiel',         'DEL'),
+  ('Álvaro Rodríguez',         'DEL'),
+  ('Alan Torterolo',           'DEL'),
+  ('Anderson Duarte',          'DEL'),
+  ('Cristian Olivera',         'DEL'),
+  ('Facundo Martínez',         'DEL'),
+  ('Gonzalo Carneiro',         'DEL'),
+  ('Gonzalo Petit',            'DEL'),
+  ('Juan Cruz De los Santos',  'DEL'),
+  ('Luis Suárez',              'DEL'),
+  ('Matías Arezo',             'DEL'),
+  ('Maximiliano Gómez',        'DEL'),
+  ('Maximiliano Silvera',      'DEL'),
+  ('Nahuel López',             'DEL'),
+  ('Pablo Cardozo',            'DEL'),
+  ('Alexander Velázquez',      'DEF'),
+  ('Yuri Oyarzo',              'DEF'),
+  ('Andrés Ferrari',           'DEL'),
+  ('Bruno Arady',              'MED'),
+  ('Damián García',            'MED'),
+  ('Facundo Domínguez',        'MED'),
+  ('Facundo Machado',          'MED'),
+  ('Franco González',          'MED'),
+  ('José Arbío',               'DEF'),
+  ('Mateo Antoni',             'DEF'),
+  ('Mateo Ponte',              'DEF'),
+  ('Mateo Soria',              'MED'),
+  ('Nicolás Siri',             'MED'),
+  ('Paulo Da Costa',           'MED'),
+  ('Rodrigo Alvez',            'MED'),
+  ('Rodrigo Chagas',           'MED'),
+  ('Román Clematte',           'MED')
+) as e(nombre, posicion)
+where not exists (
+  select 1 from public.jugador j
+  where j.club_id = 'seleccion' and lower(j.nombre) = lower(e.nombre)
+);

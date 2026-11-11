@@ -5,38 +5,7 @@
 -- Selección el número no se lleva.
 -- =============================================================================
 
--- Elegibles de la Selección (convocados o no).
-insert into public.jugador (club_id, nombre, numero, posicion_natural) values
-  ('seleccion', 'Sergio Rochet',             null, 'ARQ'),
-  ('seleccion', 'Santiago Mele',             null, 'ARQ'),
-  ('seleccion', 'Franco Israel',             null, 'ARQ'),
-  ('seleccion', 'Ronald Araújo',             null, 'DEF'),
-  ('seleccion', 'José María Giménez',        null, 'DEF'),
-  ('seleccion', 'Mathías Olivera',           null, 'DEF'),
-  ('seleccion', 'Guillermo Varela',          null, 'DEF'),
-  ('seleccion', 'Santiago Bueno',            null, 'DEF'),
-  ('seleccion', 'Sebastián Cáceres',         null, 'DEF'),
-  ('seleccion', 'Joaquín Piquerez',          null, 'DEF'),
-  ('seleccion', 'Matías Viña',               null, 'DEF'),
-  ('seleccion', 'Nicolás Marichal',          null, 'DEF'),
-  ('seleccion', 'Federico Valverde',         null, 'MED'),
-  ('seleccion', 'Manuel Ugarte',             null, 'MED'),
-  ('seleccion', 'Rodrigo Bentancur',         null, 'MED'),
-  ('seleccion', 'Giorgian De Arrascaeta',    null, 'MED'),
-  ('seleccion', 'Nicolás de la Cruz',        null, 'MED'),
-  ('seleccion', 'Nahitan Nández',            null, 'MED'),
-  ('seleccion', 'Maximiliano Araújo',        null, 'MED'),
-  ('seleccion', 'Emiliano Martínez',         null, 'MED'),
-  ('seleccion', 'Rodrigo Zalazar',           null, 'MED'),
-  ('seleccion', 'Juan Manuel Sanabria',      null, 'MED'),
-  ('seleccion', 'Facundo Pellistri',         null, 'DEL'),
-  ('seleccion', 'Darwin Núñez',              null, 'DEL'),
-  ('seleccion', 'Federico Viñas',            null, 'DEL'),
-  ('seleccion', 'Rodrigo Aguirre',           null, 'DEL'),
-  ('seleccion', 'Agustín Canobbio',          null, 'DEL'),
-  ('seleccion', 'Brian Rodríguez',           null, 'DEL'),
-  ('seleccion', 'Facundo Torres',            null, 'DEL'),
-  ('seleccion', 'Cristian Olivera',          null, 'DEL');
+-- Los elegibles de la Selección los carga la migración *_seleccion15_elegibles_completos.sql.
 
 -- Un par de elegibles no Disponibles, para ver la Disponibilidad con motivo.
 update public.jugador set disponibilidad = 'lesionado', motivo_disponibilidad = 'Lesión muscular'
