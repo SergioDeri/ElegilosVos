@@ -5,6 +5,14 @@
 -- Los Jugadores son los elegibles de la migración *_seleccion15_elegibles_completos.sql.
 -- =============================================================================
 
+-- El Partido de fecha fija contra Argentina (migración
+-- *_seleccion16_partido_argentina.sql, para producción) se saca en local: los
+-- escenarios E2E arrancan por la fecha doble de acá, relativa al reset.
+delete from public.partido p
+using public.rival r
+where p.rival_id = r.id and r.nombre = 'Argentina' and p.club_id = 'seleccion'
+  and p.inicio = timestamptz '2026-11-13 21:00:00+00';
+
 insert into public.rival (nombre, activo) values
   ('Perú (E2E 05)', true),
   ('Venezuela (E2E 05)', true)
