@@ -12,6 +12,9 @@ delete from public.partido p
 using public.rival r
 where p.rival_id = r.id and r.nombre = 'Argentina' and p.club_id = 'seleccion'
   and p.inicio = timestamptz '2026-11-13 21:00:00+00';
+-- Y la Convocatoria de noviembre (migración *_seleccion18_*) que le quedó sin Partidos.
+delete from public.convocatoria c
+where not exists (select 1 from public.convocatoria_partido cp where cp.convocatoria_id = c.id);
 
 insert into public.rival (nombre, activo) values
   ('Perú (E2E 05)', true),
