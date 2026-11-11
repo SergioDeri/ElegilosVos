@@ -6,7 +6,8 @@ import { LADO_ESCUDO } from "@/domain/planteles";
 import { Sprite } from "./sprite";
 import estilos from "./pixel.module.css";
 
-const lado = `calc(${LADO_ESCUDO} * var(--u))`;
+// --lado-escudo: quien lo usa puede achicarlo (p. ej. la elección de Club en el celular).
+const lado = `var(--lado-escudo, calc(${LADO_ESCUDO} * var(--u)))`;
 
 export function Escudo({ nombre, url, className }: { nombre: string; url: string | null; className?: string }) {
   const clase = className ? `${estilos.escudo} ${className}` : estilos.escudo;

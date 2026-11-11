@@ -14,6 +14,7 @@ import { crearClienteServidor } from "@/lib/supabase/server";
 import { escudoDeLaSeleccionDelRepo } from "@/lib/compartir/escudo";
 import { SELECCION } from "@/domain/comun/tipos";
 import { FormularioElegirClub } from "./formulario-elegir-club";
+import estilos from "./elegir-club.module.css";
 
 export default async function PaginaElegirClub() {
   const hincha = await requerirSesion();
@@ -35,7 +36,7 @@ export default async function PaginaElegirClub() {
 
   return (
     <PantallaAcceso>
-      <main>
+      <main className={estilos.ancho}>
         <h1>¿De qué cuadro sos?</h1>
         <FormularioElegirClub clubes={clubes} seleccion={seleccion} />
         {hincha.eligioSoloSeleccion ? (

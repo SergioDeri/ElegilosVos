@@ -1,8 +1,17 @@
 /* Elección del Club: botones grandes (los Clubes y la Selección), cada uno con su escudo y los
    colores de su Club. Medidas en píxeles de arte (--u). */
+/* Un poco más ancha que las otras pantallas de acceso (150u) para que los
+   tres escudos entren en fila a su tamaño (doble clase: le gana a la regla
+   de la caja de acceso). */
+.ancho.ancho {
+  --ancho-main: min(calc(200 * var(--u)), round(down, calc(100% - 4 * var(--u)), var(--u)));
+}
+
+/* Siempre en una sola fila, con columnas iguales: dos Clubes y la Selección. */
 .clubes {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(calc(56 * var(--u)), 1fr));
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
   gap: calc(4 * var(--u));
   margin: calc(4 * var(--u)) var(--u);
 }
@@ -12,8 +21,26 @@
   flex-direction: column;
   align-items: center;
   gap: calc(3 * var(--u));
+  min-width: 0;
   margin: 0;
   padding: calc(4 * var(--u)) calc(3 * var(--u)) calc(5 * var(--u));
+  overflow-wrap: anywhere;
+}
+
+/* Celular (ahí --px es siempre 2): escudos de 32u y menos aire, para que los
+   tres entren en fila hasta en pantallas de 320 px. 32u = 64 px CSS: en
+   pantallas de densidad 3 cada píxel del escudo son 4 físicos, parejo. */
+@media (max-width: 659px) {
+  .clubes {
+    --lado-escudo: calc(32 * var(--u));
+    gap: calc(2 * var(--u));
+    margin-inline: 0;
+  }
+
+  .club {
+    gap: calc(2 * var(--u));
+    padding: calc(3 * var(--u)) var(--u) calc(4 * var(--u));
+  }
 }
 
 /* La Selección no es un Club ni tiene tema: celeste, como su Camiseta. */
